@@ -1,0 +1,54 @@
+.features {
+  display: flex;
+  align-items: stretch;
+  padding: 2.5rem 0;
+  width: 100%;
+}
+
+.featureIcon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--nethereum-sidebar-active-bg);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.featureLink {
+  display: block;
+  padding: 1.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  border: 1px solid var(--nethereum-card-border);
+  background: var(--nethereum-card-bg);
+  box-shadow: var(--nethereum-card-shadow);
+  height: 100%;
+}
+
+.featureLink:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--nethereum-card-shadow-hover);
+  border-color: var(--ifm-color-primary);
+}
+
+.featureLink h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.featureLink p {
+  font-size: 0.84rem;
+  color: var(--nethereum-text-muted);
+  line-height: 1.5;
+  margin-bottom: 0;
+}

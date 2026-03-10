@@ -1,0 +1,306 @@
+/* ═══════════════════════════════════════
+   Hero
+   ═══════════════════════════════════════ */
+
+.hero {
+  padding: 3rem 2rem 2.5rem;
+  text-align: center;
+  background: var(--nethereum-hero-bg);
+  color: var(--nethereum-hero-text);
+}
+
+.heroLogo {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  border: none;
+}
+
+[data-theme='dark'] .heroTitle {
+  color: var(--nethereum-hero-text);
+}
+
+.heroSubtitle {
+  color: var(--nethereum-hero-subtitle);
+  font-size: 1.05rem;
+  font-weight: 300;
+  max-width: 640px;
+  margin: 0 auto 1.75rem;
+  line-height: 1.5;
+}
+
+.heroButtons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.heroButtons .button--primary {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #009688;
+}
+
+.heroButtons .button--primary:hover {
+  background-color: #e0f2f1;
+  border-color: #e0f2f1;
+  color: #00796b;
+}
+
+.heroButtons .button--outline {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.heroButtons .button--outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .heroButtons .button--primary {
+  background-color: #4db6ac;
+  border-color: #4db6ac;
+  color: #1a2327;
+}
+
+[data-theme='dark'] .heroButtons .button--primary:hover {
+  background-color: #80cbc4;
+  border-color: #80cbc4;
+}
+
+[data-theme='dark'] .heroButtons .button--outline {
+  color: #b2dfdb;
+  border-color: rgba(178, 223, 219, 0.4);
+}
+
+[data-theme='dark'] .heroButtons .button--outline:hover {
+  background-color: rgba(77, 182, 172, 0.15);
+  border-color: #4db6ac;
+  color: #e0f2f1;
+}
+
+/* ═══════════════════════════════════════
+   Area headings
+   ═══════════════════════════════════════ */
+
+.areaTitle {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  border-bottom: none;
+}
+
+.areaSubtitle {
+  font-size: 0.9rem;
+  color: var(--nethereum-text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* ═══════════════════════════════════════
+   Sections Grid (10 cards)
+   ═══════════════════════════════════════ */
+
+.sectionsArea {
+  padding: 2.5rem 0 1.5rem;
+}
+
+.sectionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.sectionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--nethereum-card-border);
+  background: var(--nethereum-card-bg);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.sectionCard:hover {
+  text-decoration: none;
+  color: inherit;
+  border-color: var(--ifm-color-primary);
+  box-shadow: var(--nethereum-card-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.sectionIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sectionTitle {
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.sectionDesc {
+  font-size: 0.8rem;
+  color: var(--nethereum-text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════
+   What Do You Want to Do? (tasks)
+   ═══════════════════════════════════════ */
+
+.tasksArea {
+  padding: 1.5rem 0 2rem;
+  border-top: 1px solid var(--nethereum-divider);
+}
+
+.taskGroups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.taskGroup {
+  border: 1px solid var(--nethereum-card-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--nethereum-card-bg);
+}
+
+.taskGroupTitle {
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.6rem 1rem;
+  background: var(--nethereum-table-stripe);
+  border-bottom: 1px solid var(--nethereum-card-border);
+  color: var(--nethereum-text-muted);
+}
+
+.taskRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--nethereum-card-border);
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.84rem;
+  transition: background-color 0.15s ease;
+}
+
+.taskRow:last-child {
+  border-bottom: none;
+}
+
+.taskRow:hover {
+  background-color: var(--nethereum-sidebar-active-bg);
+  text-decoration: none;
+  color: inherit;
+}
+
+.taskText {
+  flex: 1;
+}
+
+.taskPackage {
+  font-size: 0.72rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--nethereum-code-bg);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  border: none;
+}
+
+/* ═══════════════════════════════════════
+   Resources (bottom cards)
+   ═══════════════════════════════════════ */
+
+.resourcesArea {
+  padding: 2rem 0 3rem;
+  border-top: 1px solid var(--nethereum-divider);
+}
+
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.resourceCard {
+  text-align: center;
+  padding: 1.25rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--nethereum-card-border);
+  background: var(--nethereum-card-bg);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.resourceCard:hover {
+  text-decoration: none;
+  color: inherit;
+  border-color: var(--ifm-color-primary);
+  box-shadow: var(--nethereum-card-shadow-hover);
+}
+
+.resourceIcon {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.resourceTitle {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.resourceDesc {
+  font-size: 0.78rem;
+  color: var(--nethereum-text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 1.75rem;
+  }
+
+  .heroSubtitle {
+    font-size: 0.95rem;
+  }
+
+  .sectionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .taskGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .resourcesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

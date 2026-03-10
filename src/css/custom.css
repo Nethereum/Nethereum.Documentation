@@ -1,0 +1,478 @@
+/* ═══════════════════════════════════════════════════════════════
+   Nethereum Documentation Theme
+   Teal color scheme matching docs.nethereum.com
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+/* ─── Light Mode (matches Material teal theme) ─── */
+:root {
+  --ifm-color-primary: #009688;
+  --ifm-color-primary-dark: #00897b;
+  --ifm-color-primary-darker: #00796b;
+  --ifm-color-primary-darkest: #004d40;
+  --ifm-color-primary-light: #26a69a;
+  --ifm-color-primary-lighter: #4db6ac;
+  --ifm-color-primary-lightest: #80cbc4;
+
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #fafafa;
+  --ifm-navbar-background-color: #009688;
+  --ifm-footer-background-color: #263238;
+
+  --ifm-font-family-base: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --ifm-font-family-monospace: 'Roboto Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --ifm-heading-font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --ifm-font-size-base: 16px;
+  --ifm-code-font-size: 85%;
+  --ifm-line-height-base: 1.7;
+  --ifm-heading-font-weight: 500;
+
+  --ifm-navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.14), 0 0 2px rgba(0, 0, 0, 0.12);
+  --ifm-global-radius: 4px;
+  --ifm-code-border-radius: 3px;
+  --ifm-alert-border-radius: 4px;
+
+  --ifm-navbar-link-color: rgba(255, 255, 255, 0.9);
+  --ifm-navbar-link-hover-color: #ffffff;
+  --ifm-menu-color: #546e7a;
+  --ifm-menu-color-active: #009688;
+  --ifm-toc-link-color: #78909c;
+  --ifm-link-color: #009688;
+  --ifm-link-hover-color: #00796b;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 150, 136, 0.08);
+
+  --nethereum-card-bg: #ffffff;
+  --nethereum-card-border: #e0e0e0;
+  --nethereum-card-shadow: 0 2px 2px rgba(0, 0, 0, 0.07), 0 0 2px rgba(0, 0, 0, 0.06);
+  --nethereum-card-shadow-hover: 0 8px 17px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.07);
+  --nethereum-sidebar-active-bg: rgba(0, 150, 136, 0.08);
+  --nethereum-text-muted: #78909c;
+  --nethereum-divider: #e0e0e0;
+  --nethereum-code-bg: #f5f5f5;
+  --nethereum-table-stripe: #fafafa;
+  --nethereum-hero-bg: #009688;
+  --nethereum-hero-text: #ffffff;
+  --nethereum-hero-subtitle: rgba(255, 255, 255, 0.85);
+}
+
+/* ─── Dark Mode ─── */
+[data-theme='dark'] {
+  --ifm-color-primary: #4db6ac;
+  --ifm-color-primary-dark: #26a69a;
+  --ifm-color-primary-darker: #009688;
+  --ifm-color-primary-darkest: #00796b;
+  --ifm-color-primary-light: #80cbc4;
+  --ifm-color-primary-lighter: #b2dfdb;
+  --ifm-color-primary-lightest: #e0f2f1;
+
+  --ifm-background-color: #1a2327;
+  --ifm-background-surface-color: #263238;
+  --ifm-navbar-background-color: #1a2327;
+  --ifm-footer-background-color: #11181c;
+
+  --ifm-navbar-link-color: rgba(255, 255, 255, 0.85);
+  --ifm-navbar-link-hover-color: #ffffff;
+  --ifm-menu-color: #90a4ae;
+  --ifm-menu-color-active: #4db6ac;
+  --ifm-toc-link-color: #90a4ae;
+  --ifm-link-color: #4db6ac;
+  --ifm-link-hover-color: #80cbc4;
+
+  --docusaurus-highlighted-code-line-bg: rgba(77, 182, 172, 0.12);
+
+  --nethereum-card-bg: #263238;
+  --nethereum-card-border: #37474f;
+  --nethereum-card-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  --nethereum-card-shadow-hover: 0 8px 17px rgba(0, 0, 0, 0.3);
+  --nethereum-sidebar-active-bg: rgba(77, 182, 172, 0.12);
+  --nethereum-text-muted: #90a4ae;
+  --nethereum-divider: #37474f;
+  --nethereum-code-bg: #1e2a2f;
+  --nethereum-table-stripe: #1e2a2f;
+  --nethereum-hero-bg: #1a2327;
+  --nethereum-hero-text: #eceff1;
+  --nethereum-hero-subtitle: #90a4ae;
+}
+
+/* ═══════════════════════════════════════
+   Global
+   ═══════════════════════════════════════ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════
+   Navbar — teal bar (light mode), dark bar (dark mode)
+   ═══════════════════════════════════════ */
+
+.navbar {
+  box-shadow: var(--ifm-navbar-shadow);
+  padding: 0 1rem;
+  height: 56px;
+}
+
+.navbar__title {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--ifm-navbar-link-color);
+}
+
+.navbar__link {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--ifm-navbar-link-color);
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--ifm-navbar-link-hover-color);
+}
+
+/* Navbar search input styling */
+.navbar .DocSearch-Button,
+.navbar__search-input {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid var(--nethereum-divider);
+  box-shadow: none;
+}
+
+/* Version dropdown on teal navbar */
+.navbar .dropdown__link {
+  color: var(--ifm-font-color-base);
+}
+
+/* ═══════════════════════════════════════
+   Sidebar
+   ═══════════════════════════════════════ */
+
+.menu__link {
+  font-size: 0.84rem;
+  font-weight: 400;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.menu__link:hover {
+  background-color: var(--nethereum-sidebar-active-bg);
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  background-color: var(--nethereum-sidebar-active-bg);
+  font-weight: 500;
+  color: var(--ifm-menu-color-active);
+}
+
+.menu__list-item-collapsible .menu__link {
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.menu__list-item-collapsible:hover {
+  background: none;
+}
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--nethereum-divider) !important;
+}
+
+/* ═══════════════════════════════════════
+   Content area
+   ═══════════════════════════════════════ */
+
+.markdown h1 {
+  font-size: 1.85rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--nethereum-divider);
+  color: var(--ifm-heading-color);
+}
+
+.markdown h2 {
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--nethereum-divider);
+}
+
+.markdown h3 {
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-top: 1.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.markdown p {
+  margin-bottom: 0.8rem;
+}
+
+/* ─── Tables ─── */
+
+.markdown > table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.markdown > table thead {
+  background-color: var(--nethereum-table-stripe);
+}
+
+.markdown > table thead th {
+  font-weight: 500;
+  padding: 0.65rem 1rem;
+  border-bottom: 2px solid var(--nethereum-divider);
+  text-align: left;
+}
+
+.markdown > table tbody td {
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--nethereum-divider);
+}
+
+.markdown > table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown > table tbody tr:hover {
+  background-color: var(--nethereum-sidebar-active-bg);
+}
+
+/* ═══════════════════════════════════════
+   Code blocks
+   ═══════════════════════════════════════ */
+
+code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  background-color: var(--nethereum-code-bg);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+div[class*='codeBlockContainer'] {
+  border-radius: 4px;
+  border: 1px solid var(--nethereum-divider);
+  box-shadow: var(--nethereum-card-shadow);
+  margin-bottom: 1.25rem;
+}
+
+div[class*='codeBlockTitle'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--nethereum-divider);
+}
+
+/* ═══════════════════════════════════════
+   Admonitions / Alerts
+   ═══════════════════════════════════════ */
+
+.alert {
+  border-radius: 4px;
+  border-left-width: 4px;
+  box-shadow: var(--nethereum-card-shadow);
+}
+
+/* ═══════════════════════════════════════
+   Blockquotes (section links in "What Do You Want to Do?")
+   ═══════════════════════════════════════ */
+
+.markdown blockquote {
+  border-left: 3px solid var(--ifm-color-primary);
+  background: var(--nethereum-sidebar-active-bg);
+  padding: 0.6rem 1rem;
+  border-radius: 0 4px 4px 0;
+  margin: 0.5rem 0 1.75rem 0;
+  font-size: 0.875rem;
+}
+
+.markdown blockquote p {
+  margin-bottom: 0;
+}
+
+/* ═══════════════════════════════════════
+   TOC (right side)
+   ═══════════════════════════════════════ */
+
+.table-of-contents__link {
+  font-size: 0.78rem;
+}
+
+.table-of-contents__link--active {
+  font-weight: 500;
+  color: var(--ifm-color-primary);
+}
+
+/* ═══════════════════════════════════════
+   Footer — dark charcoal (matches Material)
+   ═══════════════════════════════════════ */
+
+.footer {
+  padding: 2.5rem 2rem 1.5rem;
+  color: #b0bec5;
+}
+
+.footer__title {
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+  color: #eceff1;
+}
+
+.footer__link-item {
+  font-size: 0.84rem;
+  line-height: 2;
+  color: #90a4ae;
+}
+
+.footer__link-item:hover {
+  color: #eceff1;
+}
+
+.footer__copyright {
+  font-size: 0.78rem;
+  margin-top: 2rem;
+  opacity: 0.6;
+  color: #78909c;
+}
+
+/* ═══════════════════════════════════════
+   Buttons
+   ═══════════════════════════════════════ */
+
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 0.6rem 1.5rem;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.button--outline {
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 0.6rem 1.5rem;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.03em;
+  border-width: 2px;
+  transition: all 0.2s ease;
+}
+
+/* ═══════════════════════════════════════
+   Pagination
+   ═══════════════════════════════════════ */
+
+.pagination-nav__link {
+  border: 1px solid var(--nethereum-divider);
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: var(--nethereum-card-shadow-hover);
+}
+
+.pagination-nav__sublabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  color: var(--nethereum-text-muted);
+}
+
+/* ═══════════════════════════════════════
+   Search box
+   ═══════════════════════════════════════ */
+
+.navbar__search-input {
+  border-radius: 4px;
+  font-size: 0.84rem;
+}
+
+/* ═══════════════════════════════════════
+   Scrollbar (dark mode)
+   ═══════════════════════════════════════ */
+
+[data-theme='dark'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--ifm-background-color);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #37474f;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #455a64;
+}
+
+/* ═══════════════════════════════════════
+   Breadcrumbs
+   ═══════════════════════════════════════ */
+
+.breadcrumbs__link {
+  font-size: 0.78rem;
+}
+
+/* ═══════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════ */
+
+@media (max-width: 996px) {
+  .markdown h1 {
+    font-size: 1.6rem;
+  }
+
+  .markdown h2 {
+    font-size: 1.25rem;
+  }
+
+  .navbar__title {
+    color: var(--ifm-navbar-link-color);
+  }
+}

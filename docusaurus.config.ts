@@ -89,7 +89,8 @@ const config: Config = {
     image: 'img/nethereum-social-card.jpg',
     colorMode: {
       defaultMode: 'dark',
-      respectPrefersColorScheme: true,
+      disableSwitch: false,
+      respectPrefersColorScheme: false,
     },
     navbar: {
       title: 'Nethereum',

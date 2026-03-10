@@ -102,6 +102,10 @@ const sidebars: SidebarsConfig = {
           label: 'Guides',
           items: [
             'signing-and-key-management/guide-eip712-signing',
+            'signing-and-key-management/guide-hd-wallets',
+            'signing-and-key-management/guide-keystore',
+            'signing-and-key-management/guide-hardware-wallets',
+            'signing-and-key-management/guide-cloud-kms',
           ],
         },
         'signing-and-key-management/nethereum-signer',

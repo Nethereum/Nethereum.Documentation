@@ -17,7 +17,7 @@ dotnet add package Nethereum.Web3
 
 ## Generate an EC Key
 
-> **Source:** [`SignerDocExampleTests.ShouldGenerateKeyAndDerivePublicKeyAndAddress`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/SignerDocExampleTests.cs)
+<!-- tag:SignerDocExampleTests:ShouldGenerateKeyAndDerivePublicKeyAndAddress -->
 
 ```csharp
 var ecKey = EthECKey.GenerateKey();
@@ -33,7 +33,7 @@ Assert.Equal(address, reconstructed.GetPublicAddress());
 
 ## Create an Account with Chain ID
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldCreateAccountWithChainId`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
+<!-- tag:AccountTypesDocExampleTests:ShouldCreateAccountWithChainId -->
 
 ```csharp
 var privateKey = "0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7";
@@ -52,7 +52,7 @@ The address is the same across all chains; only the chain ID differs.
 
 ## View-Only Account
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldCreateViewOnlyAccount`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
+<!-- tag:AccountTypesDocExampleTests:ShouldCreateViewOnlyAccount -->
 
 ```csharp
 var address = "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe";
@@ -63,8 +63,7 @@ A `ViewOnlyAccount` allows read-only queries (balance, call) without a private k
 
 ## Encrypt to Keystore (Scrypt)
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldEncryptAndDecryptKeystore`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
-
+<!-- tag:AccountTypesDocExampleTests:ShouldEncryptAndDecryptKeystore -->
 ```csharp
 var ecKey = EthECKey.GenerateKey();
 var privateKeyBytes = ecKey.GetPrivateKeyAsBytes();
@@ -79,7 +78,7 @@ The default `KeyStoreService` uses Scrypt as the key derivation function, produc
 
 ## Decrypt from Keystore
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldEncryptAndDecryptKeystore`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
+<!-- tag:AccountTypesDocExampleTests:ShouldEncryptAndDecryptKeystore -->
 
 ```csharp
 var decryptedKey = keyStoreService.DecryptKeyStoreFromJson(password, keystoreJson);
@@ -89,7 +88,7 @@ Returns the raw private key bytes. You can reconstruct an `EthECKey` from these 
 
 ## Load Account from Keystore
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldLoadAccountFromKeystore`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
+<!-- tag:AccountTypesDocExampleTests:ShouldLoadAccountFromKeystore -->
 
 ```csharp
 var account = Account.LoadFromKeyStore(json, password);
@@ -99,7 +98,7 @@ This is the simplest way to go from a keystore file to a ready-to-use `Account` 
 
 ## Custom Scrypt Parameters
 
-> **Source:** [`KeyStoreDocExampleTests.ShouldCreateKeystoreWithCustomScryptParams`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/KeyStoreDocExampleTests.cs)
+<!-- tag:KeyStoreDocExampleTests:ShouldCreateKeystoreWithCustomScryptParams -->
 
 ```csharp
 var customParams = new ScryptParams { Dklen = 32, N = 4096, R = 8, P = 1 };
@@ -111,7 +110,7 @@ Lower `N` values make encryption/decryption faster but less resistant to brute f
 
 ## PBKDF2 Keystore (Legacy)
 
-> **Source:** [`KeyStoreDocExampleTests.ShouldCreatePbkdf2Keystore`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/KeyStoreDocExampleTests.cs)
+<!-- tag:KeyStoreDocExampleTests:ShouldCreatePbkdf2Keystore -->
 
 ```csharp
 var pbkdf2Service = new KeyStorePbkdf2Service();
@@ -125,7 +124,7 @@ PBKDF2 is supported for compatibility with older keystores. Scrypt is recommende
 
 ## Generate UTC Filename
 
-> **Source:** [`AccountTypesDocExampleTests.ShouldGenerateKeystoreFilename`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Accounts.IntegrationTests/AccountTypesDocExampleTests.cs)
+<!-- tag:AccountTypesDocExampleTests:ShouldGenerateKeystoreFilename -->
 
 ```csharp
 var keyStoreService = new KeyStoreService();

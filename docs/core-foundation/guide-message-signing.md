@@ -17,7 +17,7 @@ dotnet add package Nethereum.Signer
 
 ## Sign a UTF-8 Message
 
-> **Source:** [`PersonalSignDocExampleTests.ShouldSignMessageAndRecoverAddress`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/PersonalSignDocExampleTests.cs)
+<!-- tag:PersonalSignDocExampleTests:ShouldSignMessageAndRecoverAddress -->
 
 ```csharp
 var signer = new EthereumMessageSigner();
@@ -31,7 +31,7 @@ The message is UTF-8 encoded, then prefixed with `"\x19Ethereum Signed Message:\
 
 ## Sign Raw Bytes
 
-> **Source:** [`PersonalSignDocExampleTests.ShouldSignBytesAndRecoverAddress`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/PersonalSignDocExampleTests.cs)
+<!-- tag:PersonalSignDocExampleTests:ShouldSignBytesAndRecoverAddress -->
 
 ```csharp
 var signer = new EthereumMessageSigner();
@@ -44,7 +44,7 @@ Use `Sign`/`EcRecover` when you already have the raw byte payload.
 
 ## Verify a Wallet Signature
 
-> **Source:** [`PersonalSignDocExampleTests.ShouldVerifyExternalWalletSignature`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/PersonalSignDocExampleTests.cs)
+<!-- tag:PersonalSignDocExampleTests:ShouldVerifyExternalWalletSignature -->
 
 ```csharp
 var signer = new EthereumMessageSigner();
@@ -56,7 +56,7 @@ Assert.True(expectedAddress.IsTheSameAddress(recoveredAddress));
 
 ## Hash and Sign Shortcuts
 
-> **Source:** [`PersonalSignDocExampleTests.ShouldUseHashAndSignShortcuts`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/PersonalSignDocExampleTests.cs)
+<!-- tag:PersonalSignDocExampleTests:ShouldUseHashAndSignShortcuts -->
 
 ```csharp
 var signer = new EthereumMessageSigner();
@@ -68,7 +68,7 @@ These methods accept the private key as a hex string directly, without needing t
 
 ## Low-S Signature Verification
 
-> **Source:** [`SignerDocExampleTests.ShouldVerifySignatureWithLowSConstraint`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/SignerDocExampleTests.cs)
+<!-- tag:SignerDocExampleTests:ShouldVerifySignatureWithLowSConstraint -->
 
 ```csharp
 var ecKey = new EthECKey(privateKey);

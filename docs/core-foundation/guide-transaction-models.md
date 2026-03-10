@@ -28,7 +28,7 @@ dotnet add package Nethereum.Signer
 
 ## Legacy Transaction
 
-> **Source:** [`ModelDocExampleTests.LegacyTransaction_CreateWithProperties`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/ModelDocExampleTests.cs)
+<!-- tag:ModelDocExampleTests:LegacyTransaction_CreateWithProperties -->
 
 ```csharp
 var tx = new LegacyTransaction(to, amount, nonce, gasPrice, gasLimit);
@@ -37,7 +37,7 @@ Assert.Equal(TransactionType.LegacyTransaction, tx.TransactionType);
 
 ## EIP-1559 Transaction
 
-> **Source:** [`ModelDocExampleTests.Transaction1559_CreateAndEncode`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/ModelDocExampleTests.cs)
+<!-- tag:ModelDocExampleTests:Transaction1559_CreateAndEncode -->
 
 ```csharp
 var tx = new Transaction1559(chainId, nonce, maxPriorityFeePerGas, maxFeePerGas,
@@ -49,7 +49,7 @@ Assert.Equal(TransactionType.EIP1559, tx.TransactionType);
 
 Pre-declare which contract addresses and storage slots your transaction will access, reducing gas costs for cross-contract calls.
 
-> **Source:** [`ModelDocExampleTests.Transaction2930_CreateWithAccessList`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/ModelDocExampleTests.cs)
+<!-- tag:ModelDocExampleTests:Transaction2930_CreateWithAccessList -->
 
 ```csharp
 var storageKey = new byte[32];
@@ -72,7 +72,7 @@ EIP-2930 uses `gasPrice` (like legacy) but adds an access list and requires a `c
 
 EIP-7702 allows EOAs (externally owned accounts) to temporarily delegate their code execution to a contract. The EOA signs an authorization tuple that specifies the contract address to delegate to.
 
-> **Source:** [`ModelDocExampleTests.Transaction7702_CreateWithAuthorisation`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/ModelDocExampleTests.cs)
+<!-- tag:ModelDocExampleTests:Transaction7702_CreateWithAuthorisation -->
 
 ```csharp
 var authorisation = new Authorisation7702(chainId, contractAddress, nonce);
@@ -95,14 +95,14 @@ EIP-7702 uses the same fee model as EIP-1559 (`maxFeePerGas` + `maxPriorityFeePe
 
 Recover the sender address from any signed transaction, or verify that a transaction signature is valid.
 
-> **Source:** [`SignerDocExampleTests.ShouldRecoverSenderFromSignedLegacy`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/SignerDocExampleTests.cs)
+<!-- tag:SignerDocExampleTests:ShouldRecoverSenderFromSignedLegacy -->
 
 ```csharp
 // Recover sender from signed RLP hex
 var senderAddress = TransactionVerificationAndRecovery.GetSenderAddress(signedRlpHex);
 ```
 
-> **Source:** [`SignerDocExampleTests.ShouldVerifySignedTransaction`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/SignerDocExampleTests.cs)
+<!-- tag:SignerDocExampleTests:ShouldVerifySignedTransaction -->
 
 ```csharp
 // Verify signature is valid
@@ -124,7 +124,7 @@ Assert.NotNull(tx.Signature);
 
 Auto-detect the transaction type from encoded bytes:
 
-> **Source:** [`ModelDocExampleTests.TransactionFactory_Detects1559And2930`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.Signer.UnitTests/ModelDocExampleTests.cs)
+<!-- tag:ModelDocExampleTests:TransactionFactory_Detects1559And2930 -->
 
 ```csharp
 var decoded = TransactionFactory.CreateTransaction(signedRlpHex);

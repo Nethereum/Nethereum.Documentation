@@ -1,11 +1,25 @@
 ---
-title: Encode and Decode ABI Data
+title: ABI Encoding and Decoding
 sidebar_label: "ABI Encoding"
 sidebar_position: 3
-description: Low-level ABI encoding and decoding for smart contract interaction
+description: Encode and decode Ethereum ABI data — the Solidity abi.encode, abi.encodePacked, and keccak256 equivalents in C#
 ---
 
-Learn how Ethereum's ABI encoding works for function calls, events, and errors.
+# ABI Encoding and Decoding
+
+Every interaction with a smart contract goes through ABI encoding — it's how Ethereum turns function calls, parameters, and return values into the raw bytes that travel over the wire. If you've ever called `abi.encode()`, `abi.encodePacked()`, or `keccak256(abi.encodePacked(...))` in Solidity, this is the C# equivalent.
+
+## When You Need This
+
+Most of the time, Nethereum handles ABI encoding for you — when you use typed contract handlers (`GetContractQueryHandler`, `GetContractTransactionHandler`), encoding happens automatically behind the scenes.
+
+You need direct ABI encoding when you want to:
+
+- **Reproduce Solidity's `abi.encode` / `abi.encodePacked`** — for hashing, signature verification, or off-chain computation
+- **Compute CREATE2 addresses** — which require `keccak256(abi.encodePacked(...))`
+- **Verify or build EIP-712 typed data signatures** — for gasless approvals (ERC-2612 Permit), off-chain orders, etc.
+- **Decode raw transaction data or logs** — parse calldata or event topics manually
+- **Build function selectors** — compute the 4-byte selector from a function signature
 
 ## Install
 
@@ -13,9 +27,116 @@ Learn how Ethereum's ABI encoding works for function calls, events, and errors.
 dotnet add package Nethereum.ABI
 ```
 
+For EIP-712 typed data (covered at the end of this guide):
+
+```bash
+dotnet add package Nethereum.Signer.EIP712
+```
+
+---
+
+## The ABIEncode Class
+
+`ABIEncode` is the high-level entry point for encoding. It mirrors Solidity's encoding functions directly.
+
+### abi.encode() — Standard Encoding
+
+Standard ABI encoding pads every value to 32 bytes. This is what Solidity's `abi.encode(...)` produces.
+
+<!-- tag:AbiEncodeTests:ShouldEncodeMultipleTypesIncludingDynamicString -->
+```csharp
+using Nethereum.ABI;
+
+var abiEncode = new ABIEncode();
+
+// Encode with explicit types (matches Solidity exactly)
+byte[] encoded = abiEncode.GetABIEncoded(
+    new ABIValue("string", "hello"),
+    new ABIValue("int", 69),
+    new ABIValue("string", "world"));
+```
+
+Each value is padded to 32 bytes with proper offset handling for dynamic types (strings, bytes, arrays). The result is identical to what `abi.encode("hello", 69, "world")` produces in Solidity.
+
+You can also let Nethereum infer the types:
+
+<!-- tag:AbiEncodeTests:ShouldEncodeMultipleValuesUsingDefaultConvertors -->
+```csharp
+// Auto-detect types from .NET values
+byte[] encoded = abiEncode.GetABIEncoded("1", "2", "3");
+```
+
+### abi.encodePacked() — Packed Encoding
+
+Packed encoding concatenates values without padding — shorter output, used for hashing.
+
+<!-- tag:ABIPackingTests:ShouldEncodeSha3UsingTypes (packed portion) -->
+```csharp
+byte[] packed = abiEncode.GetABIEncodedPacked(
+    new ABIValue("string", "Hello!%"),
+    new ABIValue("int8", -23),
+    new ABIValue("address", "0x85F43D8a49eeB85d32Cf465507DD71d507100C1d"));
+```
+
+This is the C# equivalent of `abi.encodePacked("Hello!%", int8(-23), 0x85F4...)` in Solidity. Packed encoding is NOT self-describing — you can't decode it without knowing the types. Its main use is as input to `keccak256`.
+
+### keccak256(abi.encodePacked(...)) — Hash in One Step
+
+The most common pattern in Solidity: pack values and hash them. `ABIEncode` does both in one call:
+
+```csharp
+// This is: keccak256(abi.encodePacked("Hello!%", int8(-23), address))
+byte[] hash = abiEncode.GetSha3ABIEncodedPacked(
+    new ABIValue("string", "Hello!%"),
+    new ABIValue("int8", -23),
+    new ABIValue("address", "0x85F43D8a49eeB85d32Cf465507DD71d507100C1d"));
+```
+
+The `GetSha3ABIEncoded` family hashes standard-encoded data; the `GetSha3ABIEncodedPacked` family hashes packed data. Use the packed variants when matching Solidity's `keccak256(abi.encodePacked(...))`.
+
+### Encoding from Parameter-Attributed Classes
+
+If you have typed DTOs (from code generation or hand-written), encode them directly:
+
+<!-- tag:AbiEncodeTests:ShouldEncodeParams -->
+<!-- tag:ABIPackingTests:ShouldEncodeParams -->
+```csharp
+[FunctionOutput]
+public class MyParams
+{
+    [Parameter("address", "owner", 1)]
+    public string Owner { get; set; }
+
+    [Parameter("uint256", "amount", 2)]
+    public BigInteger Amount { get; set; }
+}
+
+var input = new MyParams { Owner = "0x1234...", Amount = 5000 };
+byte[] encoded = abiEncode.GetABIParamsEncoded(input);
+byte[] packed = abiEncode.GetABIParamsEncodedPacked(input);
+byte[] hash = abiEncode.GetSha3ABIParamsEncodedPacked(input);
+```
+
+### Decoding
+
+Decode ABI-encoded bytes back to typed values:
+
+<!-- tag:AbiEncodingDocExampleTests:ShouldDecodeEncodedValues -->
+```csharp
+string address = abiEncode.DecodeEncodedAddress(encodedBytes);
+BigInteger value = abiEncode.DecodeEncodedBigInteger(encodedBytes);
+bool flag = abiEncode.DecodeEncodedBoolean(encodedBytes);
+string text = abiEncode.DecodeEncodedString(encodedBytes);
+
+// Decode complex types (tuples/structs)
+MyParams result = abiEncode.DecodeEncodedComplexType<MyParams>(encodedBytes);
+```
+
+---
+
 ## Function Selectors
 
-A function selector is the first 4 bytes of the Keccak-256 hash of the function signature.
+A function selector is the first 4 bytes of the Keccak-256 hash of the canonical function signature. It identifies which function to call in a contract.
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldCalculateFunctionSelector -->
 ```csharp
@@ -25,7 +146,11 @@ var fullHash = keccak.CalculateHash(transferSignature);
 var selector = fullHash.Substring(0, 8); // "a9059cbb"
 ```
 
-## Encode Function Calls
+The selector `a9059cbb` is what appears at the start of every ERC-20 `transfer` call's calldata. Nethereum computes selectors automatically when you use typed function messages, but you need manual computation when parsing raw calldata or building custom encoding.
+
+## Encoding Function Calls
+
+For lower-level control, `FunctionCallEncoder` builds complete calldata (selector + encoded parameters):
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldEncodeBasicFunctionCall -->
 ```csharp
@@ -41,11 +166,7 @@ var result = functionCallEncoder.EncodeRequest(sha3Signature, inputsParameters,
     "1234567890abcdef1234567890abcdef12345678", new BigInteger(1000));
 ```
 
-The result is a hex string: the 4-byte selector followed by 32-byte ABI-encoded parameters.
-
-## Use Parameter Attributes
-
-Define a typed DTO instead of building parameters manually.
+Or use a typed DTO, which is cleaner and catches errors at compile time:
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldEncodeUsingParameterAttributes -->
 ```csharp
@@ -67,7 +188,13 @@ var input = new TransferFunction
 var result = new FunctionCallEncoder().EncodeRequest(input, "a9059cbb");
 ```
 
-## Decode Output
+:::tip
+In practice, you rarely call `FunctionCallEncoder` directly — `web3.Eth.GetContractTransactionHandler<TransferFunction>()` does this for you. Use the encoder when you need raw calldata without sending a transaction.
+:::
+
+## Decoding Function Output
+
+When you call a view/pure function and get raw hex back:
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldDecodeFunctionOutput -->
 ```csharp
@@ -88,9 +215,9 @@ var result = functionCallDecoder.DecodeOutput(encodedOutput, outputParameters);
 // result[0].Result == 69 (BigInteger)
 ```
 
-## Decode Event Topics
+## Decoding Events and Topics
 
-Events use indexed parameters as log topics. The first topic is the event signature hash.
+Events use indexed parameters as log topics. The first topic is always the Keccak-256 hash of the event signature:
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldDecodeTransferEventTopic -->
 ```csharp
@@ -117,26 +244,11 @@ var transferDto = new TransferEventDTO();
 new EventTopicDecoder().DecodeTopics(transferDto, topics, "0x");
 ```
 
-## Deserialize a Contract ABI
+The `true` in the `[Parameter]` attribute marks indexed parameters, which appear as topics rather than in the data field.
 
-Parse a JSON ABI string into a strongly-typed contract model.
+## Decoding Custom Errors
 
-<!-- tag:AbiEncodingDocExampleTests:ShouldDeserializeContractAbi -->
-```csharp
-var abi = @"[{""constant"":false,""inputs"":[{""name"":""a"",""type"":""uint256""}],
-""name"":""multiply"",""outputs"":[{""name"":""d"",""type"":""uint256""}],""type"":""function""},
-{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""from"",""type"":""address""},
-{""indexed"":true,""name"":""to"",""type"":""address""},{""indexed"":false,""name"":""value"",
-""type"":""uint256""}],""name"":""Transfer"",""type"":""event""}]";
-
-var des = new ABIJsonDeserialiser();
-var contract = des.DeserialiseContract(abi);
-// contract.Functions.Length == 2, contract.Events.Length == 1
-```
-
-## Decode Custom Errors
-
-Solidity custom errors are ABI-encoded with a 4-byte selector, just like functions.
+Solidity custom errors (since 0.8.4) are encoded identically to function calls — a 4-byte selector followed by ABI-encoded parameters:
 
 <!-- tag:AbiEncodingDocExampleTests:ShouldDecodeCustomError -->
 ```csharp
@@ -158,32 +270,157 @@ var decoded = decoder.DecodeError(error, encodedData);
 // decoded[1].Result == 100 (BigInteger)
 ```
 
-## Individual Type Encoding
+For a higher-level approach to error handling with automatic revert reason detection, see the [Error Handling guide](../smart-contracts/guide-error-handling).
 
-Each Solidity type has an encoder that produces a 32-byte padded value.
+## Deserializing a Contract ABI
 
-<!-- tag:AbiEncodingDocExampleTests:ShouldEncodeIndividualTypesWithPadding -->
+Parse a JSON ABI string into a strongly-typed contract model for inspection or dynamic interaction:
+
+<!-- tag:AbiEncodingDocExampleTests:ShouldDeserializeContractAbi -->
 ```csharp
-var addressEncoded = new AddressType()
-    .Encode("1234567890abcdef1234567890abcdef12345678");  // 32 bytes
+var abi = @"[{""constant"":false,""inputs"":[{""name"":""a"",""type"":""uint256""}],
+""name"":""multiply"",""outputs"":[{""name"":""d"",""type"":""uint256""}],""type"":""function""},
+{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""from"",""type"":""address""},
+{""indexed"":true,""name"":""to"",""type"":""address""},{""indexed"":false,""name"":""value"",
+""type"":""uint256""}],""name"":""Transfer"",""type"":""event""}]";
 
-var intEncoded = new IntType("uint256")
-    .Encode(new BigInteger(42));  // 32 bytes
-
-var boolEncoded = new BoolType()
-    .Encode(true);  // 32 bytes
-
-var bytes32Type = new Bytes32Type("bytes32");
-var bytes32Value = new byte[32];
-bytes32Value[0] = 0xAB;
-var bytes32Encoded = bytes32Type.Encode(bytes32Value);  // 32 bytes
+var des = new ABIJsonDeserialiser();
+var contract = des.DeserialiseContract(abi);
+// contract.Functions.Length == 2, contract.Events.Length == 1
 ```
+
+---
+
+## EIP-712 Typed Data Encoding
+
+EIP-712 defines a standard for signing structured data — used for gasless token approvals (ERC-2612 Permit), off-chain orders (Seaport, 0x), governance votes, and any use case where you want a user to sign structured data that a contract can verify.
+
+The `Eip712TypedDataEncoder` handles encoding, hashing, and domain separator computation.
+
+### Signing a Simple Typed Message
+
+<!-- tag:Eip712DocExampleTests:ShouldSignAndRecoverSimpleTypedMessage -->
+```csharp
+using Nethereum.ABI.EIP712;
+using Nethereum.Signer;
+using Nethereum.Signer.EIP712;
+
+// Define your domain
+var domain = new Domain
+{
+    Name = "MyDApp",
+    Version = "1",
+    ChainId = 1,
+    VerifyingContract = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+};
+
+// Define your message type with [Parameter] attributes
+[Struct("Mail")]
+public class Mail
+{
+    [Parameter("string", "contents", 1)]
+    public string Contents { get; set; }
+}
+
+var message = new Mail { Contents = "Hello Bob!" };
+
+// Encode and hash
+var encoder = Eip712TypedDataEncoder.Current;
+var encoded = encoder.EncodeAndHashTypedData(message,
+    new TypedData<Domain> { Domain = domain, PrimaryType = "Mail" });
+```
+
+### ERC-2612 Permit (Gasless Token Approval)
+
+This is the most common real-world use of EIP-712 — letting a user approve a token spend without paying gas:
+
+<!-- tag:Eip712DocExampleTests:ShouldSignErc2612Permit -->
+<!-- tag:Eip712DocExampleTests:ShouldSignWithAutoGeneratedSchema -->
+```csharp
+[Struct("Permit")]
+public class Permit
+{
+    [Parameter("address", "owner", 1)]
+    public string Owner { get; set; }
+    [Parameter("address", "spender", 2)]
+    public string Spender { get; set; }
+    [Parameter("uint256", "value", 3)]
+    public BigInteger Value { get; set; }
+    [Parameter("uint256", "nonce", 4)]
+    public BigInteger Nonce { get; set; }
+    [Parameter("uint256", "deadline", 5)]
+    public BigInteger Deadline { get; set; }
+}
+
+var permit = new Permit
+{
+    Owner = ownerAddress,
+    Spender = spenderAddress,
+    Value = BigInteger.Parse("1000000000000000000"),
+    Nonce = 0,
+    Deadline = BigInteger.Parse("1680000000")
+};
+
+var domain = new Domain
+{
+    Name = "USD Coin",
+    Version = "2",
+    ChainId = 1,
+    VerifyingContract = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+};
+
+// Auto-generate the type schema from the C# classes
+var typedData = encoder.GenerateTypedData(permit, domain, "Permit");
+var hash = encoder.EncodeAndHashTypedData(permit, typedData);
+
+// Sign with the owner's key
+var signer = new EthereumMessageSigner();
+var key = new EthECKey(ownerPrivateKey);
+var signature = key.SignAndCalculateV(hash);
+```
+
+### Encoding from JSON
+
+When you receive EIP-712 typed data as JSON (e.g., from a frontend or wallet):
+
+<!-- tag:Eip712DocExampleTests:ShouldSignAndRecoverFromJson -->
+```csharp
+var json = @"{
+  ""types"": {
+    ""EIP712Domain"": [...],
+    ""Mail"": [...]
+  },
+  ""primaryType"": ""Mail"",
+  ""domain"": { ""name"": ""MyDApp"", ""version"": ""1"" },
+  ""message"": { ""contents"": ""Hello"" }
+}";
+
+var hash = encoder.EncodeAndHashTypedData(json);
+```
+
+For full EIP-712 signing workflows including verification and recovery, see the [EIP-712 Signing guide](../signing-and-key-management/guide-eip712-signing).
+
+---
+
+## Quick Reference: Solidity ↔ Nethereum
+
+| Solidity | Nethereum |
+|----------|-----------|
+| `abi.encode(a, b, c)` | `abiEncode.GetABIEncoded(new ABIValue("type", a), ...)` |
+| `abi.encodePacked(a, b, c)` | `abiEncode.GetABIEncodedPacked(new ABIValue("type", a), ...)` |
+| `keccak256(abi.encode(...))` | `abiEncode.GetSha3ABIEncoded(...)` |
+| `keccak256(abi.encodePacked(...))` | `abiEncode.GetSha3ABIEncodedPacked(...)` |
+| `bytes4(keccak256("transfer(address,uint256)"))` | `Sha3Keccack.Current.CalculateHash(sig).Substring(0, 8)` |
+| `abi.decode(data, (uint256))` | `abiEncode.DecodeEncodedBigInteger(data)` |
 
 ## Next Steps
 
-- [Guide: Hex Encoding](guide-hex-encoding.md) -- convert between bytes, strings, and hex
-- [Smart Contracts overview](overview.md)
+- [Smart Contract Interaction](../smart-contracts/guide-smart-contract-interaction) — use ABI encoding through typed contract handlers (recommended for most use cases)
+- [EIP-712 Signing](../signing-and-key-management/guide-eip712-signing) — full typed data signing workflows
+- [Events & Logs](../smart-contracts/guide-events) — decode event data from transaction receipts
+- [Error Handling](../smart-contracts/guide-error-handling) — decode revert reasons and custom errors
 
 ## Package References
 
-- [Nethereum.ABI](nethereum-abi.md)
+- [Nethereum.ABI](nethereum-abi) — core ABI encoding, decoding, and type system
+- [Nethereum.Signer.EIP712](../signing-and-key-management/nethereum-signer-eip712) — EIP-712 typed data signing

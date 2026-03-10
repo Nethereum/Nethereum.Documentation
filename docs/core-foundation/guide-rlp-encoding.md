@@ -21,6 +21,7 @@ RLP encodes nested arrays of binary data. It is used internally for transaction 
 
 ## Encode Strings
 
+<!-- tag:RlpDocExampleTests:ShouldEncodeStrings -->
 ```csharp
 using RlpEncoder = Nethereum.RLP.RLP;
 
@@ -35,6 +36,7 @@ Assert.Equal("dog", decodedStr);
 
 ## Encode Integers
 
+<!-- tag:RlpDocExampleTests:ShouldEncodeIntegers -->
 ```csharp
 int value = 1024;
 byte[] valueBytes = value.ToBytesForRLPEncoding();
@@ -47,6 +49,7 @@ Assert.Equal(1024, decodedValue);
 
 ## Encode BigInteger
 
+<!-- tag:RlpDocExampleTests:ShouldEncodeBigInteger -->
 ```csharp
 var bigInt = BigInteger.Parse("123456789012345678901234567890");
 byte[] bigIntBytes = bigInt.ToBytesForRLPEncoding();
@@ -59,6 +62,7 @@ Assert.Equal(bigInt, decodedBigInt);
 
 ## Encode Lists
 
+<!-- tag:RlpDocExampleTests:ShouldEncodeLists -->
 ```csharp
 string[] strings = { "cat", "dog" };
 byte[][] stringBytes = strings.ToBytesForRLPEncoding();
@@ -74,6 +78,7 @@ Assert.Equal("cat", decodedList[0].RLPData.ToStringFromRLPDecoded());
 
 ## Encode Raw Bytes
 
+<!-- tag:RlpDocExampleTests:ShouldEncodeRawBytes -->
 ```csharp
 byte[] rawBytes = new byte[] { 0x01, 0x02, 0x03 };
 byte[] encoded = RlpEncoder.EncodeElement(rawBytes);

@@ -17,6 +17,7 @@ dotnet add package Nethereum.Util
 
 ## EIP-55 Checksum
 
+<!-- tag:UtilDocExampleTests:ShouldCreateChecksumAddresses -->
 ```csharp
 var addressUtil = AddressUtil.Current;
 var checksummed = addressUtil.ConvertToChecksumAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed");
@@ -26,6 +27,7 @@ Assert.True(addressUtil.IsChecksumAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1
 
 ## Validate Address Format
 
+<!-- tag:UtilDocExampleTests:ShouldValidateAndCompareAddresses -->
 ```csharp
 Assert.True(addressUtil.IsValidEthereumAddressHexFormat("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"));
 Assert.False(addressUtil.IsValidEthereumAddressHexFormat("not-an-address"));
@@ -34,6 +36,7 @@ Assert.True(addressUtil.IsValidAddressLength("0x5aAeb6053F3E94C9b9A09f33669435E7
 
 ## Compare Addresses
 
+<!-- tag:UtilDocExampleTests:ShouldValidateAndCompareAddresses -->
 ```csharp
 Assert.True(addressUtil.AreAddressesTheSame(
     "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
@@ -44,6 +47,7 @@ Assert.True("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
 
 ## Empty and Zero Addresses
 
+<!-- tag:UtilDocExampleTests:ShouldHandleEmptyAddresses -->
 ```csharp
 Assert.True(addressUtil.IsAnEmptyAddress(null));
 Assert.True(addressUtil.IsAnEmptyAddress("0x0"));
@@ -52,6 +56,7 @@ Assert.Equal("0x0000000000000000000000000000000000000000", AddressUtil.ZERO_ADDR
 
 ## UniqueAddressList
 
+<!-- tag:UtilDocExampleTests:ShouldDeduplicateAddressesInUniqueList -->
 ```csharp
 var uniqueList = new UniqueAddressList();
 uniqueList.Add("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed");
@@ -61,6 +66,7 @@ Assert.Single(uniqueList);
 
 ## Pad Short Addresses
 
+<!-- tag:UtilDocExampleTests:ShouldPadAndConvertAddresses -->
 ```csharp
 var padded = addressUtil.ConvertToValid20ByteAddress("0x1234");
 // "0x0000000000000000000000000000000000001234"

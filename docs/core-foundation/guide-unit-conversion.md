@@ -17,6 +17,7 @@ dotnet add package Nethereum.Util
 
 ## Wei to Ether
 
+<!-- tag:UtilDocExampleTests:ShouldConvertWeiEtherGwei -->
 ```csharp
 var convert = UnitConversion.Convert;
 var etherValue = convert.FromWei(BigInteger.Parse("1500000000000000000"));
@@ -25,6 +26,7 @@ var etherValue = convert.FromWei(BigInteger.Parse("1500000000000000000"));
 
 ## Ether to Wei
 
+<!-- tag:UtilDocExampleTests:ShouldConvertWeiEtherGwei -->
 ```csharp
 var oneEtherInWei = convert.ToWei(1, UnitConversion.EthUnit.Ether);
 // 1000000000000000000
@@ -32,6 +34,7 @@ var oneEtherInWei = convert.ToWei(1, UnitConversion.EthUnit.Ether);
 
 ## Gwei Conversion
 
+<!-- tag:UtilDocExampleTests:ShouldConvertWeiEtherGwei -->
 ```csharp
 var gweiInWei = convert.ToWei(21, UnitConversion.EthUnit.Gwei);
 // 21000000000
@@ -56,6 +59,7 @@ Nethereum supports the full range of Ethereum denominations:
 
 ## Custom Decimal Places (ERC-20 Tokens)
 
+<!-- tag:UtilDocExampleTests:ShouldConvertDifferentUnits -->
 ```csharp
 var fromCustom = convert.FromWei(BigInteger.Parse("1000000"), 6); // USDC has 6 decimals
 // 1m
@@ -65,6 +69,7 @@ var toCustom = convert.ToWei(1m, 6);
 
 ## BigDecimal Precision
 
+<!-- tag:UtilDocExampleTests:ShouldConvertWithBigDecimalPrecision -->
 ```csharp
 var largeWei = BigInteger.Parse("123456789012345678901234567890");
 var bigDecimal = convert.FromWeiToBigDecimal(largeWei, UnitConversion.EthUnit.Ether);

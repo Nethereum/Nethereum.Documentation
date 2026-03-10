@@ -26,7 +26,7 @@ The **base fee** is set by the protocol and adjusts each block based on network 
 
 ## Simple Fee Strategy
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.SimpleStrategy_ShouldCalculateMaxFeeAs2xBasePlusPriority`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:SimpleStrategy_ShouldCalculateMaxFeeAs2xBasePlusPriority -->
 
 ```csharp
 var defaultPriority = SimpleFeeSuggestionStrategy.DEFAULT_MAX_PRIORITY_FEE_PER_GAS;
@@ -36,7 +36,7 @@ The default priority fee is 2 Gwei (2,000,000,000 wei). The simple strategy calc
 
 ## Median Priority Fee Strategy
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.MedianStrategy_ShouldApplyCorrectBaseFeeMultipliers`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldApplyCorrectBaseFeeMultipliers -->
 
 ```csharp
 var strategy = new MedianPriorityFeeHistorySuggestionStrategy();
@@ -51,7 +51,7 @@ The multiplier decreases as the base fee rises. When gas is cheap, a 2x buffer i
 
 ## Estimate from Fee History
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.MedianStrategy_ShouldEstimatePriorityFeeFromRewards`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldEstimatePriorityFeeFromRewards -->
 
 ```csharp
 var strategy = new MedianPriorityFeeHistorySuggestionStrategy();
@@ -79,7 +79,7 @@ var estimate = strategy.EstimatePriorityFee(feeHistory);
 
 `FeeHistoryResult` comes from the `eth_feeHistory` RPC call. The strategy takes the median of the reward percentiles to suggest a priority fee.
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.MedianStrategy_ShouldSuggestMaxFeeWithMultiplier`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldSuggestMaxFeeWithMultiplier -->
 
 ```csharp
 var maxPriorityFee = new BigInteger(2_000_000_000);
@@ -92,7 +92,7 @@ var result = strategy.SuggestMaxFeeUsingMultiplier(maxPriorityFee, baseFee);
 
 ## Time Preference Strategy
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.TimePreferenceStrategy_ShouldSuggestFeesFromHistory`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:TimePreferenceStrategy_ShouldSuggestFeesFromHistory -->
 
 ```csharp
 var strategy = new TimePreferenceFeeSuggestionStrategy();
@@ -107,7 +107,7 @@ This strategy returns an array of fee suggestions, one per block in the history 
 
 ## Fee1559 Model
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.Fee1559_ShouldHoldAllFeeComponents`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:Fee1559_ShouldHoldAllFeeComponents -->
 
 ```csharp
 var fee = new Fee1559
@@ -147,7 +147,7 @@ web3.TransactionManager.UseLegacyAsDefault = true;
 
 Legacy mode is also triggered automatically if you provide `GasPrice` in your `TransactionInput`.
 
-> **Source:** [`Fee1559SuggestionDocExampleTests.DefaultStrategy_IsTimePreference`](https://github.com/nicknethgit/Nethereum/blob/master/tests/Nethereum.RPC.UnitTests/Fee1559SuggestionDocExampleTests.cs)
+<!-- tag:Fee1559SuggestionDocExampleTests:DefaultStrategy_IsTimePreference -->
 
 ## Strategy Comparison
 

@@ -22,6 +22,8 @@ dotnet add package Nethereum.HDWallet
 
 ### Generate a New Wallet
 
+<!-- tag:WalletTests:ShouldGenerateMnemonics -->
+
 ```csharp
 using Nethereum.HdWallet;
 using NBitcoin;
@@ -33,6 +35,8 @@ Console.WriteLine($"Address 0: {wallet.GetAddresses(1)[0]}");
 ```
 
 ### Restore from Mnemonic
+
+<!-- tag:WalletTests:ShouldCreateTheDefaultWalletUsingGivenWords -->
 
 ```csharp
 var wallet = new Wallet("rapid squeeze excess salute ...", seedPassword: null);
@@ -54,6 +58,8 @@ var walletLedger = new Wallet(words, null, Wallet.ELECTRUM_LEDGER_PATH);
 
 ### Get Keys and Addresses
 
+<!-- tag:WalletTests:ShouldFindAddressesUsingGivenWords -->
+
 ```csharp
 var addresses = wallet.GetAddresses(10);
 var privateKey = wallet.GetPrivateKey(0);
@@ -64,6 +70,8 @@ var account = wallet.GetAccount(0, chainId: 1);
 ### Public (Watch-Only) Wallet
 
 Derive addresses from an extended public key without exposing the private key:
+
+<!-- tag:WalletTests:ShouldFindPublicKeysAccountUsingIndex -->
 
 ```csharp
 using Nethereum.HdWallet;
@@ -78,6 +86,8 @@ var addresses = publicWallet.GetAddresses(10);
 ## Light HD Wallet (Nethereum.Wallet)
 
 Zero external cryptographic dependencies — uses only `System.Security.Cryptography`. Included in `Nethereum.Wallet` (no extra package needed).
+
+<!-- tag:MinimalHDWalletTests:ShouldFindAccountUsingIndex -->
 
 ```csharp
 using Nethereum.Wallet.Bip32;

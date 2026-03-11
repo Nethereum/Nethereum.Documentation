@@ -17,6 +17,8 @@ dotnet add package Nethereum.KeyStore
 
 Scrypt is the recommended KDF — it's memory-hard, making brute-force attacks expensive.
 
+<!-- tag:KeyStoreDocExampleTests:ShouldGenerateScryptKeystore -->
+
 ```csharp
 using Nethereum.KeyStore;
 using Nethereum.Signer;
@@ -36,6 +38,8 @@ File.WriteAllText($"keystore-{address}.json", json);
 
 Tune the cost parameter for your platform. Lower values are faster but less secure:
 
+<!-- tag:KeyStoreDocExampleTests:ShouldCreateKeystoreWithCustomScryptParams -->
+
 ```csharp
 // Default: N=262144 (strong, slow — desktop)
 var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
@@ -51,6 +55,8 @@ var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
 
 Legacy KDF — use for compatibility with older wallets:
 
+<!-- tag:KeyStoreDocExampleTests:ShouldCreatePbkdf2Keystore -->
+
 ```csharp
 var keyStoreService = new KeyStorePbkdf2Service();
 var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
@@ -58,6 +64,8 @@ var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
 ```
 
 ## Decrypt a KeyStore
+
+<!-- tag:KeyStoreDocExampleTests:ShouldRoundtripKeyThroughKeystore -->
 
 ```csharp
 var json = File.ReadAllText("keystore-file.json");
@@ -71,6 +79,8 @@ var account = new Nethereum.Web3.Accounts.Account(privateKeyBytes, chainId: 1);
 
 ### Detect KDF Type
 
+<!-- tag:KeyStoreDocExampleTests:ShouldDetectKdfTypeInJson -->
+
 ```csharp
 var kdfType = KeyStoreKdfChecker.GetKdfType(json);
 // Returns "scrypt" or "pbkdf2"
@@ -79,6 +89,8 @@ var kdfType = KeyStoreKdfChecker.GetKdfType(json);
 ## Default KeyStore Service
 
 `KeyStoreService` is a convenience wrapper that defaults to Scrypt for encryption and auto-detects for decryption:
+
+<!-- tag:KeyStoreDocExampleTests:ShouldUseDefaultKeyStoreServiceWithScrypt -->
 
 ```csharp
 var service = new KeyStoreService();

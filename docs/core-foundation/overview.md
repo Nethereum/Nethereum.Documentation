@@ -9,6 +9,45 @@ description: Ethereum primitives, ABI encoding, transactions, blocks, gas, event
 
 The foundation layer provides Ethereum primitives, ABI encoding, RPC communication, and the high-level Web3 entry point. Most users only need `Nethereum.Web3`, which pulls in all core dependencies.
 
+## The Simple Path: `web3.Eth`
+
+`web3.Eth` is designed as a complete entry point for every common Ethereum task. Gas estimation, nonce management, EIP-1559 fee calculation, and transaction signing are all **automatic** — you never need to manage these unless you choose to.
+
+```csharp
+var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+
+// Send ETH — fees, gas, nonce all handled automatically
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync("0xRecipient", 1.5m);
+
+// Query any balance — read-only, no gas or signing needed
+var balance = await web3.Eth.GetBalance.SendRequestAsync("0xAddress");
+var ethBalance = Web3.Convert.FromWei(balance.Value);
+```
+
+Here's what `web3.Eth` gives you out of the box:
+
+| Task | Simple Path |
+|------|-------------|
+| Get ETH balance | `web3.Eth.GetBalance.SendRequestAsync(address)` |
+| Get ERC-20 balance | `web3.Eth.ERC20.GetContractService(addr).BalanceOfQueryAsync(owner)` |
+| Get ERC-721 balance | `web3.Eth.ERC721.GetContractService(addr).BalanceOfQueryAsync(owner)` |
+| Send ETH | `web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(to, amount)` |
+| Send transaction with data | `web3.Eth.TransactionManager.SendTransactionAndWaitForReceiptAsync(input)` |
+| Get block | `web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(num)` |
+| Get transaction | `web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(hash)` |
+| Get receipt | `web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(hash)` |
+| Convert units | `Web3.Convert.FromWei(value)` / `Web3.Convert.ToWei(value)` |
+| Resolve ENS | `web3.Eth.GetEnsService().ResolveAddressAsync("vitalik.eth")` |
+| Multicall batch | `web3.Eth.GetMultiQueryHandler()` |
+
+For token standards, Nethereum includes built-in typed services — no ABI needed:
+- **`web3.Eth.ERC20`** — balances, transfers, allowances, metadata
+- **`web3.Eth.ERC721`** — NFT ownership, metadata, enumeration
+- **`web3.Eth.ERC1155`** — multi-token balances and batch operations
+
+Every row in the table above works with zero fee configuration. When you need more control — explicit fees, legacy transactions, custom gas — every guide shows you how. But the simple path is always enough for common tasks.
+
 ## Transactions
 
 Every state change on Ethereum happens through a transaction. Sending ETH, calling a smart contract function, deploying a contract — all transactions.
@@ -139,7 +178,7 @@ Step-by-step guides covering everything from reading balances to advanced transa
 |---|---|
 | [Query Balance](guide-query-balance) | Read ETH, ERC-20, and ERC-721 balances |
 | [Unit Conversion](guide-unit-conversion) | Convert between Wei, Ether, Gwei, and custom decimals |
-| [Fee Estimation](guide-fee-estimation) | EIP-1559 fee strategies and gas estimation |
+| [Fee Estimation](guide-fee-estimation) | Understand automatic fees and customize when needed |
 | [Transfer Ether](guide-send-eth) | Send ETH with EtherTransferService |
 | [Send Transactions](guide-send-transaction) | Send transactions with data using the transaction manager |
 | [Query Blocks](guide-query-blocks) | Get blocks, transactions, receipts, and nonces |

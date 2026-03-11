@@ -7,7 +7,17 @@ description: Transfer Ether between addresses using EtherTransferService
 
 # Transfer Ether
 
-Sending ETH from one address to another is the most fundamental write operation on Ethereum. Whether you're paying for a service, funding a contract, or moving funds between your own wallets — `web3.Eth.GetEtherTransferService()` is the simplest way to do it. Fees are handled automatically using the strategies covered in [Fee Estimation](guide-fee-estimation).
+Sending ETH from one address to another is the most fundamental write operation on Ethereum. The `EtherTransferService` handles gas estimation, nonce management, and EIP-1559 fees automatically — you just specify the recipient and amount.
+
+:::tip The Simple Way
+```csharp
+var web3 = new Web3(account, "http://testchain.nethereum.com:8545");
+
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync("0xRecipient", 1.11m);
+```
+That's it. Fees, gas, nonce — all automatic.
+:::
 
 ```bash
 dotnet add package Nethereum.Web3
@@ -29,7 +39,7 @@ Console.WriteLine("Our account: " + account.Address);
 var web3 = new Web3(account, "http://testchain.nethereum.com:8545");
 ```
 
-## Transfer Ether (Default EIP-1559)
+## Transfer Ether
 
 By default, Nethereum sends EIP-1559 transactions. Fees are calculated automatically using the `TimePreferenceFeeSuggestionStrategy`:
 
@@ -59,9 +69,13 @@ balance = await web3.Eth.GetBalance.SendRequestAsync(
 Console.WriteLine("Balance after: " + Web3.Convert.FromWei(balance.Value) + " Ether");
 ```
 
-## EIP-1559 Transfer with Explicit Fees
+## More Control: Explicit Fees and Legacy Mode
 
-If you want to control the fee parameters, pass `maxPriorityFeePerGas` and `maxFeePerGas` explicitly:
+The sections below are optional — use them only when you need to override the automatic behavior.
+
+### EIP-1559 Transfer with Explicit Fees
+
+If you want to control the fee parameters, pass `maxPriorityFeePerGas` and `maxFeePerGas` explicitly (see [Fee Estimation](guide-fee-estimation) for strategies):
 
 ```csharp
 var transferService = web3.Eth.GetEtherTransferService();
@@ -74,7 +88,7 @@ var receipt = await transferService
         fee.MaxFeePerGas.Value);
 ```
 
-## Legacy Transfer with Gas Price
+### Legacy Transfer with Gas Price
 
 To use legacy (pre-EIP-1559) transactions, set `UseLegacyAsDefault = true`:
 
@@ -87,7 +101,7 @@ var receipt = await web3.Eth.GetEtherTransferService()
         gasPriceGwei: 2);
 ```
 
-## Estimate Gas
+### Estimate Gas
 
 ```csharp
 var transferService = web3.Eth.GetEtherTransferService();
@@ -100,7 +114,7 @@ var receipt = await transferService
         gasPriceGwei: 2, gas: estimatedGas);
 ```
 
-## Transfer Entire Balance
+## Advanced: Transfer Entire Balance
 
 ### EIP-1559
 

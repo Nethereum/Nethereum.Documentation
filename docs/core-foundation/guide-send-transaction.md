@@ -7,7 +7,7 @@ description: Send transactions with data using the Nethereum transaction manager
 
 # Send Transactions Using the Transaction Manager
 
-While [Transfer Ether](guide-send-eth) covers simple ETH transfers, many Ethereum operations require sending data with the transaction — calling a smart contract, storing a message on-chain, or triggering a state change. You encode as hex (see [Hex Encoding](guide-hex-encoding)) using `.ToHexUTF8()` and similar extension methods. The `TransactionManager` gives you full control over transaction construction while still handling gas estimation, nonce management, and EIP-1559 fees automatically.
+The `TransactionManager` handles gas estimation, nonce management, and EIP-1559 fees automatically — you just provide the recipient, data, and optionally a value. This guide covers sending transactions with data (calling a smart contract, storing a message on-chain). For simple ETH transfers, see [Transfer Ether](guide-send-eth). Data is encoded as hex using `.ToHexUTF8()` and similar extension methods (see [Hex Encoding](guide-hex-encoding)).
 
 ```bash
 dotnet add package Nethereum.Web3
@@ -68,9 +68,13 @@ Use `SendTransactionAsync` to get the transaction hash immediately without waiti
 var txnHash = await web3.Eth.TransactionManager.SendTransactionAsync(txnInput);
 ```
 
-## EIP-1559 Fee Parameters
+## More Control: Explicit Fee Parameters
 
-By default, Nethereum sends EIP-1559 transactions and calculates fees automatically. To set fees explicitly, use `MaxFeePerGas` and `MaxPriorityFeePerGas` on the `TransactionInput` (see [Fee Estimation](guide-fee-estimation) for strategies):
+By default, Nethereum sends EIP-1559 transactions and calculates fees automatically. The sections below are optional — use them only when you need to override the automatic behavior.
+
+### EIP-1559 Fee Parameters
+
+To set fees explicitly, use `MaxFeePerGas` and `MaxPriorityFeePerGas` on the `TransactionInput` (see [Fee Estimation](guide-fee-estimation) for strategies):
 
 ```csharp
 using Nethereum.Util;
@@ -91,7 +95,7 @@ var receipt = await web3.Eth.TransactionManager
 
 Setting `GasPrice` instead triggers a legacy transaction automatically.
 
-## Legacy Transactions
+### Legacy Transactions
 
 To use legacy transactions by default:
 

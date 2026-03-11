@@ -9,6 +9,26 @@ description: Check Ether, ERC20 token, and ERC721 NFT balances for any Ethereum 
 
 The most common first step in any Ethereum application is checking how much ETH or tokens an address holds. Whether you're building a portfolio tracker, verifying a payment was received, or displaying wallet balances in a UI — it starts here.
 
+:::tip The Simple Way
+All balance queries are **read-only** — no gas, signing, or fees needed.
+
+```csharp
+var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+
+// ETH balance
+var balance = await web3.Eth.GetBalance.SendRequestAsync("0xAddress");
+var ether = Web3.Convert.FromWei(balance.Value);
+
+// ERC-20 token balance
+var tokenBalance = await web3.Eth.ERC20.GetContractService("0xTokenContract")
+    .BalanceOfQueryAsync("0xOwner");
+
+// ERC-721 NFT count
+var nftCount = await web3.Eth.ERC721.GetContractService("0xNftContract")
+    .BalanceOfQueryAsync("0xOwner");
+```
+:::
+
 ```bash
 dotnet add package Nethereum.Web3
 ```
@@ -119,7 +139,7 @@ var tokenOwner = await nftService.OwnerOfQueryAsync(737);
 Console.WriteLine($"Token 737 owner: {tokenOwner}");
 ```
 
-### Find All Tokens Owned via Transfer Logs
+## Advanced: Find All Owned NFTs via Transfer Logs
 
 Some contracts don't support the `IEnumerable` standard, so you can't query owned token IDs directly. Instead, retrieve ownership by processing all Transfer events from the contract's deployment block:
 

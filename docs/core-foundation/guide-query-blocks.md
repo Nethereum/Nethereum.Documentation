@@ -7,7 +7,9 @@ description: Get blocks, transactions, and receipts using web3.Eth
 
 # Query Blocks and Transactions
 
-After sending transactions (as covered in [Transfer Ether](guide-send-eth) and [Send Transactions](guide-send-transaction)), you'll want to inspect what happened on-chain. This guide covers querying blocks, looking up transactions by hash, reading receipts to check success/failure, and detecting whether an address is a contract or a regular account.
+After sending transactions (as covered in [Transfer Ether](guide-send-eth) and [Send Transactions](guide-send-transaction)), you'll want to inspect what happened on-chain. All queries in this guide are **read-only** — no gas, signing, or fees needed.
+
+This guide covers querying blocks, looking up transactions by hash, reading receipts to check success/failure, and detecting whether an address is a contract or a regular account.
 
 ```bash
 dotnet add package Nethereum.Web3

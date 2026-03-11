@@ -189,6 +189,6 @@ if (exception.IsCustomErrorFor<InsufficientBalanceError>())
 | Get error from failed tx hash | `web3.Eth.GetContractTransactionErrorReason.SendRequestAsync(hash)` |
 ## Next Steps
 
+- [Built-in Contract Standards](./guide-built-in-standards.md) -- typed services for ERC-20, ERC-721, ENS with built-in error handling
 - [Events & Logs](./guide-events.md) -- decode event data from transaction receipts
-- [Deploy a Contract](./deploy-a-contract.md) -- handle deployment errors
-- [Built-in Contract Standards](./guide-built-in-standards.md) -- typed services with built-in error handling
+- [Multicall & Batch Queries](./guide-multicall.md) -- batch multiple queries into a single call

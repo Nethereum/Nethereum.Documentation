@@ -99,21 +99,19 @@ Functions marked `view` or `pure` in Solidity are queries. Everything else is a 
 
 ## Guides
 
-### Getting Started
-
 | Guide | What You'll Learn |
 |---|---|
 | [Smart Contract Interaction](guide-smart-contract-interaction) | Define typed DTOs for functions, events, and errors — the foundation for all contract work |
 | [Deploy a Contract](deploy-a-contract) | Deploy contracts with typed deployment handlers and constructor parameters |
 | [ERC-20 Tokens](erc20) | Query and transfer any ERC-20 token using the built-in typed service |
 | [Code Generation](code-generation) | Generate typed C# classes from Solidity ABI — CLI, VS Code, MSBuild, and Foundry workflows |
+| [Events & Logs](guide-events) | Filter, query, and decode contract events and transfer logs |
+| [Error Handling](guide-error-handling) | Catch and decode Solidity custom error types in C# |
+| [Built-in Standards](guide-built-in-standards) | Pre-built typed services for ERC-721, ERC-1155, ENS, EIP-3009, and more |
 
 ### Advanced Patterns
 
 | Guide | What You'll Learn |
 |---|---|
-| [Events & Logs](guide-events) | Filter, query, and decode contract events and transfer logs |
 | [Multicall & Batch Queries](guide-multicall) | Batch multiple reads into a single call for efficiency |
-| [Error Handling](guide-error-handling) | Catch and decode Solidity custom error types in C# |
-| [Built-in Standards](guide-built-in-standards) | Pre-built typed services for ERC-721, ERC-1155, ENS, EIP-3009, and more |
 | [CREATE2 Deployment](guide-create2-deployment) | Deploy contracts to deterministic addresses across chains |

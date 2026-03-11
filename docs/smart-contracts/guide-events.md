@@ -287,6 +287,6 @@ Try interactive event examples in the [Nethereum Playground](http://playground.n
 
 ## Next Steps
 
-- [Multicall & Batch Queries](./guide-multicall.md) -- batch multiple event or balance queries into a single call
 - [Error Handling](./guide-error-handling.md) -- handle custom revert errors from contract calls
+- [Built-in Standards](./guide-built-in-standards.md) -- pre-built typed services for ERC-20, ERC-721, ENS, and more
 - [Real-Time Streaming](../core-foundation/nethereum-rpc-reactive.md) -- subscribe to events over WebSocket with Rx observables

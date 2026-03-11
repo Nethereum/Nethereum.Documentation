@@ -272,7 +272,6 @@ var storageValue = await web3.Eth.GetStorageAt
 This is useful for reading internal contract state without needing an ABI (e.g., reading ERC-20 balances directly from storage, or verifying proxy implementation addresses).
 ## Next Steps
 
+- [Multicall & Batch Queries](./guide-multicall.md) -- batch multiple token queries into a single call
 - [CREATE2 Deployment](./guide-create2-deployment.md) -- deploy contracts to deterministic addresses across chains
 - [ERC-20 Tokens](./erc20.md) -- detailed ERC-20 guide with transfer and event examples
-- [Events & Logs](./guide-events.md) -- subscribe to Transfer, Approval, and custom events
-- [Error Handling](./guide-error-handling.md) -- handle custom revert errors from contract calls

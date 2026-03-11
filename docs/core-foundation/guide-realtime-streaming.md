@@ -1,7 +1,7 @@
 ---
 title: Stream Real-Time Blockchain Data
 sidebar_label: "Real-Time Streaming"
-sidebar_position: 13
+sidebar_position: 20
 description: Subscribe to blocks, transactions, and event logs using WebSocket and Rx
 ---
 
@@ -45,8 +45,6 @@ The client maintains a single persistent connection. All subscriptions share it 
 
 The most common subscription. Fires every time a new block is mined (roughly every 12 seconds on mainnet):
 
-<!-- tag:ExampleNewHeaderSubscription:SubscribeAndRunAsync -->
-
 ```csharp
 var subscription = new EthNewBlockHeadersObservableSubscription(client);
 
@@ -89,10 +87,14 @@ Subscribe to specific contract events by address and topic filters. This is the 
 ```csharp
 using Nethereum.RPC.Eth.DTOs;
 
+// Keccak256 of "Transfer(address,address,uint256)" — the ERC-20 Transfer event signature.
+// For typed filter construction, see the ERC-20 example below or the [Events & Logs](../smart-contracts/guide-events) guide.
+var transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
 var filter = new NewFilterInput
 {
-    Address = new[] { "0xContractAddress..." },
-    Topics = new[] { /* event signature hash */ }
+    Address = new[] { "0x6B175474E89094C44Da98b954EedeAC495271d0F" },
+    Topics = new[] { new[] { transferTopic } }
 };
 
 var subscription = new EthLogsObservableSubscription(client);
@@ -112,8 +114,6 @@ await subscription.SubscribeAsync(filter);
 
 Rather than building raw topic filters, use the typed event DTO to create the filter automatically:
 
-<!-- tag:ExampleLogsERC20Subscriptions:SubscribeAndRunAsync -->
-
 ```csharp
 using Nethereum.Contracts;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
@@ -131,6 +131,7 @@ subscription.GetSubscriptionDataResponsesAsObservable()
         if (decoded != null)
         {
             Console.WriteLine($"Transfer: {decoded.Event.From} → {decoded.Event.To}");
+            // See [Unit Conversion](guide-unit-conversion) for FromWei / ToWei helpers
             Console.WriteLine($"  Value: {Web3.Convert.FromWei(decoded.Event.Value)}");
         }
     });
@@ -145,8 +146,6 @@ The `CreateFilterInput` method builds the correct topic hash from the event sign
 ## Real-World Example: DEX Swap Monitoring
 
 Monitor Uniswap V2 pair swaps with price calculation:
-
-<!-- tag:ExampleLogsUniswapSwapsSubscription:SubscribeAndRunAsync -->
 
 ```csharp
 [Event("Swap")]
@@ -198,7 +197,10 @@ client.Error += async (sender, ex) =>
     Console.WriteLine($"WebSocket error: {ex.Message}");
     // Stop and recreate — subscriptions need to be re-established
     await ((StreamingWebSocketClient)sender).StopAsync();
-    await ReconnectAndSubscribeAsync();
+    // Implement your own reconnection logic here:
+    // 1. Create a new StreamingWebSocketClient and call StartAsync()
+    // 2. Re-create your subscriptions (they are not transferable to a new client)
+    // 3. Consider exponential back-off to avoid hammering the provider
 };
 ```
 
@@ -226,8 +228,6 @@ _ = Task.Run(async () =>
 
 Pending transaction subscriptions only give you hashes. To get the full transaction, fetch it on demand:
 
-<!-- tag:ExamplePendingTransactionsWithTransactionsUsingSameClient:SubscribeAndRunAsync -->
-
 ```csharp
 using Nethereum.RPC.Reactive.Eth.Transactions;
 
@@ -242,6 +242,9 @@ pendingSub.GetSubscriptionDataResponsesAsObservable()
             if (tx != null)
                 Console.WriteLine($"Pending: {tx.From} → {tx.To} ({Web3.Convert.FromWei(tx.Value)} ETH)");
         });
+        // .Wait() is used here because Subscribe takes a synchronous Action.
+        // Prefer `await` in async code — .Wait() blocks the thread and can
+        // cause deadlocks in UI applications (WPF, MAUI, Blazor Server).
         txByHash.SendRequestAsync(txHash).Wait();
     });
 
@@ -295,7 +298,11 @@ subscription.GetSubscriptionDataResponsesAsObservable()
 subscription.GetSubscriptionDataResponsesAsObservable()
     .Buffer(TimeSpan.FromSeconds(10))
     .Where(batch => batch.Count > 0)
-    .Subscribe(batch => ProcessBatch(batch));
+    .Subscribe(batch =>
+    {
+        // Process the batch — e.g., write to database, update UI, or aggregate metrics
+        Console.WriteLine($"Received {batch.Count} events in window");
+    });
 ```
 
 ---

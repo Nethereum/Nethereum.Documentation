@@ -1,7 +1,7 @@
 ---
 title: Choose an RPC Transport
 sidebar_label: "RPC Transport"
-sidebar_position: 12
+sidebar_position: 19
 description: Pick the right JSON-RPC transport for your application
 ---
 
@@ -15,6 +15,8 @@ Nethereum supports multiple JSON-RPC transports. Choose based on your platform, 
 |-----------|---------|----------|-----------|-----|----------|
 | HTTP (default) | `Nethereum.JsonRpc.RpcClient` | HTTP/HTTPS | No | No | General-purpose, server apps |
 | SystemTextJson HTTP | `Nethereum.JsonRpc.SystemTextJsonRpcClient` | HTTP/HTTPS | No | **Yes** | AOT, Native AOT, trimming |
+
+Nethereum provides two HTTP client packages because they serve different ecosystems: `Nethereum.JsonRpc.RpcClient` uses Newtonsoft.Json (the original, broadest compatibility); `Nethereum.JsonRpc.SystemTextJsonRpcClient` uses System.Text.Json (faster, AOT-compatible). Choose based on your deployment target.
 | WebSocket | `Nethereum.JsonRpc.WebSocketClient` | WS/WSS | **Yes** | No | Subscriptions, low latency |
 | WebSocket Streaming | `Nethereum.JsonRpc.WebSocketStreamingClient` | WS/WSS | **Yes** | No | Real-time event streams |
 | IPC | `Nethereum.JsonRpc.IpcClient` | Unix/Named pipe | No | No | Local node, lowest latency |
@@ -120,6 +122,8 @@ await client.StartAsync();
 var ethGetBalance = new EthGetBalanceObservableHandler(client);
 ethGetBalance.GetResponseAsObservable()
     .Subscribe(balance => Console.WriteLine($"Balance: {balance.Value}"));
+// BlockParameter specifies which block state to query — CreateLatest() for current
+// state, or pass a specific block number for historical queries.
 await ethGetBalance.SendRequestAsync("0x742d35cc6634c0532925a3b844bc454e4438f44e",
     BlockParameter.CreateLatest());
 
@@ -155,6 +159,7 @@ Console.WriteLine($"Block {block.Number} — {block.Transactions.Length} txs");
 var tokenBalance = await web3.Eth.ERC20
     .GetContractService("0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2")
     .BalanceOfQueryAsync("0x8ee7d9235e01e6b42345120b5d270bdb763624c7");
+// See [Unit Conversion](guide-unit-conversion) for FromWei / ToWei helpers
 Console.WriteLine(Web3.Convert.FromWei(tokenBalance, 18));
 ```
 

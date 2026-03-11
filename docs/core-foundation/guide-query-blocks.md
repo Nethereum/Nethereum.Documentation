@@ -1,171 +1,118 @@
 ---
 title: Query Blocks and Transactions
 sidebar_label: "Query Blocks & Txs"
-sidebar_position: 11
-description: Get blocks, transactions, receipts, and balances using Web3
+sidebar_position: 6
+description: Get blocks, transactions, and receipts using web3.Eth
 ---
 
 # Query Blocks and Transactions
 
-Every piece of blockchain data is accessible through JSON-RPC calls. Nethereum wraps these as strongly-typed async methods on `Web3`, so you get IntelliSense and compile-time safety instead of raw JSON.
-
-This guide covers the read operations you'll use most often: checking balances, inspecting transactions, reading blocks, and decoding event logs from receipts. These are all **read-only** — they don't send transactions or cost gas.
-
-## Prerequisites
+After sending transactions (as covered in [Transfer Ether](guide-send-eth) and [Send Transactions](guide-send-transaction)), you'll want to inspect what happened on-chain. This guide covers querying blocks, looking up transactions by hash, reading receipts to check success/failure, and detecting whether an address is a contract or a regular account.
 
 ```bash
 dotnet add package Nethereum.Web3
 ```
 
-Connect to any Ethereum node — a local devchain, a public RPC from [chainlist.org](https://chainlist.org), or a provider like [Infura](https://infura.io) or [Alchemy](https://alchemy.com):
+## Connect to Ethereum
 
 ```csharp
 using Nethereum.Web3;
 
-var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_PROJECT_ID");
+var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
 ```
 
-No account or private key needed — all operations here are read-only.
-
----
-
-## Account Balance
-
-The most common query. Returns the balance in wei (the smallest ETH unit, 10⁻¹⁸ ETH):
-
-<!-- tag:HttpRpcEndToEndTests:GetBalance_ReflectsTransfers -->
-
-```csharp
-var balance = await web3.Eth.GetBalance.SendRequestAsync("0xaddress...");
-
-// Convert from Wei to Ether
-var etherAmount = Nethereum.Util.UnitConversion.Convert.FromWei(balance.Value);
-```
-
-### Historical Balance
-
-Query the balance at a specific block height — useful for snapshots, auditing, or verifying past state. Not all providers support this for old blocks (they may need "archive" mode):
-
-```csharp
-using Nethereum.RPC.Eth.DTOs;
-
-var balance = await web3.Eth.GetBalance.SendRequestAsync(
-    "0xaddress...",
-    new BlockParameter(new HexBigInteger(15000000)));
-```
-
-`BlockParameter` also accepts `BlockParameter.CreateLatest()`, `BlockParameter.CreatePending()`, and `BlockParameter.CreateEarliest()`.
-
----
-
-## Blocks
-
-### Latest Block Number
-
-<!-- tag:HttpRpcEndToEndTests:BlockParentHash_FormsValidChain -->
+## Get the Current Block Number
 
 ```csharp
 var blockNumber = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
-// blockNumber.Value is a BigInteger
+Console.WriteLine("Current block number: " + blockNumber.Value);
 ```
 
-### Block with Transactions
+## Get a Block with Its Transactions
 
-Fetch a full block including all transaction objects. This is a large response for busy blocks (hundreds of transactions):
-
-<!-- tag:HttpRpcEndToEndTests:GetBlockByNumber_ContainsTransactions -->
+Use `GetBlockWithTransactionsByNumber` to retrieve a block with full transaction objects:
 
 ```csharp
 using Nethereum.Hex.HexTypes;
 
 var block = await web3.Eth.Blocks.GetBlockWithTransactionsByNumber
-    .SendRequestAsync(new HexBigInteger(blockNumber));
+    .SendRequestAsync(new HexBigInteger(8257129));
 
-// block.Number, block.Timestamp, block.Transactions[]
-// block.BaseFee (present on EIP-1559 blocks, null on pre-London blocks)
+Console.WriteLine("Block number: " + block.Number.Value);
+Console.WriteLine("Block hash: " + block.BlockHash);
+Console.WriteLine("Number of transactions: " + block.Transactions.Length);
+
+// Access individual transactions
+Console.WriteLine("Transaction 0 From: " + block.Transactions[0].From);
+Console.WriteLine("Transaction 0 To: " + block.Transactions[0].To);
+Console.WriteLine("Transaction 0 Value: " + block.Transactions[0].Value);
+Console.WriteLine("Transaction 0 Hash: " + block.Transactions[0].TransactionHash);
 ```
 
-If you only need transaction hashes (not full objects), use `GetBlockWithTransactionsHashesByNumber` instead — much lighter.
+Use `GetBlockWithTransactionsHashesByNumber` if you only need transaction hashes (lighter response).
 
-### Block by Hash
-
-<!-- tag:HttpRpcEndToEndTests:GetBlockByNumber_MatchesGetBlockByHash -->
+## Get a Block by Hash
 
 ```csharp
 var block = await web3.Eth.Blocks.GetBlockWithTransactionsByHash
     .SendRequestAsync("0xabc123...");
 ```
 
----
-
-## Transactions
-
-### Get Transaction by Hash
-
-Returns the transaction as submitted — before execution. Useful for inspecting inputs, gas parameters, and the sender:
-
-<!-- tag:HttpRpcEndToEndTests:GetTransactionByHash_ReturnsCorrectTx -->
+## Get a Transaction by Hash
 
 ```csharp
-var tx = await web3.Eth.Transactions.GetTransactionByHash
-    .SendRequestAsync("0xtxhash...");
+var transaction = await web3.Eth.Transactions.GetTransactionByHash
+    .SendRequestAsync(
+        "0xb4729a0d8dd30e3070d0cb203090f2b792e029f6fa4629e96d2ebc1de13cb5c4");
 
-// tx.From, tx.To, tx.Value, tx.GasPrice
-// tx.MaxFeePerGas, tx.MaxPriorityFeePerGas (EIP-1559)
-// tx.Type (0x0 = legacy, 0x2 = EIP-1559)
+Console.WriteLine("From: " + transaction.From);
+Console.WriteLine("To: " + transaction.To);
+Console.WriteLine("Value: " + transaction.Value);
+Console.WriteLine("Hash: " + transaction.TransactionHash);
 ```
 
-### Get Transaction Receipt
+For EIP-1559 transactions, `transaction.MaxFeePerGas` and `transaction.MaxPriorityFeePerGas` are populated instead of `transaction.GasPrice`. The `transaction.Type` field indicates the transaction type (`0x0` = legacy, `0x2` = EIP-1559).
 
-The receipt is available after a transaction is mined. It tells you whether it succeeded, how much gas it actually used, and what events were emitted:
+## Get a Transaction Receipt
 
-<!-- tag:HttpRpcEndToEndTests:GetTransactionReceipt_HasAllFields -->
+The receipt contains the execution result after a transaction has been mined:
 
 ```csharp
 var receipt = await web3.Eth.Transactions.GetTransactionReceipt
-    .SendRequestAsync("0xtxhash...");
+    .SendRequestAsync(
+        "0xb4729a0d8dd30e3070d0cb203090f2b792e029f6fa4629e96d2ebc1de13cb5c4");
 
-// receipt.Status (1 = success, 0 = revert)
-// receipt.GasUsed — actual gas consumed
-// receipt.EffectiveGasPrice — actual price paid per gas unit
-// receipt.Logs — raw event logs (decode with typed DTOs below)
-// receipt.BlockNumber, receipt.TransactionIndex
+Console.WriteLine("Transaction Hash: " + receipt.TransactionHash);
+Console.WriteLine("Logs count: " + receipt.Logs.Count);
 ```
 
-:::tip
-`GetTransactionByHash` returns `null` if the transaction is still pending (not yet mined). `GetTransactionReceipt` also returns `null` for unconfirmed transactions. Always null-check the result.
-:::
+The receipt includes `Status` (1 = success, 0 = revert), `GasUsed`, `EffectiveGasPrice`, `Logs` (raw event logs), `BlockNumber`, and `TransactionIndex`.
 
-### Transaction Count (Nonce)
+`GetTransactionReceipt` returns `null` if the transaction has not been mined yet. Use `receipt.HasErrors()` to check if the transaction reverted.
 
-The nonce is the number of transactions sent from an address. You need this when manually constructing transactions:
+## Get Transaction Count (Nonce)
+
+The transaction count for an address is its nonce (the transaction sequence number for an address) — the number of transactions sent from that address:
 
 ```csharp
 var nonce = await web3.Eth.Transactions.GetTransactionCount
-    .SendRequestAsync("0xaddress...");
+    .SendRequestAsync("0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae");
+Console.WriteLine("Nonce: " + nonce.Value);
 ```
 
----
+## Detect if an Address is a Contract
 
-## Contract Detection
-
-Check whether an address is an EOA (externally owned account) or a smart contract:
-
-<!-- tag:HttpRpcEndToEndTests:GetCode_ReturnsDeployedBytecode -->
+Use `GetCode` to check whether an address has deployed bytecode. Externally owned accounts (EOAs) return `"0x"`:
 
 ```csharp
 var code = await web3.Eth.GetCode.SendRequestAsync("0xaddress...");
-// Returns "0x" for EOAs, bytecode hex for contracts
 var isContract = code != null && code != "0x";
+Console.WriteLine("Is contract: " + isContract);
 ```
 
----
+## Decode Events from a Receipt
 
-## Decoding Events from Receipts
-
-After sending a transaction that interacts with a contract, the receipt contains raw log entries. Decode them into typed C# objects using the event DTO classes from `Nethereum.Contracts.Standards`:
-
-<!-- tag:HttpRpcEndToEndTests:EventDecoding_TransferEvent -->
+Use `DecodeAllEvents<T>()` to decode typed events from a transaction receipt. `TransferEventDTO` is a built-in type from `Nethereum.Contracts.Standards.ERC20`:
 
 ```csharp
 using Nethereum.Contracts;
@@ -174,65 +121,15 @@ using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
 var receipt = await web3.Eth.Transactions.GetTransactionReceipt
     .SendRequestAsync("0x654288d8...");
 
-// Decode all Transfer events from the receipt logs
-var events = receipt.DecodeAllEvents<TransferEventDTO>();
-Console.WriteLine($"From: {events[0].Event.From}");
-Console.WriteLine($"To: {events[0].Event.To}");
-Console.WriteLine($"Value: {events[0].Event.Value}");
-```
-
-`DecodeAllEvents<T>()` scans all logs in the receipt and returns only those matching the event signature. If the receipt contains logs from multiple contracts (e.g., a DEX swap touching multiple tokens), each matching log is returned.
-
----
-
-## ERC-20 Token Balances
-
-Query token balances using the built-in typed contract service — no ABI needed:
-
-```csharp
-var tokenBalance = await web3.Eth.ERC20
-    .GetContractService("0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2")  // MKR token
-    .BalanceOfQueryAsync("0x8ee7d9235e01e6b42345120b5d270bdb763624c7");
-
-// Convert from smallest unit to human-readable
-Console.WriteLine(Web3.Convert.FromWei(tokenBalance, 18));
-```
-
-The same pattern works for `ERC721` and `ERC1155`. See the [Nethereum.Contracts](nethereum-contracts) package for the full typed contract API.
-
----
-
-## Common Patterns
-
-### Check If a Transaction Succeeded
-
-```csharp
-var receipt = await web3.Eth.Transactions.GetTransactionReceipt
-    .SendRequestAsync(txHash);
-
-if (receipt == null)
-    Console.WriteLine("Transaction not yet mined");
-else if (receipt.Status.Value == 1)
-    Console.WriteLine("Success");
-else
-    Console.WriteLine("Reverted");
-```
-
-### Calculate Transaction Cost in ETH
-
-```csharp
-var costWei = receipt.GasUsed.Value * receipt.EffectiveGasPrice.Value;
-var costEth = Nethereum.Util.UnitConversion.Convert.FromWei(costWei);
+var transferEvents = receipt.DecodeAllEvents<TransferEventDTO>();
+foreach (var e in transferEvents)
+{
+    Console.WriteLine($"From: {e.Event.From}, To: {e.Event.To}, Value: {e.Event.Value}");
+}
 ```
 
 ## Next Steps
 
-- [Send ETH](guide-send-eth) — create and send transactions
-- [Real-Time Streaming](guide-realtime-streaming) — subscribe to blocks and events via WebSocket
-- [Fee Estimation](guide-fee-estimation) — understand gas pricing before sending
-- [Unit Conversion](guide-unit-conversion) — convert between ETH, Gwei, and wei
-
-## Package References
-
-- [Nethereum.Web3](nethereum-web3) — main entry point for all queries
-- [Nethereum.RPC](nethereum-rpc) — low-level RPC methods and DTOs
+- [Decode Transactions](guide-decode-transactions) — decode function calls from transaction input data
+- [Pending Transactions](guide-pending-transactions) — retrieve pending transactions from the mempool
+- [Query Balances](guide-query-balance) — check account and token balances

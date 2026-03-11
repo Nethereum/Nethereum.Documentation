@@ -129,6 +129,50 @@ byte[] encoded = abiEncode.GetABIEncoded(
 );
 ```
 
+## Guides
+
+Step-by-step guides covering everything from reading balances to advanced transaction handling.
+
+### Essentials
+
+| Guide | What You'll Learn |
+|---|---|
+| [Query Balance](guide-query-balance) | Read ETH, ERC-20, and ERC-721 balances |
+| [Unit Conversion](guide-unit-conversion) | Convert between Wei, Ether, Gwei, and custom decimals |
+| [Fee Estimation](guide-fee-estimation) | EIP-1559 fee strategies and gas estimation |
+| [Transfer Ether](guide-send-eth) | Send ETH with EtherTransferService |
+| [Send Transactions](guide-send-transaction) | Send transactions with data using the transaction manager |
+| [Query Blocks](guide-query-blocks) | Get blocks, transactions, receipts, and nonces |
+
+### Transaction Deep Dives
+
+| Guide | What You'll Learn |
+|---|---|
+| [Transaction Types](guide-transaction-models) | Legacy, EIP-1559, Blob, and EIP-7702 transaction models |
+| [Transaction Hash](guide-transaction-hash) | Sign and predict the hash before sending |
+| [Transaction Recovery](guide-transaction-recovery) | Recover the sender from a signed transaction |
+| [Transaction Replacement](guide-transaction-replacement) | Replace a pending transaction with higher fees |
+| [Pending Transactions](guide-pending-transactions) | Retrieve pending transactions from the mempool |
+| [Decode Transactions](guide-decode-transactions) | Decode function calls from transaction input data |
+
+### Keys, Signing & Encoding
+
+| Guide | What You'll Learn |
+|---|---|
+| [Keys & Accounts](guide-keys-accounts) | Private keys, account types, and keystores |
+| [Message Signing](guide-message-signing) | Sign and verify messages |
+| [ABI Encoding](guide-abi-encoding) | Encode and decode smart contract data |
+| [Hex Encoding](guide-hex-encoding) | Work with hex data |
+| [Address Utilities](guide-address-utils) | Validate and format addresses |
+| [RLP Encoding](guide-rlp-encoding) | Low-level RLP encoding and decoding |
+
+### Transport & Streaming
+
+| Guide | What You'll Learn |
+|---|---|
+| [RPC Transport](guide-rpc-transport) | Choose the right connection method |
+| [Real-Time Streaming](guide-realtime-streaming) | Subscribe to blockchain events via WebSocket |
+
 ## Core Packages
 
 | Package | Description |

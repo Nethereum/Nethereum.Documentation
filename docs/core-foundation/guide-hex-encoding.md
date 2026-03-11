@@ -1,11 +1,11 @@
 ---
 title: Work with Hex Data
 sidebar_label: "Hex Encoding"
-sidebar_position: 4
+sidebar_position: 16
 description: Convert between bytes, strings, and hex-encoded data
 ---
 
-Convert between byte arrays, strings, and hex-encoded values -- the lingua franca of Ethereum.
+Ethereum transmits all data as hex-encoded strings over JSON-RPC — addresses, transaction data, balances, and block numbers are all hex. Nethereum handles most conversions automatically, but you'll need these utilities when working with raw RPC responses, building custom tooling, or debugging on-chain data.
 
 ## Install
 
@@ -15,7 +15,6 @@ dotnet add package Nethereum.Hex
 
 ## Byte Arrays to Hex
 
-<!-- tag:HexConversionDocExampleTests:ShouldConvertBytesToHex -->
 ```csharp
 var data = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
 var hexWithPrefix = data.ToHex(prefix: true);   // "0xdeadbeef"
@@ -24,7 +23,6 @@ var hexWithoutPrefix = data.ToHex(prefix: false); // "deadbeef"
 
 ## Hex to Bytes
 
-<!-- tag:HexConversionDocExampleTests:ShouldConvertHexToBytes -->
 ```csharp
 var hex = "0xdeadbeef";
 var bytes = hex.HexToByteArray();
@@ -33,8 +31,6 @@ var bytes = hex.HexToByteArray();
 
 ## Hex Prefix Handling
 
-<!-- tag:HexConversionDocExampleTests:ShouldEnsureHexPrefix -->
-<!-- tag:HexConversionDocExampleTests:ShouldCheckAndRemoveHexPrefix -->
 ```csharp
 var withoutPrefix = "deadbeef";
 var withPrefix = "0xdeadbeef";
@@ -50,7 +46,6 @@ withPrefix.RemoveHexPrefix(); // "deadbeef"
 
 Case-insensitive comparison that ignores prefix differences.
 
-<!-- tag:HexConversionDocExampleTests:ShouldCompareHexStrings -->
 ```csharp
 var hex1 = "0xDeAdBeEf";
 var hex2 = "0xdeadbeef";
@@ -61,7 +56,6 @@ hex1.IsTheSameHex(hex2); // true
 
 `HexBigInteger` wraps a `BigInteger` and serializes as a hex string in JSON-RPC calls.
 
-<!-- tag:HexConversionDocExampleTests:ShouldCreateHexBigIntegerFromBothFormats -->
 ```csharp
 var fromNumber = new HexBigInteger(new BigInteger(1_000_000));
 var fromHex = new HexBigInteger("0xf4240");
@@ -72,7 +66,6 @@ var fromHex = new HexBigInteger("0xf4240");
 
 ## UTF-8 String Encoding
 
-<!-- tag:HexConversionDocExampleTests:ShouldEncodeDecodeUtf8AsHex -->
 ```csharp
 var text = "Hello Ethereum";
 var hex = text.ToHexUTF8();
@@ -81,7 +74,8 @@ var decoded = hex.HexToUTF8String(); // "Hello Ethereum"
 
 ## Next Steps
 
-- [Guide: ABI Encoding](guide-abi-encoding.md) -- encode and decode smart contract data
+- [ABI Encoding](guide-abi-encoding.md) -- encode and decode smart contract data
+- [RLP Encoding](guide-rlp-encoding.md) -- the low-level serialization format used for transactions and trie nodes
 
 ## Package References
 

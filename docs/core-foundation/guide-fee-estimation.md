@@ -1,170 +1,165 @@
 ---
 title: Estimate Gas Fees (EIP-1559)
 sidebar_label: "Fee Estimation"
-sidebar_position: 7
-description: Use fee estimation strategies for EIP-1559 transactions
+sidebar_position: 3
+description: Use built-in fee estimation strategies for EIP-1559 transactions
 ---
 
 # Estimate Gas Fees (EIP-1559)
 
-Choose the right EIP-1559 fee strategy for your use case -- from simple defaults to advanced median-based estimation.
+Every Ethereum transaction costs gas — a fee paid to validators for including your transaction in a block. Since EIP-1559 (the London upgrade), fees have two components: a **base fee** (set by the network, burned — permanently removed from circulation) and a **priority tip** (goes to the validator). You set a **max fee** cap so you never overpay.
 
-## Installation
+The good news: **Nethereum handles all of this automatically.** When you send a transaction with `web3.Eth`, fees are estimated and set for you. This guide explains how the automatic estimation works and how to control it when you need to.
+
+To learn more about EIP-1559, see the [EIP-1559 FAQ](https://notes.ethereum.org/@vbuterin/eip-1559-faq).
 
 ```bash
-dotnet add package Nethereum.RPC
+dotnet add package Nethereum.Web3
 ```
 
-## Fee Components
+## Default Behavior
 
-Every EIP-1559 transaction specifies two fee parameters:
+When you send transactions with `Web3`, Nethereum handles fee estimation automatically:
 
-- **`maxPriorityFeePerGas`** -- the tip paid directly to the validator
-- **`maxFeePerGas`** -- the absolute maximum you will pay per gas unit (base fee + priority fee)
+- **Default strategy**: `TimePreferenceFeeSuggestionStrategy` (assigned from version 4.3.1)
+- **Default transaction type**: EIP-1559 (`UseLegacyAsDefault = false`)
+- **Auto-calculation**: fees are calculated if not provided
 
-The **base fee** is set by the protocol and adjusts each block based on network congestion. You only pay `baseFee + priorityFee`, and any excess under `maxFeePerGas` is refunded.
+This means you can send transactions without specifying any fee parameters.
 
-## Simple Fee Strategy
+## Assign a Strategy to the Transaction Manager
 
-<!-- tag:Fee1559SuggestionDocExampleTests:SimpleStrategy_ShouldCalculateMaxFeeAs2xBasePlusPriority -->
+The transaction manager can be assigned a strategy to automate the calculation. By default, the `TimePreferenceFeeSuggestionStrategy` is assigned from 4.3.1:
 
 ```csharp
-var defaultPriority = SimpleFeeSuggestionStrategy.DEFAULT_MAX_PRIORITY_FEE_PER_GAS;
+using Nethereum.Web3;
+
+var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+
+// Using the FeeSuggestion service to select a prebuilt strategy
+var timePreferenceStrategy = web3.FeeSuggestion
+    .GetTimePreferenceFeeSuggestionStrategy();
+web3.TransactionManager.Fee1559SuggestionStrategy = timePreferenceStrategy;
 ```
 
-The default priority fee is 2 Gwei (2,000,000,000 wei). The simple strategy calculates `maxFeePerGas` as `2 * baseFee + priorityFee`, giving a buffer for base fee increases across two blocks.
+## Time Preference Fee Suggestion Strategy
 
-## Median Priority Fee Strategy
+`SuggestFees` returns a series of `MaxFeePerGas` / `MaxPriorityFeePerGas` values suggested for different time preferences. The first element corresponds to the highest time preference (most urgent transaction).
 
-<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldApplyCorrectBaseFeeMultipliers -->
+The algorithm is similar to the old "gas price oracle" in Geth — it takes the prices of recent blocks and makes a suggestion based on a low percentile of those prices. With EIP-1559, the base fee of each block provides a less noisy and more reliable price signal. This is a port of [Felfodi Zsolt's feehistory example](https://github.com/zsfelfoldi/feehistory).
+
+### Single Fee (Highest Priority)
+
+`SuggestFeeAsync` returns a single fee — the first element, corresponding to the highest time preference (most urgent transaction):
 
 ```csharp
-var strategy = new MedianPriorityFeeHistorySuggestionStrategy();
-
-strategy.GetBaseFeeMultiplier(30_000_000_000);   // 2.0 (low congestion)
-strategy.GetBaseFeeMultiplier(50_000_000_000);   // 1.6
-strategy.GetBaseFeeMultiplier(150_000_000_000);  // 1.4 (high congestion)
-strategy.GetBaseFeeMultiplier(300_000_000_000);  // 1.2 (very high)
+var fee = await timePreferenceStrategy.SuggestFeeAsync();
+Console.WriteLine("Max Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxFeePerGas.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei)
+    + " Gwei");
+Console.WriteLine("Max Priority Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxPriorityFeePerGas.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei)
+    + " Gwei");
 ```
 
-The multiplier decreases as the base fee rises. When gas is cheap, a 2x buffer is acceptable. When gas is expensive, a smaller buffer avoids overpaying.
+### All Priority Levels
 
-## Estimate from Fee History
-
-<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldEstimatePriorityFeeFromRewards -->
+`SuggestFeesAsync` returns all the estimated fees, starting with the highest priority:
 
 ```csharp
-var strategy = new MedianPriorityFeeHistorySuggestionStrategy();
-var feeHistory = new FeeHistoryResult
+var fees = await timePreferenceStrategy.SuggestFeesAsync();
+var priority = 1;
+foreach (var feeItem in fees)
 {
-    OldestBlock = new HexBigInteger(100),
-    BaseFeePerGas = new[]
-    {
-        new HexBigInteger(20_000_000_000),
-        new HexBigInteger(21_000_000_000)
-    },
-    GasUsedRatio = new decimal[] { 0.5m },
-    Reward = new[]
-    {
-        new[] { new HexBigInteger(1_000_000_000) },
-        new[] { new HexBigInteger(1_500_000_000) },
-        new[] { new HexBigInteger(2_000_000_000) },
-        new[] { new HexBigInteger(2_500_000_000) },
-        new[] { new HexBigInteger(3_000_000_000) }
-    }
-};
-
-var estimate = strategy.EstimatePriorityFee(feeHistory);
-```
-
-`FeeHistoryResult` comes from the `eth_feeHistory` RPC call. The strategy takes the median of the reward percentiles to suggest a priority fee.
-
-<!-- tag:Fee1559SuggestionDocExampleTests:MedianStrategy_ShouldSuggestMaxFeeWithMultiplier -->
-
-```csharp
-var maxPriorityFee = new BigInteger(2_000_000_000);
-var baseFee = new HexBigInteger(30_000_000_000);
-
-var result = strategy.SuggestMaxFeeUsingMultiplier(maxPriorityFee, baseFee);
-```
-
-`SuggestMaxFeeUsingMultiplier` combines the estimated priority fee with the congestion-adjusted base fee multiplier.
-
-## Time Preference Strategy
-
-<!-- tag:Fee1559SuggestionDocExampleTests:TimePreferenceStrategy_ShouldSuggestFeesFromHistory -->
-
-```csharp
-var strategy = new TimePreferenceFeeSuggestionStrategy();
-var fees = strategy.SuggestFees(feeHistory, tip);
-foreach (var fee in fees)
-{
-    // fee.MaxFeePerGas, fee.MaxPriorityFeePerGas
+    Console.WriteLine($"Priority level {priority}:");
+    Console.WriteLine("  Max Fee Per Gas: " +
+        Web3.Convert.FromWei(feeItem.MaxFeePerGas.Value,
+            Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+    Console.WriteLine("  Max Priority Fee Per Gas: " +
+        Web3.Convert.FromWei(feeItem.MaxPriorityFeePerGas.Value,
+            Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+    priority++;
 }
 ```
 
-This strategy returns an array of fee suggestions, one per block in the history window, allowing you to pick based on your urgency preference.
+Very low `MaxFeePerGas` values or values matching `MaxPriorityFeePerGas` indicate that an estimate could not be made for that priority level.
 
-## Fee1559 Model
+## Median Priority Fee History Suggestion Strategy
 
-<!-- tag:Fee1559SuggestionDocExampleTests:Fee1559_ShouldHoldAllFeeComponents -->
+Suggests a priority fee based on the fee history of previous blocks and the median of all its values. The base fee is suggested based on the latest block and increased by a percentage depending on its value. This ensures inclusion on the next block but may be more expensive.
+
+Based on [MyCrypto's implementation](https://github.com/MyCryptoHQ/MyCrypto/blob/master/src/services/ApiService/Gas/eip1559.ts).
 
 ```csharp
-var fee = new Fee1559
+var medianStrategy = web3.FeeSuggestion
+    .GetMedianPriorityFeeHistorySuggestionStrategy();
+var fee = await medianStrategy.SuggestFeeAsync();
+Console.WriteLine("Max Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxFeePerGas.Value,
+        Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+Console.WriteLine("Max Priority Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxPriorityFeePerGas.Value,
+        Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+```
+
+## Simple Fee Suggestion Strategy
+
+Gets the base fee, multiplies it by 2, and adds a default max priority fee of 2 Gwei:
+
+```csharp
+var simpleStrategy = web3.FeeSuggestion
+    .GetSimpleFeeSuggestionStrategy();
+var fee = await simpleStrategy.SuggestFeeAsync();
+Console.WriteLine("Max Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxFeePerGas.Value,
+        Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+Console.WriteLine("Max Priority Fee Per Gas: " +
+    Web3.Convert.FromWei(fee.MaxPriorityFeePerGas.Value,
+        Nethereum.Util.UnitConversion.EthUnit.Gwei) + " Gwei");
+```
+
+## Assign Fees to a Contract FunctionMessage
+
+In a similar way to setting the gas price, you can set `MaxFeePerGas` and `MaxPriorityFeePerGas` on a contract `FunctionMessage`. Setting the `GasPrice` instead converts the transaction to a [legacy transaction](guide-transaction-models):
+
+```csharp
+using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.Contracts;
+using System.Numerics;
+
+[Function("transfer", "bool")]
+public class TransferFunction : FunctionMessage
 {
-    BaseFee = 20_000_000_000,
-    MaxPriorityFeePerGas = 2_000_000_000,
-    MaxFeePerGas = 42_000_000_000
-};
+    [Parameter("address", "_to", 1)]
+    public string To { get; set; }
+
+    [Parameter("uint256", "_value", 2)]
+    public BigInteger TokenAmount { get; set; }
+}
+
+var transferFunction = new TransferFunction();
+transferFunction.MaxFeePerGas = fee.MaxFeePerGas;
+transferFunction.MaxPriorityFeePerGas = fee.MaxPriorityFeePerGas;
 ```
 
-The `Fee1559` model holds all three components. You can pass `MaxPriorityFeePerGas` and `MaxFeePerGas` directly to transaction input objects.
+## Force Legacy Transactions
 
-## Default Behavior in Web3
-
-When you use `Web3` to send transactions, Nethereum automatically handles fee estimation:
-
-- **Default strategy**: `TimePreferenceFeeSuggestionStrategy` (NOT Simple)
-- **Default transaction type**: EIP-1559 (`UseLegacyAsDefault = false`)
-- **Auto-calculation**: fees are calculated if not provided (`CalculateOrSetDefaultGasPriceFeesIfNotSet = true`)
-
-This means you can send transactions without specifying any fee parameters — Web3 will estimate them automatically using the TimePreference strategy.
-
-### Override the Default Strategy
+To use legacy `GasPrice` instead of EIP-1559:
 
 ```csharp
-// Switch to Simple strategy
-web3.TransactionManager.Fee1559SuggestionStrategy =
-    new SimpleFeeSuggestionStrategy(web3.Client);
-```
-
-### Force Legacy Transactions
-
-```csharp
-// Use legacy gasPrice instead of EIP-1559
 web3.TransactionManager.UseLegacyAsDefault = true;
 ```
 
-Legacy mode is also triggered automatically if you provide `GasPrice` in your `TransactionInput`.
-
-<!-- tag:Fee1559SuggestionDocExampleTests:DefaultStrategy_IsTimePreference -->
-
 ## Strategy Comparison
 
-| Strategy | Speed | Accuracy | Requirements |
-|---|---|---|---|
-| **Simple** | Instant | Rough estimate | None (uses current base fee only) |
-| **Median** | Fast | Balanced | `eth_feeHistory` with reward percentiles |
-| **TimePreference** | Fast | Precise | `eth_feeHistory` with 100-block window |
-
-- Use **Simple** for quick transactions where overpaying slightly is acceptable.
-- Use **Median** when you want congestion-aware pricing with minimal RPC calls.
-- Use **TimePreference** for precise fee targeting when you have full fee history data.
+| Strategy | Method | Best For |
+|---|---|---|
+| **TimePreference** | Percentile-based from recent block prices | Default — precise fee targeting with urgency levels |
+| **Median** | Median of fee history + base fee multiplier | Next-block inclusion with congestion-aware pricing |
+| **Simple** | `baseFee * 2 + 2 Gwei` | Quick estimate when accuracy is less important |
 
 ## Next Steps
 
-- [Send ETH Transfers](guide-send-eth) -- use fee estimates in real transactions
-
-## Related Packages
-
-- [Nethereum.RPC](nethereum-rpc) -- RPC methods and fee suggestion strategies
+- [Transfer Ether](guide-send-eth) — send ETH using fee estimates
+- [Send Transactions](guide-send-transaction) — send transactions with the transaction manager
+- [Unit Conversion](guide-unit-conversion) — convert between Wei, Gwei, and Ether

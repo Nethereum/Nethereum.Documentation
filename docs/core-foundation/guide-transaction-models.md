@@ -1,13 +1,13 @@
 ---
 title: Understand Transaction Types
 sidebar_label: "Transaction Types"
-sidebar_position: 10
+sidebar_position: 7
 description: Legacy, EIP-1559, EIP-2930, EIP-7702 transaction models and recovery
 ---
 
 # Understand Transaction Types
 
-Understand Ethereum's transaction types — from legacy to EIP-7702 — and how to create, encode, decode, and recover sender addresses.
+Ethereum has evolved through several transaction formats. Most of the time, Nethereum picks the right type automatically — you only need this guide when constructing raw transactions, decoding on-chain data, or working with newer features like EIP-7702 delegation.
 
 ## Installation
 
@@ -26,32 +26,43 @@ dotnet add package Nethereum.Signer
 | Type 3 | 0x03   | Blob        | EIP-4844: blob-carrying transactions |
 | Type 4 | 0x05   | SetCode     | EIP-7702: delegate code for EOAs     |
 
-## Legacy Transaction
+## Legacy Transaction (Type 0)
+
+The original format. Still used on some L2s and when interacting with older contracts that expect a single `gasPrice` field.
 
 <!-- tag:ModelDocExampleTests:LegacyTransaction_CreateWithProperties -->
 
 ```csharp
 var tx = new LegacyTransaction(to, amount, nonce, gasPrice, gasLimit);
-Assert.Equal(TransactionType.LegacyTransaction, tx.TransactionType);
+
+Console.WriteLine($"Transaction type: {tx.TransactionType}");
+// Output: Transaction type: LegacyTransaction
 ```
 
-## EIP-1559 Transaction
+Legacy transactions do not include a chain ID in the body — replay protection relies on the signature's `v` value (EIP-155).
+
+## EIP-1559 Transaction (Type 2)
+
+The current default. Separates base fee from priority tip for more predictable pricing. You set `maxFeePerGas` (the ceiling you're willing to pay) and `maxPriorityFeePerGas` (the tip to validators). The actual fee depends on the block's base fee — see [Fee Estimation](guide-fee-estimation) for how to choose good values.
 
 <!-- tag:ModelDocExampleTests:Transaction1559_CreateAndEncode -->
 
 ```csharp
 var tx = new Transaction1559(chainId, nonce, maxPriorityFeePerGas, maxFeePerGas,
-    gasLimit, receiverAddress, amount, data, null);
-Assert.Equal(TransactionType.EIP1559, tx.TransactionType);
+    gasLimit, receiverAddress, amount, data, accessList: null);
+
+Console.WriteLine($"Transaction type: {tx.TransactionType}");
+// Output: Transaction type: EIP1559
 ```
 
-## EIP-2930 Access List Transaction
+## EIP-2930 Access List Transaction (Type 1)
 
-Pre-declare which contract addresses and storage slots your transaction will access, reducing gas costs for cross-contract calls.
+Reduces gas by pre-declaring which storage slots you'll touch. This is useful for cross-contract calls where the EVM would otherwise charge cold-access penalties for each storage read.
 
 <!-- tag:ModelDocExampleTests:Transaction2930_CreateWithAccessList -->
 
 ```csharp
+// Declare which contract addresses and storage slots will be accessed
 var storageKey = new byte[32];
 storageKey[31] = 0x01;
 var accessList = new List<AccessListItem>
@@ -60,117 +71,89 @@ var accessList = new List<AccessListItem>
 };
 
 var tx = new Transaction2930(chainId, nonce, gasPrice, gasLimit,
-    receiverAddress, amount, null, accessList);
+    receiverAddress, amount, data: null, accessList);
 
-Assert.Equal(TransactionType.LegacyEIP2930, tx.TransactionType);
-Assert.Single(tx.AccessList);
+Console.WriteLine($"Transaction type: {tx.TransactionType}");
+Console.WriteLine($"Access list entries: {tx.AccessList.Count}");
+// Output: Transaction type: LegacyEIP2930
+// Output: Access list entries: 1
 ```
 
 EIP-2930 uses `gasPrice` (like legacy) but adds an access list and requires a `chainId`.
 
-## EIP-7702 Authorization Transaction
+## EIP-7702 Authorization Transaction (Type 4)
 
-EIP-7702 allows EOAs (externally owned accounts) to temporarily delegate their code execution to a contract. The EOA signs an authorization tuple that specifies the contract address to delegate to.
+Lets an EOA temporarily delegate to a smart contract — enables account abstraction features without deploying a new contract wallet. The EOA signs an authorization tuple specifying which contract to delegate to.
 
 <!-- tag:ModelDocExampleTests:Transaction7702_CreateWithAuthorisation -->
 
 ```csharp
+// Create and sign the authorization
 var authorisation = new Authorisation7702(chainId, contractAddress, nonce);
 
 var authSigner = new Authorisation7702Signer();
 var signedAuth = authSigner.SignAuthorisation(ecKey, authorisation);
 
+// Build the transaction with the signed authorization
 var tx = new Transaction7702(
     chainId, nonce, maxPriorityFeePerGas, maxFeePerGas,
-    gasLimit, receiverAddress, amount, null,
+    gasLimit, receiverAddress, amount, data: null,
     new List<AccessListItem>(), new List<Authorisation7702Signed> { signedAuth });
 
-Assert.Equal(TransactionType.EIP7702, tx.TransactionType);
-Assert.Single(tx.AuthorisationList);
+Console.WriteLine($"Transaction type: {tx.TransactionType}");
+Console.WriteLine($"Authorization list entries: {tx.AuthorisationList.Count}");
+// Output: Transaction type: EIP7702
+// Output: Authorization list entries: 1
 ```
 
 EIP-7702 uses the same fee model as EIP-1559 (`maxFeePerGas` + `maxPriorityFeePerGas`) and adds an authorization list.
 
 ## Transaction Recovery
 
-Recover the sender address from any signed transaction, or verify that a transaction signature is valid.
+You can recover the sender address from any signed transaction or verify that a signature is valid. Both methods accept a signed RLP hex string and work with all transaction types.
+
+RLP (Recursive Length Prefix) is Ethereum's binary encoding format — see [RLP Encoding](guide-rlp-encoding) for details.
 
 <!-- tag:SignerDocExampleTests:ShouldRecoverSenderFromSignedLegacy -->
 
 ```csharp
-// Recover sender from signed RLP hex
+// Recover sender from a signed transaction's RLP encoding
 var senderAddress = TransactionVerificationAndRecovery.GetSenderAddress(signedRlpHex);
+Console.WriteLine($"Sender: {senderAddress}");
 ```
 
 <!-- tag:SignerDocExampleTests:ShouldVerifySignedTransaction -->
 
 ```csharp
-// Verify signature is valid
+// Verify the signature is valid
 var isValid = TransactionVerificationAndRecovery.VerifyTransaction(signedRlpHex);
-Assert.True(isValid);
+Console.WriteLine($"Signature valid: {isValid}");
 ```
 
-Both methods accept the signed RLP hex string and work with all transaction types (legacy, EIP-1559, EIP-2930, EIP-7702).
+## Decoding Transactions with TransactionFactory
 
-## Decode from RLP
-
-```csharp
-var rlpHex = "f86b80...";
-var tx = new LegacyTransaction(rlpHex.HexToByteArray());
-Assert.NotNull(tx.Signature);
-```
-
-## TransactionFactory
-
-Auto-detect the transaction type from encoded bytes:
+When you receive raw transaction bytes (from a node, mempool, or external source), use `TransactionFactory` to auto-detect the type and decode it. The factory reads the type prefix byte: `0x01` = EIP-2930, `0x02` = EIP-1559, `0x05` = EIP-7702, no prefix = Legacy.
 
 <!-- tag:ModelDocExampleTests:TransactionFactory_Detects1559And2930 -->
 
 ```csharp
 var decoded = TransactionFactory.CreateTransaction(signedRlpHex);
-// decoded.TransactionType tells you Legacy, EIP1559, EIP2930, etc.
+Console.WriteLine($"Detected type: {decoded.TransactionType}");
 ```
 
-The factory reads the type prefix byte: `0x01` = EIP-2930, `0x02` = EIP-1559, `0x05` = EIP-7702, no prefix = Legacy.
-
-## Chain IDs
+You can also decode a legacy transaction directly from RLP bytes:
 
 ```csharp
-Assert.Equal(1, (int)Chain.MainNet);
-Assert.Equal(11155111, (int)Chain.Sepolia);
-Assert.Equal(137, (int)Chain.Polygon);
-Assert.Equal(8453, (int)Chain.Base);
-```
-
-## Access List Items
-
-Access lists pre-declare which storage slots a transaction will access, reducing gas costs for cross-contract calls.
-
-```csharp
-var accessList = new List<AccessListItem>
-{
-    new AccessListItem(contractAddress, new List<byte[]> { storageKey })
-};
-```
-
-## Block Headers
-
-```csharp
-var blockHeader = new BlockHeader
-{
-    BlockNumber = 1000,
-    GasLimit = 8000000,
-    GasUsed = 21000,
-    BaseFee = 1000000000,
-    Coinbase = "0x0000000000000000000000000000000000000000"
-};
+var tx = new LegacyTransaction(rlpBytes);
+Console.WriteLine($"Has signature: {tx.Signature != null}");
 ```
 
 ## Next Steps
 
-- [Send Ether](guide-send-eth) — send transactions using Web3
-- [Fee Estimation](guide-fee-estimation) — estimate gas and fees
-- [Transaction Signing](../signing-and-key-management/nethereum-signer) — sign transactions with different key types
+- [Calculate Transaction Hash](guide-transaction-hash) -- sign and predict the hash before sending
+- [Fee Estimation](guide-fee-estimation) -- estimate gas and choose fee parameters
+- [RLP Encoding](guide-rlp-encoding) -- understand Ethereum's binary format
+- [Send Ether](guide-send-eth) -- send transactions using Web3
 
 ## Further Reading
 

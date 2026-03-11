@@ -1,13 +1,13 @@
 ---
 title: Manage Keys, Accounts, and Keystores
 sidebar_label: "Keys & Accounts"
-sidebar_position: 5
+sidebar_position: 13
 description: Generate EC keys, create accounts, and encrypt keys with keystores
 ---
 
 # Manage Keys, Accounts, and Keystores
 
-Generate Ethereum keys, create accounts for different chains, and securely store private keys in keystore files.
+Every Ethereum interaction starts with an account. This guide covers the three account types Nethereum provides and when to use each one.
 
 ## Installation
 
@@ -17,7 +17,7 @@ dotnet add package Nethereum.Web3
 
 ## Generate an EC Key
 
-<!-- tag:SignerDocExampleTests:ShouldGenerateKeyAndDerivePublicKeyAndAddress -->
+A private key is a 256-bit random number that controls an Ethereum address. Keep it secret.
 
 ```csharp
 var ecKey = EthECKey.GenerateKey();
@@ -25,19 +25,24 @@ var privateKeyHex = ecKey.GetPrivateKey();
 var publicKeyBytes = ecKey.GetPubKey();
 var address = ecKey.GetPublicAddress();
 
+Console.WriteLine($"Address: {address}");
+Console.WriteLine($"Public key length: {publicKeyBytes.Length} bytes");
+
+// Reconstruct the same key from the private key hex
 var reconstructed = new EthECKey(privateKeyHex);
-Assert.Equal(address, reconstructed.GetPublicAddress());
+Console.WriteLine($"Same address: {reconstructed.GetPublicAddress()}");
 ```
 
-`EthECKey.GenerateKey()` creates a cryptographically random secp256k1 key pair. The Ethereum address is derived from the last 20 bytes of the Keccak-256 hash of the uncompressed public key.
+`EthECKey.GenerateKey()` creates a cryptographically random key pair on Ethereum's elliptic curve (secp256k1). The Ethereum address is derived from the last 20 bytes of the Keccak-256 hash of the uncompressed public key.
 
 ## Create an Account with Chain ID
 
-<!-- tag:AccountTypesDocExampleTests:ShouldCreateAccountWithChainId -->
+A chain ID identifies which blockchain network you're on (1 = mainnet, 11155111 = Sepolia). It prevents transactions from being replayed on other networks.
 
 ```csharp
 var privateKey = "0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7";
 var account = new Account(privateKey, Chain.MainNet);
+Console.WriteLine($"Account address: {account.Address}");
 ```
 
 The `Chain` enum provides named constants for common networks. You can also pass a numeric chain ID directly:
@@ -52,18 +57,18 @@ The address is the same across all chains; only the chain ID differs.
 
 ## View-Only Account
 
-<!-- tag:AccountTypesDocExampleTests:ShouldCreateViewOnlyAccount -->
-
 ```csharp
 var address = "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe";
 var viewOnly = new ViewOnlyAccount(address);
+Console.WriteLine($"View-only address: {viewOnly.Address}");
 ```
 
 A `ViewOnlyAccount` allows read-only queries (balance, call) without a private key. It cannot sign transactions.
 
 ## Encrypt to Keystore (Scrypt)
 
-<!-- tag:AccountTypesDocExampleTests:ShouldEncryptAndDecryptKeystore -->
+Keystores encrypt your private key with a password so you can store it safely on disk.
+
 ```csharp
 var ecKey = EthECKey.GenerateKey();
 var privateKeyBytes = ecKey.GetPrivateKeyAsBytes();
@@ -72,33 +77,32 @@ var address = ecKey.GetPublicAddress();
 var keyStoreService = new KeyStoreService();
 var keystoreJson = keyStoreService.EncryptAndGenerateDefaultKeyStoreAsJson(
     password, privateKeyBytes, address);
+
+Console.WriteLine($"Keystore created for {address}");
 ```
 
 The default `KeyStoreService` uses Scrypt as the key derivation function, producing a standard Ethereum V3 keystore JSON file.
 
 ## Decrypt from Keystore
 
-<!-- tag:AccountTypesDocExampleTests:ShouldEncryptAndDecryptKeystore -->
-
 ```csharp
 var decryptedKey = keyStoreService.DecryptKeyStoreFromJson(password, keystoreJson);
+var restoredKey = new EthECKey(decryptedKey, true);
+Console.WriteLine($"Recovered address: {restoredKey.GetPublicAddress()}");
 ```
 
 Returns the raw private key bytes. You can reconstruct an `EthECKey` from these bytes using `new EthECKey(decryptedKey, true)`.
 
 ## Load Account from Keystore
 
-<!-- tag:AccountTypesDocExampleTests:ShouldLoadAccountFromKeystore -->
-
 ```csharp
 var account = Account.LoadFromKeyStore(json, password);
+Console.WriteLine($"Loaded account: {account.Address}");
 ```
 
 This is the simplest way to go from a keystore file to a ready-to-use `Account` object.
 
 ## Custom Scrypt Parameters
-
-<!-- tag:KeyStoreDocExampleTests:ShouldCreateKeystoreWithCustomScryptParams -->
 
 ```csharp
 var customParams = new ScryptParams { Dklen = 32, N = 4096, R = 8, P = 1 };
@@ -109,8 +113,6 @@ var json = scryptService.EncryptAndGenerateKeyStoreAsJson(password, privateKeyBy
 Lower `N` values make encryption/decryption faster but less resistant to brute force. The default `N` is 262144. Use lower values only for testing or low-security scenarios.
 
 ## PBKDF2 Keystore (Legacy)
-
-<!-- tag:KeyStoreDocExampleTests:ShouldCreatePbkdf2Keystore -->
 
 ```csharp
 var pbkdf2Service = new KeyStorePbkdf2Service();
@@ -124,11 +126,10 @@ PBKDF2 is supported for compatibility with older keystores. Scrypt is recommende
 
 ## Generate UTC Filename
 
-<!-- tag:AccountTypesDocExampleTests:ShouldGenerateKeystoreFilename -->
-
 ```csharp
 var keyStoreService = new KeyStoreService();
 var filename = keyStoreService.GenerateUTCFileName(address);
+Console.WriteLine($"Keystore filename: {filename}");
 ```
 
 Produces a filename in the standard `UTC--<timestamp>--<address>` format used by Geth and other Ethereum clients.
@@ -137,6 +138,7 @@ Produces a filename in the standard `UTC--<timestamp>--<address>` format used by
 
 - [Send ETH Transfers](guide-send-eth) -- transfer Ether between accounts
 - [Sign and Verify Messages](guide-message-signing) -- sign data with your keys
+- For HD wallets, hardware wallets, and cloud KMS, see the [Signing & Key Management](../signing-and-key-management/overview) section
 
 ## Related Packages
 

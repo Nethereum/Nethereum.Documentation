@@ -216,6 +216,18 @@ const sidebars: SidebarsConfig = {
         'defi/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'defi/guide-uniswap-swap',
+            'defi/guide-uniswap-liquidity',
+            'defi/guide-gnosis-safe',
+            'defi/guide-x402-payments',
+            'defi/guide-circles',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'defi/nethereum-uniswap',

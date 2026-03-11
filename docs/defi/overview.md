@@ -2,44 +2,43 @@
 title: DeFi & Protocols
 sidebar_label: Overview
 sidebar_position: 1
-description: Uniswap DEX, Permit2, x402 payments, Gnosis Safe, Optimism, GSN, and Circles protocol integrations
+description: Uniswap DEX trading, Gnosis Safe multi-sig, x402 payments, and Circles UBI protocol integrations with Nethereum
 ---
 
 # DeFi & Protocols
 
-Nethereum provides typed contract services for interacting with DeFi protocols and deeper integrations with specific Ethereum protocols.
+Nethereum provides typed, high-level services for interacting with major DeFi protocols and Ethereum ecosystem tools. Each integration wraps the protocol's smart contracts in a C# API — you get compile-time safety, automatic gas/nonce handling, and the same `web3.Eth` patterns used throughout Nethereum.
 
-## Uniswap (V2/V3/V4)
+## The Simple Path
 
-The `Nethereum.Uniswap` package covers:
+| Task | Simple Path |
+|------|-------------|
+| Access Uniswap V4 | `web3.UniswapV4()` |
+| Quote a swap price | `uniswap.Pricing.Quoter.QuoteExactInputQueryAsync(params)` |
+| Execute a swap | `uniswap.UniversalRouter.ExecuteRequestAndWaitForReceiptAsync(fn)` |
+| Manage liquidity | `uniswap.Positions.Manager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(fn)` |
+| Execute through Safe | `new SafeAccount(safe, chainId, key)` → any contract service auto-routes through Safe |
+| Protect API with payments | `[X402PaymentRequired(amount: 1_000000)]` on any ASP.NET endpoint |
+| Pay for API access | `new X402Client(http, web3, key).GetAsync(url)` |
+| Query Circles balance | `new GetTotalBalanceV2(client).SendRequestAsync(address)` |
 
-- **Universal Router** — main entry point for executing swaps
-- **Permit2** — gasless, signature-based token approval mechanism
-- **Quoter V2** — on-chain quoting for swap amounts
-- **Pool interaction** — direct access to V3 pool state
+For every row above, Nethereum handles gas estimation, nonce management, EIP-1559 fee calculation, and transaction signing automatically. You only override when you need to.
 
-### Permit2: Gasless Token Approvals
+## Protocol Packages
 
-```csharp
-// One-time ERC-20 approval granting Permit2 unlimited access
-var permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
-var erc20 = web3.Eth.ERC20.GetContractService("0xTokenAddress");
-var receipt = await erc20.ApproveRequestAndWaitForReceiptAsync(
-    permit2Address, BigInteger.Parse("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    System.Globalization.NumberStyles.HexNumber));
-```
+| Package | Protocol | What It Does |
+|---------|----------|-------------|
+| `Nethereum.Uniswap` | Uniswap V2/V3/V4 | Token swaps, liquidity positions, price quoting, Permit2, Universal Router |
+| `Nethereum.GnosisSafe` | Safe (Gnosis Safe) | Multi-signature transaction assembly, EIP-712 signing, SafeAccount, MultiSend |
+| `Nethereum.X402` | x402 Protocol | HTTP 402 payments with EIP-3009 USDC transfers, ASP.NET middleware, client library |
+| `Nethereum.Circles` | Circles UBI | Balance queries, personal minting, trust management, transaction history |
 
-After the one-time approval, all future authorizations are handled via off-chain signatures.
+## Guides
 
-## x402 Crypto Payments
-
-`Nethereum.X402` implements the HTTP 402 Payment Required protocol for pay-per-request APIs with Ethereum payments, including ASP.NET Core middleware and EIP-3009 signed authorizations.
-
-## Protocol Integrations
-
-| Package | Protocol | Description |
-|---|---|---|
-| `Nethereum.GnosisSafe` | Gnosis Safe | Multi-signature wallet transaction assembly and execution |
-| `Nethereum.GSN` | Gas Station Network | Meta-transactions — users pay no gas |
-| `Nethereum.Circles` | Circles UBI | Universal Basic Income protocol |
-| `Nethereum.Optimism` | Optimism | L2 bridge deposits, withdrawals, and cross-domain messaging |
+| Guide | What You'll Learn |
+|-------|-------------------|
+| [Uniswap: Swap Tokens](guide-uniswap-swap) | Quote prices, execute swaps via Universal Router, handle slippage and price impact |
+| [Uniswap: Manage Liquidity](guide-uniswap-liquidity) | Create/increase/decrease positions, collect fees, atomic rebalancing |
+| [Gnosis Safe](guide-gnosis-safe) | Build multi-sig transactions, collect signatures, SafeAccount, MultiSend |
+| [x402 Payments](guide-x402-payments) | Protect API endpoints, accept USDC payments, EIP-3009 authorization flow |
+| [Circles UBI](guide-circles) | Query balances, mint CRC, manage trust relationships on Gnosis Chain |

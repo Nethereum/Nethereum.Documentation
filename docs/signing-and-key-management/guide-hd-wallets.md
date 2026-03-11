@@ -1,13 +1,24 @@
 ---
 title: HD Wallets
 sidebar_label: "HD Wallets"
-sidebar_position: 3
+sidebar_position: 6
 description: Derive multiple Ethereum accounts from a single mnemonic phrase using BIP-39/BIP-32/BIP-44
 ---
 
 # HD Wallets
 
-Derive multiple Ethereum accounts from a single mnemonic phrase (BIP-39/BIP-32/BIP-44). Nethereum offers two implementations:
+:::tip The Simple Way
+```csharp
+var wallet = new Wallet(Wordlist.English, WordCount.Twelve);
+var account = wallet.GetAccount(0, chainId: 1);
+var web3 = new Web3(account, "https://your-rpc-url");
+```
+Generate a mnemonic, derive an account, and start using it — all in three lines.
+:::
+
+Instead of managing individual private keys (and backing up each one separately), HD wallets derive multiple accounts from a single mnemonic phrase. Back up 12 words and you can recover all your accounts. This is the same approach used by MetaMask, Ledger, and Trezor.
+
+Nethereum offers two implementations:
 
 | Package | Use Case | Dependencies |
 |---|---|---|
@@ -83,14 +94,14 @@ var publicWallet = new PublicWallet(xPub);
 var addresses = publicWallet.GetAddresses(10);
 ```
 
-## Light HD Wallet (Nethereum.Wallet)
+## Light HD Wallet (Nethereum.Accounts)
 
-Zero external cryptographic dependencies — uses only `System.Security.Cryptography`. Included in `Nethereum.Wallet` (no extra package needed).
+Zero external cryptographic dependencies — uses only `System.Security.Cryptography`. Included in `Nethereum.Accounts` (no extra package needed — already a dependency of `Nethereum.Web3`).
 
 <!-- tag:MinimalHDWalletTests:ShouldFindAccountUsingIndex -->
 
 ```csharp
-using Nethereum.Wallet.Bip32;
+using Nethereum.Accounts.Bip32;
 
 // Generate a new mnemonic
 var mnemonic = Bip39.GenerateMnemonic(12); // 12, 15, 18, 21, or 24 words
@@ -118,12 +129,8 @@ var key = wallet.GetKeyFromPath("m/44'/60'/0'/0/5");
 | Watch-only wallet | Yes | No |
 | Best for | Full wallet apps, hardware integration | Embedded wallets, mobile, WASM |
 
-:::tip Claude Code
-Install the Nethereum skills plugin for AI-assisted development: `/plugin install nethereum-skills`
-:::
-
 ## Next Steps
 
-- [Keys & Accounts](../core-foundation/guide-keys-accounts) — account types and key generation
-- [KeyStore Files](./guide-keystore) — encrypt and store private keys
-- [Hardware Wallets](./guide-hardware-wallets) — Ledger and Trezor signing
+- [Hardware Wallets](./guide-hardware-wallets) — Ledger and Trezor use HD derivation internally, but the key never leaves the device
+- [KeyStore Files](./guide-keystore) — encrypt individual derived keys for storage
+- [Keys & Accounts](./guide-keys-accounts) — account types and key generation

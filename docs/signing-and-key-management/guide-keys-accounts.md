@@ -1,7 +1,7 @@
 ---
 title: Manage Keys, Accounts, and Keystores
 sidebar_label: "Keys & Accounts"
-sidebar_position: 13
+sidebar_position: 2
 description: Generate EC keys, create accounts, and encrypt keys with keystores
 ---
 
@@ -136,11 +136,12 @@ Produces a filename in the standard `UTC--<timestamp>--<address>` format used by
 
 ## Next Steps
 
-- [Send ETH Transfers](guide-send-eth) -- transfer Ether between accounts
-- [Sign and Verify Messages](guide-message-signing) -- sign data with your keys
-- For HD wallets, hardware wallets, and cloud KMS, see the [Signing & Key Management](../signing-and-key-management/overview) section
+- [Sign and Verify Messages](./guide-message-signing) — sign data with your keys using `personal_sign`
+- [Send ETH Transfers](../core-foundation/guide-send-eth) — transfer Ether between accounts
+- [HD Wallets](./guide-hd-wallets) — derive multiple accounts from a single mnemonic
+- [Hardware Wallets](./guide-hardware-wallets) — sign with Ledger and Trezor devices
 
 ## Related Packages
 
-- [Nethereum.Accounts](nethereum-accounts) -- account types and transaction managers
-- [Nethereum.Signer](../signing-and-key-management/overview) -- EC key and transaction signing
+- [Nethereum.Accounts](../core-foundation/nethereum-accounts) — account types and transaction managers
+- [Nethereum.Signer](./nethereum-signer) — EC key and transaction signing

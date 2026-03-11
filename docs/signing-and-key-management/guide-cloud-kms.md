@@ -1,15 +1,29 @@
 ---
 title: Cloud KMS Signing
 sidebar_label: "Cloud KMS"
-sidebar_position: 6
+sidebar_position: 8
 description: Sign Ethereum transactions with AWS KMS and Azure Key Vault HSMs
 ---
 
 # Cloud KMS Signing
 
-Sign Ethereum transactions using cloud-managed HSM keys. The private key is generated inside the HSM and never leaves it — your application only receives signatures.
+:::tip The Simple Way
+```csharp
+var signer = new AWSKeyManagementExternalSigner(keyId: "your-kms-key-id");
+var externalAccount = new ExternalAccount(signer, chainId: 1);
+await externalAccount.InitialiseAsync();
+var web3 = new Web3(externalAccount, "https://your-rpc-url");
 
-Both implementations support Legacy, EIP-1559, EIP-2930, and EIP-7702 transaction types.
+// From here, use web3 exactly like a regular account
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync(toAddress, 0.1m);
+```
+Create a signer with your KMS key ID, initialise the account, and use the same `web3.Eth` methods. Signing happens in the HSM automatically.
+:::
+
+For production servers and institutional custody, cloud KMS provides the highest security level — keys are generated and stored inside FIPS 140-2 validated HSMs, with audit logging and access control built in. Your application sends signing requests to the cloud service and receives signatures back; the private key is never exported.
+
+Like [hardware wallets](./guide-hardware-wallets), both AWS KMS and Azure Key Vault use the `ExternalAccount` pattern — once initialised, they work identically to a regular `Account` with `Web3`. Both support Legacy, EIP-1559, EIP-2930, and EIP-7702 transaction types.
 
 ## AWS Key Management Service
 
@@ -123,11 +137,9 @@ var signer = new AzureKeyVaultExternalSigner(
 | Audit logging | CloudTrail | Azure Monitor |
 | Pricing model | Per-request + key storage | Per-operation + key storage |
 
-:::tip Claude Code
-Install the Nethereum skills plugin for AI-assisted development: `/plugin install nethereum-skills`
-:::
-
 ## Next Steps
 
-- [Hardware Wallets](./guide-hardware-wallets) — Ledger and Trezor signing
-- [Keys & Accounts](../core-foundation/guide-keys-accounts) — account types
+- [Hardware Wallets](./guide-hardware-wallets) — for end-user signing on a local device instead of cloud
+- [EIP-7702 Delegation](../core-foundation/guide-eip7702) — both KMS signers support Type 4 transactions for EOA code delegation
+- [Keys & Accounts](./guide-keys-accounts) — account types and the `ExternalAccount` pattern in detail
+- [Send ETH](../core-foundation/guide-send-eth) — once set up, use the same `web3.Eth` transfer methods as any account

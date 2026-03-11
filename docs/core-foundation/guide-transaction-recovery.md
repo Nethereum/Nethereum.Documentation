@@ -56,7 +56,7 @@ Console.WriteLine("S: " + tx.S);
 This example signs a transaction locally, sends it, retrieves it back from the chain, and recovers the sender to verify the round-trip.
 
 :::caution
-The private key below is for local testing only. Never hardcode private keys in production code. See [Keys and Accounts](guide-keys-accounts) for secure key management patterns.
+The private key below is for local testing only. Never hardcode private keys in production code. See [Keys and Accounts](../signing-and-key-management/guide-keys-accounts) for secure key management patterns.
 :::
 
 ```csharp
@@ -105,7 +105,7 @@ Console.WriteLine("Recovered raw: " + rawRecovered);
 
 ## Next Steps
 
-- [Keys and Accounts](guide-keys-accounts) -- how Ethereum addresses derive from public keys
+- [Keys and Accounts](../signing-and-key-management/guide-keys-accounts) -- how Ethereum addresses derive from public keys
 - [Transaction Models](guide-transaction-models) -- Legacy, EIP-1559, and EIP-2930 transaction types
 - [Transaction Replacement](guide-transaction-replacement) -- replace a pending transaction with higher fees
 - [Calculate Transaction Hash](guide-transaction-hash) -- predict the hash before sending

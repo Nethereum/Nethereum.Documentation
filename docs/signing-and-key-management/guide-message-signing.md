@@ -1,7 +1,7 @@
 ---
 title: Sign and Verify Messages
 sidebar_label: "Message Signing"
-sidebar_position: 14
+sidebar_position: 3
 description: Sign UTF-8 messages and verify signatures using personal_sign
 ---
 
@@ -74,9 +74,9 @@ Console.WriteLine("Recovered: " + recovered);
 
 ## Next Steps
 
-- [EIP-712 Typed Data Signing](../signing-and-key-management/guide-eip712-signing) -- sign structured data (permits, orders, typed approvals)
-- [Manage Keys, Accounts, and Keystores](guide-keys-accounts) -- generate and store keys
-- [Signing and Key Management Overview](../signing-and-key-management/overview) -- advanced signing topics
+- [EIP-712 Typed Data Signing](./guide-eip712-signing) — sign structured data (permits, orders, typed approvals)
+- [Keys & Accounts](./guide-keys-accounts) — generate and store keys
+- [KeyStore Files](./guide-keystore) — encrypt keys to password-protected JSON files
 
 :::note
 Ethereum enforces low-S signatures (EIP-2) to prevent transaction malleability. Nethereum handles this automatically -- you only need to be aware of it if you are implementing custom signature verification. Use `EthECKey.VerifyAllowingOnlyLowS` if you need to explicitly reject high-S signatures.

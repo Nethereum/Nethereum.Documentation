@@ -58,6 +58,7 @@ const sidebars: SidebarsConfig = {
           label: 'Transaction Deep Dives',
           items: [
             'core-foundation/guide-transaction-models',
+            'core-foundation/guide-eip7702',
             'core-foundation/guide-transaction-hash',
             'core-foundation/guide-transaction-recovery',
             'core-foundation/guide-transaction-replacement',
@@ -67,10 +68,8 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Keys, Signing & Encoding',
+          label: 'Encoding & Utilities',
           items: [
-            'core-foundation/guide-keys-accounts',
-            'core-foundation/guide-message-signing',
             'core-foundation/guide-abi-encoding',
             'core-foundation/guide-hex-encoding',
             'core-foundation/guide-address-utils',
@@ -131,11 +130,26 @@ const sidebars: SidebarsConfig = {
         'signing-and-key-management/overview',
         {
           type: 'category',
-          label: 'Guides',
+          label: 'Keys & Signing',
+          collapsed: false,
           items: [
+            'signing-and-key-management/guide-keys-accounts',
+            'signing-and-key-management/guide-message-signing',
             'signing-and-key-management/guide-eip712-signing',
-            'signing-and-key-management/guide-hd-wallets',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Key Storage & Derivation',
+          items: [
             'signing-and-key-management/guide-keystore',
+            'signing-and-key-management/guide-hd-wallets',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'External Signers',
+          items: [
             'signing-and-key-management/guide-hardware-wallets',
             'signing-and-key-management/guide-cloud-kms',
           ],

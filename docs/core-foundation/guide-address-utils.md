@@ -102,7 +102,7 @@ Console.WriteLine(padded);
 
 ## Next Steps
 
-- [Keys and Accounts](guide-keys-accounts) -- generate keys and derive addresses
+- [Keys and Accounts](../signing-and-key-management/guide-keys-accounts) -- generate keys and derive addresses
 - [Hex Encoding](guide-hex-encoding) -- hex conversion and byte-array handling
 
 ## Further Reading

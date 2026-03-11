@@ -1,13 +1,33 @@
 ---
 title: "EIP-7702: EOA Code Delegation"
 sidebar_label: "EIP-7702 Delegation"
-sidebar_position: 13
+sidebar_position: 8
 description: Delegate smart contract code to EOAs with EIP-7702 — self-delegation, sponsored delegation, and querying delegation state
 ---
 
 # EIP-7702: EOA Code Delegation
 
 EIP-7702 lets an externally owned account (EOA) temporarily delegate its execution to a smart contract. When someone calls the EOA, the EVM runs the delegate contract's code in the context of the EOA — same address, same balance, same storage. This gives EOAs smart account capabilities (batch calls, spending limits, social recovery) without deploying a separate contract.
+
+:::tip The Simple Way
+```csharp
+var authService = web3.Eth.GetEIP7022AuthorisationService();
+
+// Delegate your EOA to a smart contract — gas overhead calculated automatically
+var receipt = await authService
+    .AuthoriseRequestAndWaitForReceiptAsync("0xDelegateContract");
+
+// Check if an address has a smart account (is delegated)
+bool isDelegated = await authService.IsDelegatedAccountAsync(address);
+
+// Get the delegate contract address
+string delegateContract = await authService.GetDelegatedAccountAddressAsync(address);
+
+// Revoke delegation — removes smart account from EOA
+var receipt = await authService.RemoveAuthorisationRequestAndWaitForReceiptAsync();
+```
+For sponsored delegation (someone else pays gas), use `EIP7022SponsorAuthorisationService`.
+:::
 
 The delegation is set by sending a **Type 4 transaction** that includes a signed authorization tuple. The EOA owner signs "I authorize contract X to act as my code" and the delegation takes effect when the transaction is mined.
 

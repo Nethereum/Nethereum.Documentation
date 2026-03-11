@@ -103,8 +103,29 @@ To use legacy transactions by default:
 web3.TransactionManager.UseLegacyAsDefault = true;
 ```
 
+## EIP-7702: Inline Authorization
+
+You can attach an EIP-7702 authorization directly to a transaction, delegating an EOA and executing a contract call in one step. The transaction manager signs unsigned authorizations automatically and calculates the extra gas overhead:
+
+```csharp
+var executeFunction = new ExecuteFunction
+{
+    Calls = batchCalls,
+    Gas = 1000000,
+    AuthorisationList = new List<Authorisation>
+    {
+        new Authorisation { Address = "0xDelegateContractAddress" }
+    }
+};
+
+var receipt = await contractService.ExecuteRequestAndWaitForReceiptAsync(executeFunction);
+```
+
+For dedicated delegation workflows (self-delegation, sponsored delegation, batch delegation), see the [EIP-7702 guide](guide-eip7702).
+
 ## Next Steps
 
 - [Query Blocks](guide-query-blocks) — inspect blocks, transactions, and receipts
+- [EIP-7702 Delegation](guide-eip7702) — delegate EOA to smart contract code
 - [Calculate Transaction Hash](guide-transaction-hash) — sign and predict the hash before sending
 - [Fee Estimation](guide-fee-estimation) — EIP-1559 fee strategies

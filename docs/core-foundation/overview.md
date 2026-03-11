@@ -40,11 +40,17 @@ Here's what `web3.Eth` gives you out of the box:
 | Convert units | `Web3.Convert.FromWei(value)` / `Web3.Convert.ToWei(value)` |
 | Resolve ENS | `web3.Eth.GetEnsService().ResolveAddressAsync("vitalik.eth")` |
 | Multicall batch | `web3.Eth.GetMultiQueryHandler()` |
+| Delegate EOA (EIP-7702) | `web3.Eth.GetEIP7022AuthorisationService().AuthoriseRequestAndWaitForReceiptAsync(contract)` |
+| Check if smart account | `web3.Eth.GetEIP7022AuthorisationService().IsDelegatedAccountAsync(address)` |
+| Get delegate contract | `web3.Eth.GetEIP7022AuthorisationService().GetDelegatedAccountAddressAsync(address)` |
+| Revoke delegation | `web3.Eth.GetEIP7022AuthorisationService().RemoveAuthorisationRequestAndWaitForReceiptAsync()` |
 
 For token standards, Nethereum includes built-in typed services — no ABI needed:
 - **`web3.Eth.ERC20`** — balances, transfers, allowances, metadata
 - **`web3.Eth.ERC721`** — NFT ownership, metadata, enumeration
 - **`web3.Eth.ERC1155`** — multi-token balances and batch operations
+
+For smart account features, EIP-7702 lets any EOA delegate to a contract — batch calls, spending limits, gas sponsorship — all through `web3.Eth.GetEIP7022AuthorisationService()`. Delegate, check if an address has a smart account, get the delegate contract, or revoke — gas overhead is calculated automatically. For sponsored delegation (another account pays gas), use `EIP7022SponsorAuthorisationService`. See the [EIP-7702 guide](guide-eip7702) for details.
 
 Every row in the table above works with zero fee configuration. When you need more control — explicit fees, legacy transactions, custom gas — every guide shows you how. But the simple path is always enough for common tasks.
 
@@ -188,18 +194,17 @@ Step-by-step guides covering everything from reading balances to advanced transa
 | Guide | What You'll Learn |
 |---|---|
 | [Transaction Types](guide-transaction-models) | Legacy, EIP-1559, Blob, and EIP-7702 transaction models |
+| [EIP-7702 Delegation](guide-eip7702) | Delegate EOA to smart contract code — self, sponsored, and batch delegation |
 | [Transaction Hash](guide-transaction-hash) | Sign and predict the hash before sending |
 | [Transaction Recovery](guide-transaction-recovery) | Recover the sender from a signed transaction |
 | [Transaction Replacement](guide-transaction-replacement) | Replace a pending transaction with higher fees |
 | [Pending Transactions](guide-pending-transactions) | Retrieve pending transactions from the mempool |
 | [Decode Transactions](guide-decode-transactions) | Decode function calls from transaction input data |
 
-### Keys, Signing & Encoding
+### Encoding & Utilities
 
 | Guide | What You'll Learn |
 |---|---|
-| [Keys & Accounts](guide-keys-accounts) | Private keys, account types, and keystores |
-| [Message Signing](guide-message-signing) | Sign and verify messages |
 | [ABI Encoding](guide-abi-encoding) | Encode and decode smart contract data |
 | [Hex Encoding](guide-hex-encoding) | Work with hex data |
 | [Address Utilities](guide-address-utils) | Validate and format addresses |

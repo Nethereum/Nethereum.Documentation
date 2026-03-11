@@ -100,17 +100,16 @@ public class HerumiBlsBindings : INativeBlsBindings
 
 ### Domain Separation
 
-Ethereum consensus layer domain types:
+Ethereum consensus layer uses domain types to prevent cross-context signature replay. The domain is a 4-byte prefix combined with the fork version and genesis validators root. Standard domain type prefixes:
 
-```csharp
-public static class DomainTypes
-{
-    public static readonly byte[] DOMAIN_BEACON_PROPOSER = new byte[] { 0x00, 0x00, 0x00, 0x00 };
-    public static readonly byte[] DOMAIN_BEACON_ATTESTER = new byte[] { 0x01, 0x00, 0x00, 0x00 };
-    public static readonly byte[] DOMAIN_RANDAO = new byte[] { 0x02, 0x00, 0x00, 0x00 };
-    public static readonly byte[] DOMAIN_SYNC_COMMITTEE = new byte[] { 0x07, 0x00, 0x00, 0x00 };
-}
-```
+| Domain | Prefix | Usage |
+|--------|--------|-------|
+| Beacon Proposer | `0x00000000` | Block proposals |
+| Beacon Attester | `0x01000000` | Attestations |
+| RANDAO | `0x02000000` | Randomness reveals |
+| Sync Committee | `0x07000000` | Light client sync |
+
+These domain bytes are passed to BLS signing/verification as the `domain` parameter.
 
 ### Native Library Loading
 

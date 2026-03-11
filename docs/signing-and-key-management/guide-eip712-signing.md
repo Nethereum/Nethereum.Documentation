@@ -1,13 +1,22 @@
 ---
 title: EIP-712 Typed Data Signing
 sidebar_label: "EIP-712 Signing"
-sidebar_position: 12
+sidebar_position: 4
 description: Sign and verify structured typed data using EIP-712 with Nethereum
 ---
 
 # EIP-712 Typed Data Signing
 
-[EIP-712](https://eips.ethereum.org/EIPS/eip-712) defines a standard for signing structured, typed data instead of raw byte strings. Wallets can display the data fields to users before signing, preventing blind-signing attacks. Nethereum provides full support for EIP-712 through the `Nethereum.Signer.EIP712` package.
+:::tip The Simple Way
+```csharp
+var signer = new Eip712TypedDataSigner();
+var signature = signer.SignTypedDataV4(message, typedData, key);
+var recovered = signer.RecoverFromSignatureV4(message, typedData, signature);
+```
+Define your data as C# classes with `[Struct]` and `[Parameter]` attributes, then sign and verify in two calls.
+:::
+
+[EIP-712](https://eips.ethereum.org/EIPS/eip-712) defines a standard for signing structured, typed data instead of raw byte strings. Wallets can display the data fields to users before signing, preventing blind-signing attacks. This is the foundation for ERC-2612 token permits, gasless meta-transactions, and off-chain order books. Nethereum provides full support through the `Nethereum.Signer.EIP712` package.
 
 ## Installation
 
@@ -285,12 +294,8 @@ The domain separator uniquely identifies your contract and chain. Typical fields
 
 Try EIP-712 signing interactively in the [Nethereum Playground](http://playground.nethereum.com) (sample 1073).
 
-:::tip Claude Code
-Install the Nethereum skills plugin for AI-assisted development: `/plugin install nethereum-skills`
-:::
-
 ## Next Steps
 
-- [Signing and Key Management Overview](./overview.md) -- full list of signing capabilities
-- [Nethereum.Signer.EIP712 package reference](./nethereum-signer-eip712.md) -- API details
-- [Personal Message Signing](./nethereum-signer.md) -- sign raw messages and personal_sign
+- [KeyStore Files](./guide-keystore) — encrypt and store your signing keys securely
+- [Personal Message Signing](./guide-message-signing) — sign raw messages with `personal_sign`
+- [Nethereum.Signer.EIP712 package reference](./nethereum-signer-eip712) — full API details

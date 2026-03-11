@@ -1,13 +1,24 @@
 ---
 title: KeyStore Files
 sidebar_label: "KeyStore Files"
-sidebar_position: 4
+sidebar_position: 5
 description: Encrypt and decrypt private keys using Web3 Secret Storage Definition (Scrypt/PBKDF2)
 ---
 
 # KeyStore Files
 
-Encrypt private keys to JSON files using the [Web3 Secret Storage Definition](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/). The encrypted JSON can be safely stored on disk — the private key is only accessible with the correct password.
+:::tip The Simple Way
+```csharp
+var service = new KeyStoreService();
+// Encrypt
+var json = service.EncryptAndGenerateDefaultKeyStoreAsJson("password", keyBytes, address);
+// Decrypt
+var key = service.DecryptKeyStoreFromJson("password", json);
+```
+`KeyStoreService` defaults to Scrypt for encryption and auto-detects the KDF for decryption.
+:::
+
+After generating or importing a private key (as covered in [Keys & Accounts](./guide-keys-accounts)), you need a safe way to store it. KeyStore files encrypt private keys to JSON using the [Web3 Secret Storage Definition](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/) — the same format used by MetaMask, Geth, and other wallets. The encrypted JSON can be safely stored on disk — the private key is only accessible with the correct password.
 
 ```bash
 dotnet add package Nethereum.KeyStore
@@ -103,11 +114,8 @@ var json = service.EncryptAndGenerateDefaultKeyStoreAsJson(
 var key = service.DecryptKeyStoreFromJson("password", json);
 ```
 
-:::tip Claude Code
-Install the Nethereum skills plugin for AI-assisted development: `/plugin install nethereum-skills`
-:::
-
 ## Next Steps
 
-- [HD Wallets](./guide-hd-wallets) — derive multiple accounts from a mnemonic
-- [Keys & Accounts](../core-foundation/guide-keys-accounts) — account types and key generation
+- [HD Wallets](./guide-hd-wallets) — derive multiple accounts from a single mnemonic instead of managing individual keys
+- [Hardware Wallets](./guide-hardware-wallets) — if you need keys that never touch disk at all, use a hardware device
+- [Keys & Accounts](./guide-keys-accounts) — account types and key generation

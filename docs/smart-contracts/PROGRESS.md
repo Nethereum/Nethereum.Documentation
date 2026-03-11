@@ -11,8 +11,8 @@ unlisted: true
 | Stage | Status | Date |
 |-------|--------|------|
 | Stage 1: Use Cases | ✅ Complete | 2026-03-10 |
-| Stage 2: README Validation | ⏳ Pending | — |
-| Stage 3: Fix README Issues | ⏳ Pending | — |
+| Stage 2: README Validation | ✅ Complete | 2026-03-11 |
+| Stage 3: Fix README Issues | ✅ Complete | 2026-03-11 |
 | Stage 4: Guide Pages | ✅ Complete | 2026-03-10 |
 | Stage 5: Plugin Skills | ✅ Complete | 2026-03-10 |
 | Stage 6: Verification | ✅ Complete | 2026-03-10 |
@@ -108,9 +108,19 @@ unlisted: true
 - [ ] ERC20 multicall with token list — Playground 1066
 - [ ] ERC721 log processing for owned tokens — Playground 1067
 
+## Simple Path First Updates (2026-03-11)
+
+- [x] All 9 guides have `:::tip The Simple Way` callouts
+- [x] `deploy-a-contract.md` and `erc20.md` have Next Steps sections
+- [x] Opening context added to `deploy-a-contract.md` and `erc20.md`
+- [x] Sidebar restructured: "Getting Started" (collapsed: false) + "Advanced Patterns"
+- [x] Overview updated with simple path table and guide tables grouped by sub-category
+- [x] README fix: ADRaffy.ENSNormalize version v0.1.5 → v0.3.1
+- [x] `npm run build` passes (no new broken links)
+
 ## Known Gaps
 
-1. **README validation not yet performed** — need to scan Nethereum.Contracts README against public API surface
+1. ~~**README validation not yet performed**~~ — ✅ Validated 2026-03-11, one version number fix applied
 2. ~~**MultiSend not documented**~~ — ✅ Added to multicall guide and skill (2026-03-10)
 3. ~~**MulticallInput vs MulticallInputOutput**~~ — ✅ Added to multicall guide and skill (2026-03-10)
 4. ~~**ContractServiceBase**~~ — ✅ Added to built-in-standards guide + tested (2026-03-10)

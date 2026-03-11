@@ -7,6 +7,16 @@ description: Batch multiple contract queries into a single call with Nethereum M
 
 # Multicall & Batch Queries
 
+:::tip The Simple Way
+```csharp
+var multiQuery = web3.Eth.GetMultiQueryHandler();
+var balance1 = multiQuery.AddQueryHandler<BalanceOfFunction, BigInteger>(contract1, balanceMsg1);
+var balance2 = multiQuery.AddQueryHandler<BalanceOfFunction, BigInteger>(contract2, balanceMsg2);
+await multiQuery.MultiCallAsync();
+```
+Batch multiple reads into a single call — no gas needed for read-only queries.
+:::
+
 When you need to read data from multiple contracts or call the same function with different parameters, sending individual RPC requests is slow and wasteful. Nethereum provides two approaches to batch queries into fewer round-trips:
 
 - **Multicall contract** -- aggregates calls through the on-chain Multicall contract (single `eth_call`)
@@ -173,6 +183,6 @@ var multiSendFunction = new MultiSendFunction(new IMultiSendInput[] { input1, in
 The `MultiSendEncoder` handles the packed encoding format (operation, target, value, data length, data) for each transaction in the batch.
 ## Next Steps
 
+- [Error Handling](./guide-error-handling.md) -- handle errors from batched calls and custom reverts
+- [Built-in Standards](./guide-built-in-standards.md) -- typed services for ERC-20, ERC-721, ENS, and more
 - [Events & Logs](./guide-events.md) -- subscribe to and query contract events
-- [Error Handling](./guide-error-handling.md) -- handle errors from batched calls
-- [Deploy a Contract](./deploy-a-contract.md) -- deploy contracts with typed handlers

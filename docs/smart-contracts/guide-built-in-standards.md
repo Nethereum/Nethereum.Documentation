@@ -7,6 +7,15 @@ description: Use Nethereum's built-in typed services for ERC-20, ERC-721, ERC-11
 
 # Built-in Contract Standards
 
+:::tip The Simple Way
+```csharp
+var erc20 = web3.Eth.ERC20.GetContractService(address);
+var erc721 = web3.Eth.ERC721.GetContractService(address);
+var erc1155 = web3.Eth.ERC1155.GetContractService(address);
+```
+Built-in typed services for all major standards — no ABI or code generation needed.
+:::
+
 Nethereum ships typed services for common Ethereum standards, all accessible through `web3.Eth`. These services provide strongly-typed methods so you never need to write raw ABI JSON for standard interactions.
 
 ```bash
@@ -263,7 +272,7 @@ var storageValue = await web3.Eth.GetStorageAt
 This is useful for reading internal contract state without needing an ABI (e.g., reading ERC-20 balances directly from storage, or verifying proxy implementation addresses).
 ## Next Steps
 
+- [CREATE2 Deployment](./guide-create2-deployment.md) -- deploy contracts to deterministic addresses across chains
 - [ERC-20 Tokens](./erc20.md) -- detailed ERC-20 guide with transfer and event examples
 - [Events & Logs](./guide-events.md) -- subscribe to Transfer, Approval, and custom events
 - [Error Handling](./guide-error-handling.md) -- handle custom revert errors from contract calls
-- [CREATE2 Deployment](./guide-create2-deployment.md) -- deterministic contract deployment

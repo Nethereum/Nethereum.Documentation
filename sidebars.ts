@@ -183,12 +183,19 @@ const sidebars: SidebarsConfig = {
         'smart-contracts/overview',
         {
           type: 'category',
-          label: 'Guides',
+          label: 'Getting Started',
+          collapsed: false,
           items: [
             'smart-contracts/guide-smart-contract-interaction',
             'smart-contracts/deploy-a-contract',
             'smart-contracts/erc20',
             'smart-contracts/code-generation',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced Patterns',
+          items: [
             'smart-contracts/guide-events',
             'smart-contracts/guide-multicall',
             'smart-contracts/guide-error-handling',

@@ -7,6 +7,16 @@ description: Define typed DTOs, deploy, query, transact, decode events, read his
 
 # Smart Contract Interaction
 
+:::tip The Simple Way
+```csharp
+var service = new StandardTokenService(web3, contractAddress);
+var balance = await service.BalanceOfQueryAsync(ownerAddress);
+var receipt = await service.TransferRequestAndWaitForReceiptAsync(
+    new TransferFunction { To = recipient, Value = amount });
+```
+Define typed DTOs, then query and transact — gas, nonce, and fees are all automatic.
+:::
+
 Nethereum uses typed C# classes to represent every part of a smart contract: deployment bytecode, function calls, events, and return values. This page covers the full interaction lifecycle using a standard ERC20 token as the example.
 
 ```bash
@@ -250,8 +260,7 @@ The typed approach is recommended — it catches parameter mismatches at compile
 
 ## Next Steps
 
+- [Deploy a Contract](./deploy-a-contract.md) -- deploy contracts using the typed deployment handlers shown above
+- [ERC-20 Tokens](./erc20.md) -- interact with any ERC-20 token using built-in typed services
+- [Code Generation](./code-generation.md) -- generate typed DTOs and service classes from ABI
 - [Events & Logs](./guide-events.md) -- filter, subscribe, and decode contract events
-- [Multicall & Batch Queries](./guide-multicall.md) -- batch multiple queries in one RPC call
-- [Error Handling](./guide-error-handling.md) -- handle reverts and custom errors
-- [Built-in Standards](./guide-built-in-standards.md) -- ERC-20, ERC-721, ERC-1155, ENS presets
-- [Code Generation](./code-generation.md) -- generate DTOs from ABI

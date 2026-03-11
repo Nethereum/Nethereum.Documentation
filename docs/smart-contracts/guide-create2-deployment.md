@@ -7,6 +7,15 @@ description: Deploy contracts to deterministic addresses using CREATE2 with Neth
 
 # CREATE2 Deterministic Deployment
 
+:::tip The Simple Way
+```csharp
+var create2 = web3.Eth.Create2DeterministicDeploymentProxyService;
+var address = create2.CalculateCreate2Address(deployment, salt);
+var receipt = await create2.DeployContractRequestAndWaitForReceiptAsync(deployment, salt);
+```
+Predict the address, then deploy — same address on every chain with the same salt.
+:::
+
 CREATE2 lets you deploy a contract to a predictable address that depends only on the deployer address, a salt, and the contract bytecode. This is useful for counterfactual deployments (predicting addresses before deployment), deploying the same contract to the same address across multiple chains, and factory patterns.
 
 Nethereum provides `Create2DeterministicDeploymentProxyService` accessible via `web3.Eth.Create2DeterministicDeploymentProxyService`.

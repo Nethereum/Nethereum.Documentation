@@ -7,7 +7,17 @@ description: Deploy smart contracts to Ethereum using Nethereum's typed deployme
 
 # Deploy a Contract
 
-Nethereum provides typed deployment handlers that make deploying smart contracts straightforward and type-safe.
+:::tip The Simple Way
+```csharp
+var handler = web3.Eth.GetContractDeploymentHandler<StandardTokenDeployment>();
+var receipt = await handler.SendRequestAndWaitForReceiptAsync(
+    new StandardTokenDeployment { TotalSupply = Web3.Convert.ToWei(1000000) });
+Console.WriteLine($"Deployed at: {receipt.ContractAddress}");
+```
+Define a deployment message, send it — gas estimation and signing are automatic.
+:::
+
+After defining your contract's typed DTOs (as covered in [Contract Interaction](./guide-smart-contract-interaction)), the next step is deploying. Nethereum's typed deployment handlers give you gas estimation, receipt tracking, and constructor parameter encoding out of the box.
 
 ## Prerequisites
 
@@ -81,3 +91,9 @@ if (receipt.Status.Value == 1)
     Console.WriteLine($"Contract address: {receipt.ContractAddress}");
 }
 ```
+
+## Next Steps
+
+- [ERC-20 Tokens](./erc20.md) -- interact with deployed ERC-20 tokens using the built-in typed service
+- [Events & Logs](./guide-events.md) -- listen for events emitted during deployment and contract calls
+- [Code Generation](./code-generation.md) -- generate typed deployment classes from ABI and bytecode

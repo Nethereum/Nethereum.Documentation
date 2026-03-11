@@ -7,6 +7,16 @@ description: Listen for and decode smart contract events using Nethereum
 
 # Filter & Query Events
 
+:::tip The Simple Way
+```csharp
+var transferEvent = web3.Eth.GetEvent<TransferEventDTO>(contractAddress);
+var filter = transferEvent.CreateFilterInput(
+    BlockParameter.CreateEarliest(), BlockParameter.CreateLatest());
+var events = await transferEvent.GetAllChangesAsync(filter);
+```
+Define an event DTO, create a filter, query — no gas or signing needed.
+:::
+
 Smart contracts emit events (logs) to signal that something happened on-chain. Nethereum lets you define strongly-typed DTOs for events, create filters with block ranges and indexed parameters, and decode logs from transaction receipts or historical queries.
 
 ```bash
@@ -277,5 +287,6 @@ Try interactive event examples in the [Nethereum Playground](http://playground.n
 
 ## Next Steps
 
-- [ERC-20 Tokens](./erc20.md) -- Query balances and transfer tokens using built-in typed services
-- [Real-Time Streaming](../core-foundation/nethereum-rpc-reactive.md) -- Subscribe to events over WebSocket with Rx observables
+- [Multicall & Batch Queries](./guide-multicall.md) -- batch multiple event or balance queries into a single call
+- [Error Handling](./guide-error-handling.md) -- handle custom revert errors from contract calls
+- [Real-Time Streaming](../core-foundation/nethereum-rpc-reactive.md) -- subscribe to events over WebSocket with Rx observables

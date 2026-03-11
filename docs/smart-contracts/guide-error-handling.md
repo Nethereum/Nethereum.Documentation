@@ -7,6 +7,18 @@ description: Handle smart contract reverts and decode custom error types with Ne
 
 # Error Handling & Custom Reverts
 
+:::tip The Simple Way
+```csharp
+try {
+    var receipt = await service.TransferRequestAndWaitForReceiptAsync(transfer);
+} catch (SmartContractCustomErrorRevertException ex) {
+    if (ex.IsCustomErrorFor<InsufficientBalanceError>())
+        var error = ex.DecodeError<InsufficientBalanceError>();
+}
+```
+Catch `SmartContractCustomErrorRevertException`, then decode the typed error.
+:::
+
 Since Solidity 0.8.4, contracts can revert with custom error types instead of plain strings. Nethereum catches these reverts as `SmartContractCustomErrorRevertException` and provides typed decoding so you can handle each error case in your C# code.
 
 ```bash

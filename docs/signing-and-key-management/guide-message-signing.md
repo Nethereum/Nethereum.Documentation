@@ -7,6 +7,15 @@ description: Sign UTF-8 messages and verify signatures using personal_sign
 
 # Sign and Verify Messages
 
+:::tip The Simple Way
+```csharp
+var signer = new EthereumMessageSigner();
+var signature = signer.EncodeUTF8AndSign("Hello from Nethereum", new EthECKey(privateKey));
+var recovered = signer.EncodeUTF8AndEcRecover("Hello from Nethereum", signature);
+```
+Sign a message and recover the signer address — no gas, no transaction needed.
+:::
+
 Message signing lets you prove you own an address without sending a transaction. Common uses: wallet authentication (Sign-In with Ethereum), off-chain approvals, and proving ownership of an address to a dApp.
 
 ## Installation

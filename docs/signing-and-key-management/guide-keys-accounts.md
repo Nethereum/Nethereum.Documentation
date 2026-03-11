@@ -7,6 +7,15 @@ description: Generate EC keys, create accounts, and encrypt keys with keystores
 
 # Manage Keys, Accounts, and Keystores
 
+:::tip The Simple Way
+```csharp
+var ecKey = EthECKey.GenerateKey();
+var account = new Account(ecKey.GetPrivateKey(), chainId: 1);
+var web3 = new Web3(account, "https://your-rpc-url");
+```
+Generate a key, create an account, and connect — ready to sign transactions.
+:::
+
 Every Ethereum interaction starts with an account. This guide covers the three account types Nethereum provides and when to use each one.
 
 ## Installation

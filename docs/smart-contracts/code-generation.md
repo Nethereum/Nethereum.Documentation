@@ -7,6 +7,13 @@ description: Generate typed C# contract services, DTOs, Unity requests, MUD tabl
 
 # Code Generation
 
+:::tip The Simple Way
+```bash
+Nethereum.Generator.Console generate from-abi -abi MyContract.abi -o Generated
+```
+One command generates typed C# classes for deployment, functions, events, errors, and a full service class.
+:::
+
 Nethereum generates strongly-typed C# classes from Solidity ABI and bytecode — deployment messages, function messages, event DTOs, error DTOs, struct types, and a complete service class with methods for every contract function. The same generator supports Unity, Blazor, MUD, and multi-language output (C#, VB.NET, F#).
 
 ## Generation Tools
@@ -458,7 +465,6 @@ Place `.abi` and `.bin` files in the project directory. Code is generated during
 
 ## Next Steps
 
-- [Smart Contract Interaction](./guide-smart-contract-interaction.md) -- use generated DTOs to deploy, query, and transact
 - [Events & Logs](./guide-events.md) -- filter and decode events using generated event DTOs
+- [Smart Contract Interaction](./guide-smart-contract-interaction.md) -- use generated DTOs to deploy, query, and transact
 - [Error Handling](./guide-error-handling.md) -- decode custom errors from generated error DTOs
-- [Built-in Standards](./guide-built-in-standards.md) -- pre-generated services for ERC-20, ERC-721, etc.

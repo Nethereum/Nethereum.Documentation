@@ -42,7 +42,7 @@ public class DevChainFixture : IAsyncLifetime
         Bob = new Account("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d");
 
         Node = new DevChainNode(new DevChainConfig { ChainId = 31337 });
-        await Node.StartAsync(new[] { Alice.Address, Bob.Address });
+        await Node.StartAsync(Alice, Bob);
 
         AliceWeb3 = Node.CreateWeb3(Alice);
         BobWeb3 = Node.CreateWeb3(Bob);

@@ -248,7 +248,7 @@ If you're switching from Hardhat or Anvil to DevChain:
 | Fork support | `--fork <url>` | `--fork-url <url>` | `-f <url>` |
 | Persistent storage | No | No | `--persist` |
 | Interval mining | `--interval <sec>` | `-b <sec>` | `-b <ms>` (milliseconds) |
-| Account impersonation | `hardhat_impersonateAccount` | `anvil_impersonateAccount` | Both |
+| Account impersonation | `hardhat_impersonateAccount` | `anvil_impersonateAccount` | `hardhat_impersonateAccount` |
 | Debug tracing | Limited | `debug_traceTransaction` | Both geth-compatible |
 
 The key difference: DevChain block time is in **milliseconds**, not seconds.

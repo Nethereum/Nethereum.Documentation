@@ -37,7 +37,7 @@ var config = new DevChainConfig
 
 var node = new DevChainNode(config);
 var account = new Account("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80");
-await node.StartAsync(new[] { account.Address });
+await node.StartAsync(account);
 
 var web3 = node.CreateWeb3(account);
 ```

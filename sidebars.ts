@@ -321,8 +321,13 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Guides',
+          collapsed: false,
           items: [
             'devchain/devchain-quickstart',
+            'devchain/guide-http-server',
+            'devchain/guide-testing-patterns',
+            'devchain/guide-forking-and-state',
+            'devchain/guide-debug-trace',
           ],
         },
         {

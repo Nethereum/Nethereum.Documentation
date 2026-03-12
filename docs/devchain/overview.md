@@ -23,66 +23,46 @@ using Nethereum.Web3.Accounts;
 
 var account = new Account("0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7");
 var devChain = new DevChainNode();
-await devChain.StartAsync(account);
+await devChain.StartAsync(account);         // Pre-funds the account with 10,000 ETH
+var web3 = devChain.CreateWeb3(account);    // In-process Web3 — no HTTP
 
-var web3 = devChain.CreateWeb3(account);
+// Use web3 as normal
 var balance = await web3.Eth.GetBalance.SendRequestAsync(account.Address);
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync("0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae", 1.0m);
 ```
 
-## Configuration
+Transactions are mined instantly by default. `CreateWeb3` wires directly to the in-process node — no HTTP overhead, no port conflicts.
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Instant Mining** | Auto-mine on each transaction, or configure interval mining |
+| **Funded Accounts** | Pre-fund with 10,000 ETH by default, or specify custom balances |
+| **Snapshots** | `TakeSnapshotAsync()` / `RevertToSnapshotAsync()` for test isolation |
+| **Forking** | Fork mainnet or any EVM chain with `ForkUrl` / `ForkBlockNumber` |
+| **State Manipulation** | `SetBalanceAsync`, `SetCodeAsync`, `SetNonceAsync`, `SetStorageAtAsync` |
+| **Time Control** | `evm_increaseTime`, `evm_setNextBlockTimestamp` for time-dependent contracts |
+| **Debug Tracing** | `debug_traceTransaction` and `debug_traceCall` with opcode-level detail |
+| **Hardhat/Anvil Compat** | Same default mnemonic, same RPC methods, same chain ID (31337) |
+| **HTTP Server** | Expose as HTTP endpoint for MetaMask, Foundry, ethers.js |
+| **Full EVM** | Complete execution up to Prague hardfork via Nethereum.EVM |
+
+## Configuration Presets
 
 ```csharp
-var config = new DevChainConfig
-{
-    ChainId = 1337,
-    BlockGasLimit = 30_000_000,
-    AutoMine = true,
-    InitialBalance = BigInteger.Parse("10000000000000000000000")
-};
+// Default: ChainId 1337, auto-mine, 10,000 ETH per account
+var devChain = new DevChainNode();
 
-var devChain = new DevChainNode(config);
-await devChain.StartAsync(account);
-```
+// Hardhat compatible: ChainId 31337
+var devChain = new DevChainNode(DevChainConfig.Hardhat);
 
-## Factory Methods
+// Anvil compatible: ChainId 31337
+var devChain = new DevChainNode(DevChainConfig.Anvil);
 
-```csharp
-var devChain = await DevChainNode.CreateAndStartAsync(account);
+// In-memory (no SQLite, fastest)
 var devChain = DevChainNode.CreateInMemory();
-```
-
-## Features
-
-### Snapshots and Revert
-
-```csharp
-var snapshot = await devChain.TakeSnapshotAsync();
-// ... do transactions ...
-await devChain.RevertToSnapshotAsync(snapshot);
-```
-
-### Hardhat / Anvil Compatibility
-
-DevChain supports standard development methods:
-
-- `evm_mine`, `evm_snapshot`, `evm_revert`
-- `evm_increaseTime`, `evm_setNextBlockTimestamp`
-- `hardhat_setBalance`, `hardhat_setCode`, `hardhat_setNonce`, `hardhat_setStorageAt`
-
-### Forking
-
-Fork state from a live Ethereum network for local testing against real data.
-
-### Full EVM
-
-Complete EVM execution up to Prague hardfork, including `debug_traceTransaction` and `debug_traceCall`.
-
-## HTTP Server
-
-Expose DevChain as an HTTP endpoint for MetaMask, Foundry, Hardhat, or any Ethereum tool:
-
-```bash
-dotnet add package Nethereum.DevChain.Server
 ```
 
 ## Aspire Template
@@ -109,9 +89,20 @@ This creates an Aspire-orchestrated environment with:
 | Package | Description |
 |---|---|
 | `Nethereum.DevChain` | Development chain with auto-mine, SQLite storage, and funded accounts |
-| `Nethereum.DevChain.Server` | HTTP server wrapper for external tool access |
+| `Nethereum.DevChain.Server` | HTTP server wrapper — CLI tool and ASP.NET embedding |
+
+## Guides
+
+| Guide | What You'll Learn |
+|---|---|
+| [Quick Start](devchain-quickstart) | Create a node, fund accounts, send your first transaction |
+| [HTTP Server & CLI](guide-http-server) | Run as standalone server, CLI options, connect from any language, Hardhat/Anvil migration |
+| [Testing Patterns](guide-testing-patterns) | xUnit fixtures, snapshot/revert isolation, time manipulation, contract deployment |
+| [Forking & State](guide-forking-and-state) | Fork mainnet, manipulate balances/code/storage, account impersonation |
+| [Debug & Trace](guide-debug-trace) | Trace transactions at the opcode level, find reverts, track storage changes |
 
 ## Related
 
 - [Chain Infrastructure](/docs/chain-infrastructure/overview) — the shared blockchain engine underneath
+- [EVM Simulator](/docs/evm-simulator/overview) — the execution engine that powers DevChain
 - [AppChains (Preview)](/docs/application-chain/overview) — production satellite chains with sequencer and P2P

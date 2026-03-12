@@ -18,8 +18,8 @@ Nethereum provides typed, high-level services for interacting with major DeFi pr
 | Execute a swap | `uniswap.UniversalRouter.ExecuteRequestAndWaitForReceiptAsync(fn)` |
 | Manage liquidity | `uniswap.Positions.Manager.ModifyLiquiditiesRequestAndWaitForReceiptAsync(fn)` |
 | Execute through Safe | `new SafeAccount(safe, chainId, key)` → any contract service auto-routes through Safe |
-| Protect API with payments | `[X402PaymentRequired(amount: 1_000000)]` on any ASP.NET endpoint |
-| Pay for API access | `new X402Client(http, web3, key).GetAsync(url)` |
+| Protect API with payments | `app.UseX402(options => options.Routes.Add(new RoutePaymentConfig(...)))` |
+| Pay for API access | `new X402HttpClient(http, key, options).GetAsync(url)` |
 | Query Circles balance | `new GetTotalBalanceV2(client).SendRequestAsync(address)` |
 
 For every row above, Nethereum handles gas estimation, nonce management, EIP-1559 fee calculation, and transaction signing automatically. You only override when you need to.

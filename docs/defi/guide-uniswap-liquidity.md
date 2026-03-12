@@ -334,6 +334,6 @@ After burning, the NFT is destroyed and the `tokenId` is no longer valid.
 
 ## Next Steps
 
-- [Uniswap: Swap Tokens](guide-uniswap-swap) -- quote prices and execute swaps
 - [Gnosis Safe](guide-gnosis-safe) -- execute Uniswap operations through a multi-sig wallet
+- [Uniswap: Swap Tokens](guide-uniswap-swap) -- quote prices and execute swaps
 - [Nethereum.Uniswap Package Reference](nethereum-uniswap) -- full API covering V2, V3, V4, Permit2, pool discovery, and path finding

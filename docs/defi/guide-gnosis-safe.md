@@ -171,28 +171,19 @@ Safe requires signatures ordered by signer address (ascending). The `GetCombined
 
 ## MultiSend: Batch Multiple Actions
 
-MultiSend lets you execute multiple different contract calls in a single Safe transaction. This is useful for batch operations like "approve token + swap" or "transfer to multiple recipients":
+MultiSend lets you execute multiple different contract calls in a single Safe transaction. This is useful for batch operations like "transfer to multiple recipients" or "approve + swap":
 
 ```csharp
 using Nethereum.Contracts.TransactionHandlers.MultiSend;
 
-var multiSendInputs = new List<IMultiSendInput>
-{
-    new MultiSendInput
-    {
-        Operation = MultiSendOperationType.Call,
-        To = erc20Address,
-        Value = 0,
-        Data = approveCallData
-    },
-    new MultiSendInput
-    {
-        Operation = MultiSendOperationType.Call,
-        To = routerAddress,
-        Value = 0,
-        Data = swapCallData
-    }
-};
+// Create typed inputs — each wraps a FunctionMessage with its target contract
+var input1 = new MultiSendFunctionInput<TransferFunction>(
+    new TransferFunction { To = recipient1, Value = amount1 },
+    tokenAddress);
+
+var input2 = new MultiSendFunctionInput<TransferFunction>(
+    new TransferFunction { To = recipient2, Value = amount2 },
+    tokenAddress);
 
 var transactionData = new EncodeTransactionDataFunction
 {
@@ -205,13 +196,14 @@ var transactionData = new EncodeTransactionDataFunction
     RefundReceiver = AddressUtil.ZERO_ADDRESS
 };
 
+// BuildMultiSendTransactionAsync sets Operation to DelegateCall automatically
 var execTx = await safeService.BuildMultiSendTransactionAsync(
-    transactionData, chainId, privateKey, false, multiSendInputs.ToArray());
+    transactionData, chainId, privateKey, false, input1, input2);
 
 var receipt = await safeService.ExecTransactionRequestAndWaitForReceiptAsync(execTx);
 ```
 
-MultiSend uses DelegateCall (operation type 1) internally — the `BuildMultiSendTransactionAsync` sets this automatically.
+`MultiSendFunctionInput<T>` implements `IMultiSendInput` and encodes the function call data automatically. The method sets Operation to DelegateCall (required by MultiSend) and packs all inputs into a single `MultiSendFunction` call.
 
 ## Query Safe Configuration
 

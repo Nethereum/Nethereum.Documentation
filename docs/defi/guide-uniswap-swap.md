@@ -167,13 +167,15 @@ A swap with >5% price impact usually means you're trading too large for that poo
 You can calculate human-readable prices from the pool's raw `sqrtPriceX96` value:
 
 ```csharp
-var prices = uniswap.Pricing.PriceCalculator.CalculatePricesFromSqrtPriceX96(
+// Get the price of token0 in terms of token1 (adjusted for decimals)
+var priceToken0InToken1 = uniswap.Pricing.PriceCalculator.CalculatePriceFromSqrtPriceX96(
     sqrtPriceX96,
-    token0Decimals: 18,
-    token1Decimals: 6);
+    decimals0: 18,
+    decimals1: 6);
 
-var priceToken0InToken1 = prices.Item1; // e.g., 1 ETH = 3500 USDC
-var priceToken1InToken0 = prices.Item2; // e.g., 1 USDC = 0.000286 ETH
+// Inverse gives token1 price in terms of token0
+var priceToken1InToken0 = priceToken0InToken1 == 0 ? 0 : 1 / priceToken0InToken1;
+// e.g., priceToken0InToken1 = 3500 (1 ETH = 3500 USDC)
 ```
 
 Tick math conversions are also available for working with price ranges:

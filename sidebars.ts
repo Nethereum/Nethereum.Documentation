@@ -249,6 +249,27 @@ const sidebars: SidebarsConfig = {
         'evm-simulator/overview',
         {
           type: 'category',
+          label: 'Simulation & Decoding',
+          collapsed: false,
+          items: [
+            'evm-simulator/guide-transaction-simulation',
+            'evm-simulator/guide-call-tree-decoding',
+            'evm-simulator/guide-log-extraction',
+            'evm-simulator/guide-revert-decoding',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced',
+          items: [
+            'evm-simulator/guide-erc20-simulation',
+            'evm-simulator/guide-bytecode-execution',
+            'evm-simulator/guide-evm-debugging',
+            'evm-simulator/guide-bytecode-disassembly',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'evm-simulator/nethereum-evm',

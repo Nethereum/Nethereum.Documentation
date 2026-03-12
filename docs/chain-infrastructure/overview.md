@@ -48,8 +48,18 @@ graph TD
 |---|---|
 | `Nethereum.CoreChain` | Core blockchain engine with EVM, block production, and RPC |
 | `Nethereum.CoreChain.RocksDB` | RocksDB persistent storage backend for production use |
+| `Nethereum.Merkle.Patricia` | Patricia Merkle Trie for state roots and proofs |
 
 ## Built On By
 
 - **[DevChain](/docs/devchain/overview)** — adds instant mining, SQLite storage, Hardhat/Anvil compatibility methods, and Aspire templates
 - **[AppChains (Preview)](/docs/application-chain/overview)** — adds genesis building, sequencer, P2P networking, and L1 anchoring
+
+## Guides
+
+| Guide | What You'll Learn |
+|---|---|
+| [Custom Chain Node](guide-custom-chain-node) | Build a local chain node using CoreChain's block production, transaction processing, and storage |
+| [Custom Storage](guide-custom-storage) | Implement your own storage backend or use RocksDB for persistent data |
+| [Custom RPC Handlers](guide-custom-rpc-handlers) | Add custom JSON-RPC methods to your chain using the extensible handler framework |
+| [Forking](guide-forking) | Fork state from live Ethereum networks for local testing and simulation |

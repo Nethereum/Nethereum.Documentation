@@ -289,6 +289,17 @@ const sidebars: SidebarsConfig = {
         'chain-infrastructure/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'chain-infrastructure/guide-custom-chain-node',
+            'chain-infrastructure/guide-custom-storage',
+            'chain-infrastructure/guide-custom-rpc-handlers',
+            'chain-infrastructure/guide-forking',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'chain-infrastructure/nethereum-corechain',

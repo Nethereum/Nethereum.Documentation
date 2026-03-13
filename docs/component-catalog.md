@@ -36,8 +36,8 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Index token transfers and compute balances | [`Nethereum.BlockchainStorage.Token.Postgres`](data-and-indexing/nethereum-blockchainstorage-token-postgres) |
 | Build a blockchain explorer | [`Nethereum.Explorer`](data-and-indexing/nethereum-explorer) |
 | Fetch ABI from Sourcify or Etherscan | `Nethereum.DataServices` |
-| Get token prices, metadata, and logos | [`Nethereum.TokenServices`](data-and-indexing/nethereum-tokenservices) |
-| Discover and scan token balances across wallets | [`Nethereum.TokenServices`](data-and-indexing/nethereum-tokenservices) |
+| Get token prices, metadata, and logos | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
+| Discover and scan token balances across wallets | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
 | **DeFi & Protocols** | |
 | Swap tokens on Uniswap (V2/V3/V4) | [`Nethereum.Uniswap`](defi/nethereum-uniswap) |
 | Use Permit2 for gasless token approvals | [`Nethereum.Uniswap`](defi/nethereum-uniswap) (includes Permit2) |
@@ -162,7 +162,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.BlockchainStore.Sqlite](data-and-indexing/nethereum-blockchainstore-sqlite) | SQLite storage provider |
 | [Nethereum.BlockchainStorage.Token.Postgres](data-and-indexing/nethereum-blockchainstorage-token-postgres) | Token transfer indexing and balance aggregation |
 | [Nethereum.Explorer](data-and-indexing/nethereum-explorer) | Blazor Server blockchain explorer |
-| [Nethereum.TokenServices](data-and-indexing/nethereum-tokenservices) | Token metadata, prices, logos, balance scanning |
+| [Nethereum.TokenServices](data-services/nethereum-tokenservices) | Token metadata, prices, logos, balance scanning |
 
 ### MUD Framework
 

@@ -138,9 +138,9 @@ const PACKAGE_CATEGORY = {
   'Nethereum.BlockchainStorage.Processors.Sqlite': 'data-and-indexing',
   'Nethereum.BlockchainStorage.Token.Postgres': 'data-and-indexing',
   'Nethereum.Explorer': 'data-and-indexing',
-  'Nethereum.TokenServices': 'data-and-indexing',
-  'Nethereum.DataServices': 'data-and-indexing',
-  'Nethereum.Sourcify.Database': 'data-and-indexing',
+  'Nethereum.TokenServices': 'data-services',
+  'Nethereum.DataServices': 'data-services',
+  'Nethereum.Sourcify.Database': 'data-services',
   'Nethereum.ChainStateVerification': 'data-and-indexing',
 
   // §8 MUD Framework

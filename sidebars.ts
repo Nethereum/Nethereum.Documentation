@@ -455,7 +455,6 @@ const sidebars: SidebarsConfig = {
               ],
             },
             'data-and-indexing/nethereum-explorer',
-            'data-and-indexing/nethereum-tokenservices',
           ],
         },
       ],
@@ -554,9 +553,21 @@ const sidebars: SidebarsConfig = {
         'data-services/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'data-services/guide-abi-retrieval',
+            'data-services/guide-token-portfolio',
+            'data-services/guide-chain-metadata',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'data-services/nethereum-dataservices',
+            'data-services/nethereum-sourcify-database',
+            'data-services/nethereum-tokenservices',
           ],
         },
       ],

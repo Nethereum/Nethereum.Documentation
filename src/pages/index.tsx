@@ -163,7 +163,7 @@ const taskGroups: TaskGroup[] = [
     tasks: [
       {task: 'Index blockchain data to PostgreSQL', packages: 'BlockchainProcessing + Store', link: '/docs/data-and-indexing/overview'},
       {task: 'Build a blockchain explorer', packages: 'Nethereum.Explorer', link: '/docs/data-and-indexing/nethereum-explorer'},
-      {task: 'Scan token balances across wallets', packages: 'Nethereum.TokenServices', link: '/docs/data-and-indexing/nethereum-tokenservices'},
+      {task: 'Scan token balances across wallets', packages: 'Nethereum.TokenServices', link: '/docs/data-services/nethereum-tokenservices'},
     ],
   },
   {

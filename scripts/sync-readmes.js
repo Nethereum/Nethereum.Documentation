@@ -170,7 +170,7 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Metamask.Blazor': 'blazor-dapp-integration',
   'Nethereum.WalletConnect': 'blazor-dapp-integration',
   'Nethereum.Reown.AppKit.Blazor': 'blazor-dapp-integration',
-  'Nethereum.HybridWebView': 'blazor-dapp-integration',
+  // 'Nethereum.HybridWebView': 'blazor-dapp-integration', // not yet released
 
   // §9 Unity
   'Nethereum.Unity': 'unity',

@@ -620,7 +620,6 @@ const sidebars: SidebarsConfig = {
               label: 'Tools',
               items: [
                 'blazor-dapp-integration/nethereum-blazor-solidity',
-                'blazor-dapp-integration/nethereum-hybridwebview',
               ],
             },
           ],

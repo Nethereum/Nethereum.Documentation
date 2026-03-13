@@ -13,41 +13,36 @@ description: "Getting Nethereum into Unity: setup, WebGL wallet integration, and
 - .NET Standard 2.1 compatibility level (Edit > Project Settings > Player > Api Compatibility Level)
 - For WebGL wallet features: a WebGL build target
 
-## Installing Nethereum DLLs
+## Installation via OpenUPM
 
-Copy the compiled DLLs from `src/compiledlibraries/net472UnityCommonAOT/` into `Assets/Plugins/Nethereum/` in your Unity project.
+Add Nethereum to your Unity project through OpenUPM. Edit `Packages/manifest.json`:
 
-Minimum DLLs required for core functionality:
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": ["com.nethereum.unity"]
+    }
+  ],
+  "dependencies": {
+    "com.nethereum.unity": "5.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
+```
 
-| DLL | Purpose |
-|---|---|
-| `Nethereum.Unity.dll` | Coroutine-based RPC, IPFS utilities |
-| `Nethereum.Web3.dll` | Web3 API |
-| `Nethereum.ABI.dll` | ABI encoding/decoding |
-| `Nethereum.Accounts.dll` | Account management |
-| `Nethereum.Contracts.dll` | Contract interaction |
-| `Nethereum.RPC.dll` | JSON-RPC requests |
-| `Nethereum.Hex.dll` | Hex type conversions |
-| `Nethereum.RLP.dll` | RLP encoding |
-| `Nethereum.Model.dll` | Transaction models |
-| `Nethereum.Signer.dll` | Transaction signing |
-| `Nethereum.KeyStore.dll` | Key storage |
-| `Nethereum.Util.dll` | Utilities |
-| `Nethereum.JsonRpc.Client.dll` | RPC client base |
-| `Nethereum.JsonRpc.RpcClient.dll` | HTTP RPC client |
-| `BouncyCastle.Crypto.dll` | Cryptography |
-| `Newtonsoft.Json.dll` | JSON serialization (use Unity's if already present) |
+This installs all core Nethereum libraries including WebGL wallet support (MetaMask, EIP-6963).
 
-For WebGL wallets, also add:
+Package source: https://github.com/Nethereum/Nethereum.Unity
 
-| DLL | Purpose |
-|---|---|
-| `Nethereum.Unity.Metamask.dll` | MetaMask WebGL integration |
-| `Nethereum.Unity.EIP6963.dll` | EIP-6963 multi-wallet discovery |
-| `Nethereum.EIP6963WalletInterop.dll` | EIP-6963 abstractions |
-| `Nethereum.Metamask.dll` | MetaMask abstractions |
-| `Nethereum.UI.dll` | Host provider interfaces |
-| `NethereumEIP6963.jslib` | JS interop for EIP-6963 (copy to `Assets/Plugins/`) |
+### Important Notes
+
+- **AOT builds**: The package uses AOT-compatible builds with Unity's custom Newtonsoft Json.NET
+- **WebGL + async/await**: Unity WebGL requires [WebGLThreadingPatcher](https://github.com/nicloay/WebGLThreadingPatcher) or similar to use async/await with Tasks
+- **Desktop HTTPS**: Newer Unity versions require `https://` for desktop builds — `http://` may be rejected
+- Remove `System.Net.Http.dll` and `UnityEngine.dll` if they appear in the Nethereum package — they conflict with Unity's own assemblies
 
 ## WebGL Wallet Connection
 

@@ -211,7 +211,6 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.WalletConnect](blazor-dapp-integration/nethereum-walletconnect) | WalletConnect v2 protocol |
 | [Nethereum.Reown.AppKit.Blazor](blazor-dapp-integration/nethereum-reown-appkit-blazor) | Reown AppKit modal for Blazor |
 | [Nethereum.Blazor.Solidity](blazor-dapp-integration/nethereum-blazor-solidity) | In-browser Solidity step-through debugger |
-| [Nethereum.HybridWebView](blazor-dapp-integration/nethereum-hybridwebview) | MAUI WebView with window.ethereum injection |
 
 ### Unity
 

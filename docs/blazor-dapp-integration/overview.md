@@ -72,6 +72,5 @@ A complete starter template is available: **[Nethereum.Templates.Siwe](https://g
 | [`Nethereum.WalletConnect`](nethereum-walletconnect) | WalletConnect v2 protocol implementation |
 | [`Nethereum.Reown.AppKit.Blazor`](nethereum-reown-appkit-blazor) | Reown AppKit modal (WalletConnect UI) for Blazor |
 | [`Nethereum.Blazor.Solidity`](nethereum-blazor-solidity) | In-browser Solidity step-through debugger |
-| [`Nethereum.HybridWebView`](nethereum-hybridwebview) | MAUI WebView with `window.ethereum` injection |
 
 > **SIWE packages** (`Nethereum.Siwe`, `Nethereum.Siwe.Core`) are in the [Protocols](../protocols/nethereum-siwe) section. The authentication guide in this section shows how to use them with Blazor.

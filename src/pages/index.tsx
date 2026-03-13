@@ -88,16 +88,22 @@ const sections: SectionItem[] = [
     link: '/docs/mud-framework/overview',
   },
   {
-    title: 'Wallet & UI',
+    title: 'Wallet SDK',
     icon: '💼',
-    description: 'Blazor, MAUI, Unity, MetaMask, WalletConnect, EIP-6963',
-    link: '/docs/wallet-and-ui/overview',
+    description: 'Multi-platform wallet: MVVM ViewModels, Blazor/MAUI renderers, hardware wallets',
+    link: '/docs/wallet-sdk/overview',
+  },
+  {
+    title: 'Blazor dApp Integration',
+    icon: '🌐',
+    description: 'Browser wallets, EIP-6963, MetaMask, WalletConnect, SIWE authentication',
+    link: '/docs/blazor-dapp-integration/overview',
   },
   {
     title: 'Unity',
     icon: '🎮',
     description: 'Unity game engine integration, WebGL wallets, EIP-6963',
-    link: '/docs/web-and-browser-integration/nethereum-unity-eip6963',
+    link: '/docs/unity/overview',
   },
   {
     title: 'Data Services',
@@ -171,7 +177,7 @@ const taskGroups: TaskGroup[] = [
     category: 'DeFi & Wallet',
     tasks: [
       {task: 'Swap tokens on Uniswap (V2/V3/V4)', packages: 'Nethereum.Uniswap', link: '/docs/defi/nethereum-uniswap'},
-      {task: 'Build a Blazor dApp with MetaMask', packages: 'Blazor + Metamask.Blazor', link: '/docs/wallet-and-ui/overview'},
+      {task: 'Build a Blazor dApp with MetaMask', packages: 'Blazor + Metamask.Blazor', link: '/docs/blazor-dapp-integration/overview'},
       {task: 'Use smart accounts (ERC-4337)', packages: 'Nethereum.AccountAbstraction', link: '/docs/account-abstraction/overview'},
     ],
   },

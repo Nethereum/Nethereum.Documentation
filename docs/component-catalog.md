@@ -61,12 +61,14 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Index and normalise MUD store records to Postgres | [`Nethereum.Mud.Repositories.Postgres`](mud-framework/nethereum-mud-repositories-postgres) |
 | Query normalised MUD tables with predicates | [`Nethereum.Mud`](mud-framework/nethereum-mud) |
 | Build MUD table UIs in Blazor | [`Nethereum.MudBlazorComponents`](mud-framework/nethereum-mudblazorcomponents) |
-| **Wallet & UI** | |
-| Build a multi-platform wallet app | `Nethereum.Wallet` + `Nethereum.Wallet.UI.Components` + a renderer (`.Blazor` / `.Maui`) |
-| Integrate browser wallets in Blazor (EIP-6963) | [`Nethereum.Blazor`](web-and-browser-integration/nethereum-blazor) |
-| Connect via WalletConnect / Reown | [`Nethereum.WalletConnect`](web-and-browser-integration/nethereum-walletconnect) or [`Nethereum.Reown.AppKit.Blazor`](web-and-browser-integration/nethereum-reown-appkit-blazor) |
-| Interact with any contract dynamically (no codegen) | [`Nethereum.Blazor`](web-and-browser-integration/nethereum-blazor) |
-| Build a Unity game with Ethereum | [`Nethereum.Unity`](https://github.com/Nethereum/Nethereum.Unity) |
+| **Wallet SDK** | |
+| Build a multi-platform wallet app | [`Nethereum.Wallet`](wallet-sdk/nethereum-wallet) + [`UI.Components`](wallet-sdk/nethereum-wallet-ui-components) + renderer (`.Blazor` / `.Maui`) |
+| **Blazor dApp Integration** | |
+| Integrate browser wallets in Blazor (EIP-6963) | [`Nethereum.Blazor`](blazor-dapp-integration/nethereum-blazor) |
+| Connect via WalletConnect / Reown | [`Nethereum.WalletConnect`](blazor-dapp-integration/nethereum-walletconnect) or [`Nethereum.Reown.AppKit.Blazor`](blazor-dapp-integration/nethereum-reown-appkit-blazor) |
+| Interact with any contract dynamically (no codegen) | [`Nethereum.Blazor`](blazor-dapp-integration/nethereum-blazor) |
+| **Unity** | |
+| Build a Unity game with Ethereum | [`Nethereum.Unity`](unity/nethereum-unity) |
 | **Verification & Cryptography** | |
 | Verify beacon chain state via light client | `Nethereum.Consensus.LightClient` + [`Nethereum.Signer.Bls.Herumi`](signing-and-key-management/nethereum-signer-bls-herumi) |
 | Calculate Merkle proofs and state roots | [`Nethereum.Merkle`](consensus-and-cryptography/nethereum-merkle) + [`Nethereum.Merkle.Patricia`](consensus-and-cryptography/nethereum-merkle-patricia) |
@@ -184,22 +186,40 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.Mud.Repositories.Postgres](mud-framework/nethereum-mud-repositories-postgres) | PostgreSQL MUD store with normalisation and background processing |
 | [Nethereum.MudBlazorComponents](mud-framework/nethereum-mudblazorcomponents) | Blazor UI for MUD table interaction |
 
-### Web & Browser Integration
+### Wallet SDK
 
 | Package | Description |
 |---|---|
-| [Nethereum.Blazor](web-and-browser-integration/nethereum-blazor) | Blazor integration: EIP-6963 wallet discovery, auth state, dynamic contract interaction |
-| [Nethereum.Metamask](web-and-browser-integration/nethereum-metamask) | MetaMask wallet provider |
-| [Nethereum.WalletConnect](web-and-browser-integration/nethereum-walletconnect) | WalletConnect v2 protocol |
-| [Nethereum.Reown.AppKit.Blazor](web-and-browser-integration/nethereum-reown-appkit-blazor) | Reown AppKit modal for Blazor |
+| [Nethereum.UI](wallet-sdk/nethereum-ui) | Abstract `IEthereumHostProvider`, SIWE authenticator, validation helpers |
+| [Nethereum.Wallet](wallet-sdk/nethereum-wallet) | Core wallet: accounts, vaults, chain config, HD wallets, dApp management |
+| [Nethereum.Wallet.RpcRequests](wallet-sdk/nethereum-wallet-rpcrequests) | EIP-1193 JSON-RPC handlers |
+| [Nethereum.Wallet.UI.Components](wallet-sdk/nethereum-wallet-ui-components) | Cross-platform MVVM ViewModels |
+| [Nethereum.Wallet.UI.Components.Trezor](wallet-sdk/nethereum-wallet-ui-components-trezor) | Trezor hardware wallet ViewModels |
+| [Nethereum.Wallet.UI.Components.Blazor](wallet-sdk/nethereum-wallet-ui-components-blazor) | Blazor/MudBlazor renderer |
+| [Nethereum.Wallet.UI.Components.Blazor.Trezor](wallet-sdk/nethereum-wallet-ui-components-blazor-trezor) | Blazor Trezor components |
+| [Nethereum.Wallet.UI.Components.Maui](wallet-sdk/nethereum-wallet-ui-components-maui) | .NET MAUI renderer |
+| [Nethereum.Maui.AndroidUsb](wallet-sdk/nethereum-maui-androidusb) | Android USB for Ledger/Trezor on MAUI |
 
-### Wallet & UI
+### Blazor dApp Integration
 
 | Package | Description |
 |---|---|
-| [Nethereum.Wallet](wallet-and-ui/nethereum-wallet) | Core wallet: accounts, vaults, chain config, HD wallets, dApp management |
-| [Nethereum.Wallet.UI.Components](wallet-and-ui/nethereum-wallet-ui-components) | Cross-platform UI ViewModels (MVVM) |
-| [Nethereum.Wallet.UI.Components.Blazor](wallet-and-ui/nethereum-wallet-ui-components-blazor) | Blazor renderer for wallet UI |
+| [Nethereum.Blazor](blazor-dapp-integration/nethereum-blazor) | EIP-6963 wallet discovery, auth state, dynamic contract interaction |
+| [Nethereum.EIP6963WalletInterop](blazor-dapp-integration/nethereum-eip6963walletinterop) | EIP-6963 JavaScript interop core |
+| [Nethereum.Metamask](blazor-dapp-integration/nethereum-metamask) | MetaMask wallet provider |
+| [Nethereum.Metamask.Blazor](blazor-dapp-integration/nethereum-metamask-blazor) | MetaMask Blazor interop component |
+| [Nethereum.WalletConnect](blazor-dapp-integration/nethereum-walletconnect) | WalletConnect v2 protocol |
+| [Nethereum.Reown.AppKit.Blazor](blazor-dapp-integration/nethereum-reown-appkit-blazor) | Reown AppKit modal for Blazor |
+| [Nethereum.Blazor.Solidity](blazor-dapp-integration/nethereum-blazor-solidity) | In-browser Solidity step-through debugger |
+| [Nethereum.HybridWebView](blazor-dapp-integration/nethereum-hybridwebview) | MAUI WebView with window.ethereum injection |
+
+### Unity
+
+| Package | Description |
+|---|---|
+| [Nethereum.Unity](unity/nethereum-unity) | Unity game engine integration |
+| [Nethereum.Unity.EIP6963](unity/nethereum-unity-eip6963) | EIP-6963 wallet discovery for Unity WebGL |
+| [Nethereum.Unity.Metamask](unity/nethereum-unity-metamask) | MetaMask integration for Unity WebGL |
 
 ### AppChains (Preview)
 

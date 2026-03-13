@@ -298,8 +298,8 @@ builder.Services.AddExplorerServices(builder.Configuration);
 
 ### See Also
 
-- [Nethereum.Blazor](../web-and-browser-integration/nethereum-blazor) - EIP-6963 wallet interop and Ethereum authentication provider
-- [Nethereum.Blazor.Solidity](../web-and-browser-integration/nethereum-blazor-solidity) - EVM debugger components and Solidity code viewer
+- [Nethereum.Blazor](../blazor-dapp-integration/nethereum-blazor) - EIP-6963 wallet interop and Ethereum authentication provider
+- [Nethereum.Blazor.Solidity](../blazor-dapp-integration/nethereum-blazor-solidity) - EVM debugger components and Solidity code viewer
 - **Nethereum.DataServices** - ABI info storage implementations (Sourcify, Etherscan, 4Byte)
 
 ## Additional Resources

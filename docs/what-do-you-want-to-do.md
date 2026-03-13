@@ -170,18 +170,32 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 ---
 
-## Wallet & UI
+## Wallet SDK
 
 | I want to... | Packages |
 |---|---|
+| **Build a multi-platform wallet app** | `Nethereum.Wallet` + `Nethereum.Wallet.UI.Components` + renderer (`.Blazor` / `.Maui`) |
+| **Create accounts from mnemonic/private key** | `Nethereum.Wallet` |
+| **Encrypt wallet vault** | `Nethereum.Wallet` |
+| **Integrate hardware wallets in wallet UI** | `Nethereum.Wallet.UI.Components.Trezor` + `.Blazor.Trezor` |
+| **Use Ledger/Trezor on Android** | `Nethereum.Maui.AndroidUsb` |
+
+> See the [Wallet SDK](./wallet-sdk/overview) section.
+
+---
+
+## Blazor dApp Integration
+
+| I want to... | Packages |
+|---|---|
+| **Integrate browser wallets (EIP-6963)** | `Nethereum.Blazor` + `Nethereum.EIP6963WalletInterop` |
 | **Build a Blazor dApp with MetaMask** | `Nethereum.Blazor` + `Nethereum.Metamask.Blazor` |
-| **Integrate browser wallets (EIP-6963)** | `Nethereum.EIP6963WalletInterop` |
 | **Connect via WalletConnect / Reown** | `Nethereum.WalletConnect` / `Nethereum.Reown.AppKit.Blazor` |
-| **Build a multi-platform wallet app** | `Nethereum.Wallet` + UI renderer package |
+| **Authenticate with Sign-In with Ethereum (SIWE)** | `Nethereum.Siwe` + `Nethereum.Blazor` |
 | **Interact with any contract dynamically** | `Nethereum.Blazor` |
 | **Debug EVM in browser (Solidity step-through)** | `Nethereum.Blazor.Solidity` |
 
-> See the [Wallet & UI](./wallet-and-ui/overview) section.
+> See the [Blazor dApp Integration](./blazor-dapp-integration/overview) section.
 
 ---
 
@@ -192,6 +206,8 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **Build a Unity game with Ethereum** | `Nethereum.Unity` |
 | **Integrate browser wallets in Unity WebGL (EIP-6963)** | `Nethereum.Unity.EIP6963` |
 | **Use MetaMask in Unity** | `Nethereum.Unity.Metamask` |
+
+> See the [Unity](./unity/overview) section.
 
 ---
 

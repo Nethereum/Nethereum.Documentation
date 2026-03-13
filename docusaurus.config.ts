@@ -156,7 +156,8 @@ const config: Config = {
             {label: 'Core Foundation', to: '/docs/core-foundation/overview'},
             {label: 'Smart Contracts', to: '/docs/smart-contracts/overview'},
             {label: 'Data & Indexing', to: '/docs/data-and-indexing/overview'},
-            {label: 'Wallet & UI', to: '/docs/wallet-and-ui/overview'},
+            {label: 'Wallet SDK', to: '/docs/wallet-sdk/overview'},
+            {label: 'Blazor dApp Integration', to: '/docs/blazor-dapp-integration/overview'},
           ],
         },
         {

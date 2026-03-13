@@ -494,13 +494,24 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
-    // Wallet & UI
+    // Wallet SDK
     // ═══════════════════════════════
     {
       type: 'category',
-      label: 'Wallet & UI',
+      label: 'Wallet SDK',
       items: [
-        'wallet-and-ui/overview',
+        'wallet-sdk/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'wallet-sdk/guide-wallet-quickstart',
+            'wallet-sdk/guide-wallet-architecture',
+            'wallet-sdk/guide-wallet-accounts',
+            'wallet-sdk/guide-wallet-transactions',
+          ],
+        },
         {
           type: 'category',
           label: 'Package Reference',
@@ -509,33 +520,81 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Wallet Core',
               items: [
-                'core-foundation/nethereum-ui',
-                'wallet-and-ui/nethereum-wallet',
-                'wallet-and-ui/nethereum-wallet-rpcrequests',
-                'wallet-and-ui/nethereum-wallet-ui-components',
-                'wallet-and-ui/nethereum-wallet-ui-components-trezor',
+                'wallet-sdk/nethereum-ui',
+                'wallet-sdk/nethereum-wallet',
+                'wallet-sdk/nethereum-wallet-rpcrequests',
+                'wallet-sdk/nethereum-wallet-ui-components',
+                'wallet-sdk/nethereum-wallet-ui-components-trezor',
               ],
             },
             {
               type: 'category',
-              label: 'Blazor',
+              label: 'Renderers',
               items: [
-                'wallet-and-ui/nethereum-wallet-ui-components-blazor',
-                'wallet-and-ui/nethereum-wallet-ui-components-blazor-trezor',
-                'web-and-browser-integration/nethereum-blazor',
-                'web-and-browser-integration/nethereum-blazor-solidity',
-                'web-and-browser-integration/nethereum-eip6963walletinterop',
-                'web-and-browser-integration/nethereum-metamask',
-                'web-and-browser-integration/nethereum-metamask-blazor',
-                'web-and-browser-integration/nethereum-walletconnect',
-                'web-and-browser-integration/nethereum-reown-appkit-blazor',
+                'wallet-sdk/nethereum-wallet-ui-components-blazor',
+                'wallet-sdk/nethereum-wallet-ui-components-blazor-trezor',
+                'wallet-sdk/nethereum-wallet-ui-components-maui',
               ],
             },
             {
               type: 'category',
-              label: 'MAUI',
+              label: 'Hardware & Mobile',
               items: [
-                'wallet-and-ui/nethereum-wallet-ui-components-maui',
+                'wallet-sdk/nethereum-maui-androidusb',
+              ],
+            },
+          ],
+        },
+      ],
+    },
+
+    // ═══════════════════════════════
+    // Blazor dApp Integration
+    // ═══════════════════════════════
+    {
+      type: 'category',
+      label: 'Blazor dApp Integration',
+      items: [
+        'blazor-dapp-integration/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'blazor-dapp-integration/guide-blazor-wallet-connect',
+            'blazor-dapp-integration/guide-blazor-authentication',
+            'blazor-dapp-integration/guide-blazor-contract-interaction',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced',
+          items: [
+            'blazor-dapp-integration/guide-blazor-solidity-debugger',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            {
+              type: 'category',
+              label: 'Wallet Providers',
+              items: [
+                'blazor-dapp-integration/nethereum-blazor',
+                'blazor-dapp-integration/nethereum-eip6963walletinterop',
+                'blazor-dapp-integration/nethereum-metamask',
+                'blazor-dapp-integration/nethereum-metamask-blazor',
+                'blazor-dapp-integration/nethereum-walletconnect',
+                'blazor-dapp-integration/nethereum-reown-appkit-blazor',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Tools',
+              items: [
+                'blazor-dapp-integration/nethereum-blazor-solidity',
+                'blazor-dapp-integration/nethereum-hybridwebview',
               ],
             },
           ],
@@ -550,7 +609,24 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Unity',
       items: [
-        'web-and-browser-integration/nethereum-unity-eip6963',
+        'unity/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'unity/guide-unity-quickstart',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'unity/nethereum-unity',
+            'unity/nethereum-unity-eip6963',
+            'unity/nethereum-unity-metamask',
+          ],
+        },
       ],
     },
 

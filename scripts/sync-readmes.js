@@ -47,7 +47,6 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Util.Rest': 'core-foundation',
   'Nethereum.RPC': 'core-foundation',
   'Nethereum.RPC.Reactive': 'core-foundation',
-  'Nethereum.UI': 'core-foundation',
 
   // §1 JSON-RPC Transport
   'Nethereum.JsonRpc.Client': 'json-rpc-transport',
@@ -150,28 +149,31 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Mud.Repositories.Postgres': 'mud-framework',
   'Nethereum.MudBlazorComponents': 'mud-framework',
 
-  // §9 Wallet & UI
-  'Nethereum.Wallet': 'wallet-and-ui',
-  'Nethereum.Wallet.UI.Components': 'wallet-and-ui',
-  'Nethereum.Wallet.UI.Components.Blazor': 'wallet-and-ui',
-  'Nethereum.Wallet.UI.Components.Blazor.Trezor': 'wallet-and-ui',
-  'Nethereum.Wallet.UI.Components.Trezor': 'wallet-and-ui',
-  'Nethereum.Wallet.UI.Components.Maui': 'wallet-and-ui',
+  // §9 Wallet SDK (was wallet-and-ui)
+  'Nethereum.UI': 'wallet-sdk',
+  'Nethereum.Wallet': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Blazor': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Blazor.Trezor': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Trezor': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Maui': 'wallet-sdk',
+  'Nethereum.Wallet.RpcRequests': 'wallet-sdk',
+  'Nethereum.Maui.AndroidUsb': 'wallet-sdk',
 
-  // §9 Web & Browser Integration
-  'Nethereum.Blazor': 'web-and-browser-integration',
-  'Nethereum.Blazor.Solidity': 'web-and-browser-integration',
-  'Nethereum.EIP6963WalletInterop': 'web-and-browser-integration',
-  'Nethereum.Metamask': 'web-and-browser-integration',
-  'Nethereum.Metamask.Blazor': 'web-and-browser-integration',
-  'Nethereum.WalletConnect': 'web-and-browser-integration',
-  'Nethereum.Reown.AppKit.Blazor': 'web-and-browser-integration',
-  'Nethereum.HybridWebView': 'web-and-browser-integration',
+  // §9 Blazor dApp Integration (was web-and-browser-integration)
+  'Nethereum.Blazor': 'blazor-dapp-integration',
+  'Nethereum.Blazor.Solidity': 'blazor-dapp-integration',
+  'Nethereum.EIP6963WalletInterop': 'blazor-dapp-integration',
+  'Nethereum.Metamask': 'blazor-dapp-integration',
+  'Nethereum.Metamask.Blazor': 'blazor-dapp-integration',
+  'Nethereum.WalletConnect': 'blazor-dapp-integration',
+  'Nethereum.Reown.AppKit.Blazor': 'blazor-dapp-integration',
+  'Nethereum.HybridWebView': 'blazor-dapp-integration',
 
-  // §9 Unity & Gaming (external repo, but if READMEs exist)
-  'Nethereum.Unity': 'web-and-browser-integration',
-  'Nethereum.Unity.EIP6963': 'web-and-browser-integration',
-  'Nethereum.Unity.Metamask': 'web-and-browser-integration',
+  // §9 Unity
+  'Nethereum.Unity': 'unity',
+  'Nethereum.Unity.EIP6963': 'unity',
+  'Nethereum.Unity.Metamask': 'unity',
 
   // §10 Consensus & Cryptography
   'Nethereum.Merkle': 'consensus-and-cryptography',
@@ -184,15 +186,11 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Geth': 'client-extensions',
   'Nethereum.Besu': 'client-extensions',
 
-  // Mobile
-  'Nethereum.Maui.AndroidUsb': 'wallet-and-ui',
-
   // Misc packages
   'Nethereum.BigInteger.N351': 'core-foundation',
   'Nethereum.Consensus.Ssz': 'consensus-and-cryptography',
   'Nethereum.Quorum': 'client-extensions',
   'Nethereum.RPC.Extensions': 'core-foundation',
-  'Nethereum.Wallet.RpcRequests': 'wallet-and-ui',
 };
 
 // Generate a URL-friendly slug from a package name

@@ -79,7 +79,9 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 | **[Account Abstraction](/docs/account-abstraction/overview)** | ERC-4337 UserOps, bundler, ERC-7579 smart accounts |
 | **[Data & Indexing](/docs/data-and-indexing/overview)** | Blockchain crawling, storage, explorer, token services |
 | **[MUD Framework](/docs/mud-framework/overview)** | Autonomous worlds, table indexing, store queries |
-| **[Wallet & UI](/docs/wallet-and-ui/overview)** | Blazor, MAUI, Unity, MetaMask, WalletConnect, EIP-6963 |
+| **[Wallet SDK](/docs/wallet-sdk/overview)** | Multi-platform wallet: MVVM ViewModels, Blazor/MAUI renderers, hardware wallets |
+| **[Blazor dApp Integration](/docs/blazor-dapp-integration/overview)** | Browser wallets, EIP-6963, MetaMask, WalletConnect, SIWE authentication |
+| **[Unity](/docs/unity/overview)** | Unity game engine, WebGL wallets, EIP-6963 |
 
 ## Community
 

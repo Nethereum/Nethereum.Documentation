@@ -17,8 +17,8 @@ Independent API clients for external blockchain data sources — Etherscan, Sour
 | Verify a contract via Sourcify V2 | [ABI Retrieval](guide-abi-retrieval) | `Nethereum.DataServices` |
 | Decode unknown calldata with 4Byte Directory | [ABI Retrieval](guide-abi-retrieval) | `Nethereum.DataServices` |
 | Store Sourcify data in PostgreSQL | [ABI Retrieval](guide-abi-retrieval#local-sourcify-database) | `Nethereum.Sourcify.Database` |
-| Get ERC-20 token balances for a wallet | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
-| Discover tokens and refresh prices (CoinGecko) | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
+| Scan thousands of known tokens against a wallet via multicall (no indexer needed) | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
+| Get token balances with CoinGecko prices | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
 | Manage a persistent token catalog | [Token Portfolio](guide-token-portfolio#token-catalog-for-persistent-registries) | `Nethereum.TokenServices` |
 | Discover RPC endpoints and chain metadata | [Chainlist RPC](guide-chainlist-rpc) | `Nethereum.DataServices` |
 | Get native currency info and block explorers | [Chainlist RPC](guide-chainlist-rpc) | `Nethereum.DataServices` |

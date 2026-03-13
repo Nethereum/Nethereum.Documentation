@@ -78,7 +78,7 @@ const sections: SectionItem[] = [
   {
     title: 'Data, Indexing & Explorer',
     icon: '📊',
-    description: 'Block crawling, PostgreSQL/SQLite storage, token indexing, explorer',
+    description: 'Block/tx/log crawling, PostgreSQL/SQLite storage, token indexing, EVM debugger, Blazor explorer',
     link: '/docs/data-and-indexing/overview',
   },
   {
@@ -102,7 +102,7 @@ const sections: SectionItem[] = [
   {
     title: 'Data Services',
     icon: '🔍',
-    description: 'Etherscan, Sourcify, 4Byte lookups, chain metadata, token prices',
+    description: 'Token portfolio via multicall, Etherscan, Sourcify, CoinGecko, Chainlist APIs',
     link: '/docs/data-services/overview',
   },
   {
@@ -161,9 +161,10 @@ const taskGroups: TaskGroup[] = [
   {
     category: 'Data & Indexing',
     tasks: [
-      {task: 'Index blockchain data to PostgreSQL', packages: 'BlockchainProcessing + Store', link: '/docs/data-and-indexing/overview'},
-      {task: 'Build a blockchain explorer', packages: 'Nethereum.Explorer', link: '/docs/data-and-indexing/nethereum-explorer'},
-      {task: 'Scan token balances across wallets', packages: 'Nethereum.TokenServices', link: '/docs/data-services/nethereum-tokenservices'},
+      {task: 'Index blockchain data to PostgreSQL', packages: 'BlockchainProcessing + Store', link: '/docs/data-and-indexing/guide-database-storage'},
+      {task: 'Index ERC-20/721/1155 token transfers', packages: 'BlockchainStorage.Token.Postgres', link: '/docs/data-and-indexing/guide-token-indexing'},
+      {task: 'Build a blockchain explorer', packages: 'Nethereum.Explorer', link: '/docs/data-and-indexing/guide-explorer'},
+      {task: 'Scan token balances via multicall (no indexer)', packages: 'Nethereum.TokenServices', link: '/docs/data-services/guide-token-portfolio'},
     ],
   },
   {

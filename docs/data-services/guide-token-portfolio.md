@@ -7,16 +7,17 @@ description: Discover ERC-20 tokens, fetch balances via multicall, get CoinGecko
 
 # Token Portfolio & Balances
 
-Every wallet UI needs the same thing: show the user what tokens they hold, how many, and what those tokens are worth. Doing this correctly means solving three distinct problems -- figuring out *which* tokens an account owns, reading their on-chain balances efficiently, and looking up current prices from an external feed. `Nethereum.TokenServices` handles all three through a single service class.
+Most approaches to finding what tokens a wallet holds require either indexing the entire chain or depending on a third-party indexer like Etherscan or The Graph. `Nethereum.TokenServices` takes a different approach: it ships with thousands of known tokens per chain (embedded from CoinGecko token lists) and checks all of them against a wallet address using batched multicall — hundreds of `balanceOf` reads in a single `eth_call`. No indexing infrastructure, no third-party API dependency for discovery. You get a complete portfolio in seconds from any standard RPC endpoint.
 
-In the [ABI Retrieval guide](guide-abi-retrieval) we looked at identifying *what* a contract does. Here we focus on *what a user owns* -- token balances and prices rather than function signatures.
+Pricing is optional and uses CoinGecko's free tier. The core balance pipeline — token list + multicall — works with nothing more than an RPC connection.
 
 **Use this guide when you are:**
 
-- Building a portfolio dashboard that shows balances and USD values
-- Scanning multiple wallets or chains in parallel for a multi-account app
-- Refreshing token data incrementally without re-scanning everything
-- Fetching prices for a known watchlist of tokens
+- Building a portfolio dashboard without running an indexer
+- Scanning thousands of known tokens against a wallet via multicall
+- Adding CoinGecko prices to balance results
+- Scanning multiple wallets or chains in parallel
+- Refreshing token data incrementally via Transfer events
 
 ## Prerequisites
 
@@ -28,13 +29,14 @@ dotnet add package Nethereum.TokenServices
 
 You need an RPC endpoint for the chain you want to query. The examples below use Ethereum mainnet (chain ID 1). No API keys are required for balance queries. Pricing calls use the free CoinGecko API tier, which has rate limits (see [Common Gotchas](#common-gotchas) at the end).
 
-## How Token Discovery Works
+## How It Works: Known Token List + Multicall
 
-Before diving into code, it helps to understand the pipeline that runs behind each call:
+The key insight is that you do not need to index the chain to find tokens. The package ships with an embedded list of thousands of known tokens per supported chain (sourced from CoinGecko token lists). The pipeline:
 
-1. **Token list** -- The service loads a list of known tokens for the chain. By default this comes from an embedded list bundled in the package, with CoinGecko data fetched in the background and cached.
-2. **Multicall balances** -- For every token in the list, a single batched `eth_call` (via Multicall) reads `balanceOf(account)`. This is far cheaper than calling each token contract individually.
-3. **CoinGecko prices** -- For tokens that have a non-zero balance, contract addresses are sent to CoinGecko's "simple/token_price" endpoint to fetch current USD (or other currency) prices.
+1. **Load the token list** — On first call, the service loads the embedded token list for the chain (e.g., ~1,000+ tokens for Ethereum mainnet). This list includes contract addresses, symbols, names, and decimals. No network call needed — it is bundled in the package. Optionally, a background refresh pulls updates from CoinGecko and caches them.
+2. **Batch multicall** — For every token in the list, a batched `eth_call` via the Multicall contract reads `balanceOf(account)`. The default batch size is 100 tokens per call, so checking 1,000 tokens takes ~10 RPC calls. This is orders of magnitude faster than calling each token contract individually, and it works against any standard RPC endpoint — no archive node, no indexer, no special API.
+3. **Filter non-zero** — Only tokens with a non-zero balance are returned (by default), so the result is the wallet's actual holdings.
+4. **Optional pricing** — If requested, contract addresses of held tokens are sent to CoinGecko's price API to attach USD (or other currency) values.
 
 The result is a `List<TokenBalance>` where each entry carries the token metadata, the raw balance, the decimal balance, and optionally a price and computed value.
 

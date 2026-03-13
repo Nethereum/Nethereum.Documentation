@@ -32,12 +32,18 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Generate UI components from contract definitions | `Nethereum.Generator.Console` (CLI) or VS Code Solidity extension |
 | Generate MUD table services and queries | `Nethereum.Generator.Console` (CLI) or VS Code Solidity extension |
 | **Data & Indexing** | |
-| Index blockchain data to a database | [`Nethereum.BlockchainProcessing`](data-and-indexing/nethereum-blockchainprocessing) + a store provider |
-| Index token transfers and compute balances | [`Nethereum.BlockchainStorage.Token.Postgres`](data-and-indexing/nethereum-blockchainstorage-token-postgres) |
+| Crawl blocks, transactions, and event logs | [`Nethereum.BlockchainProcessing`](data-and-indexing/nethereum-blockchainprocessing) |
+| Index blockchain data to PostgreSQL/SqlServer/SQLite | [`Nethereum.BlockchainProcessing`](data-and-indexing/nethereum-blockchainprocessing) + [`store provider`](data-and-indexing/nethereum-blockchainstore-postgres) |
+| Index ERC-20/721/1155 token transfers and balances | [`Nethereum.BlockchainStorage.Token.Postgres`](data-and-indexing/nethereum-blockchainstorage-token-postgres) |
 | Build a blockchain explorer | [`Nethereum.Explorer`](data-and-indexing/nethereum-explorer) |
-| Fetch ABI from Sourcify or Etherscan | `Nethereum.DataServices` |
-| Get token prices, metadata, and logos | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
-| Discover and scan token balances across wallets | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
+| Debug EVM execution in a browser UI | [`Nethereum.Explorer`](data-and-indexing/nethereum-explorer) (EVM debugger) |
+| Scan thousands of known tokens against a wallet via multicall (no indexer) | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
+| Get token balances with CoinGecko prices | [`Nethereum.TokenServices`](data-services/nethereum-tokenservices) |
+| Fetch ABI from Sourcify or Etherscan with automatic fallback | [`Nethereum.DataServices`](data-services/nethereum-dataservices) |
+| Discover RPC endpoints and chain metadata from Chainlist | [`Nethereum.DataServices`](data-services/nethereum-dataservices) |
+| Query gas prices, account transactions from Etherscan | [`Nethereum.DataServices`](data-services/nethereum-dataservices) |
+| Get token prices and metadata from CoinGecko | [`Nethereum.DataServices`](data-services/nethereum-dataservices) |
+| Store Sourcify data locally in PostgreSQL | [`Nethereum.Sourcify.Database`](data-services/nethereum-sourcify-database) |
 | **DeFi & Protocols** | |
 | Swap tokens on Uniswap (V2/V3/V4) | [`Nethereum.Uniswap`](defi/nethereum-uniswap) |
 | Use Permit2 for gasless token approvals | [`Nethereum.Uniswap`](defi/nethereum-uniswap) (includes Permit2) |
@@ -156,13 +162,17 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 
 | Package | Description |
 |---|---|
-| [Nethereum.BlockchainProcessing](data-and-indexing/nethereum-blockchainprocessing) | Block/transaction/log crawling with reorg detection and token indexing |
+| [Nethereum.BlockchainProcessing](data-and-indexing/nethereum-blockchainprocessing) | Block/transaction/log crawling pipeline with progress tracking and reorg detection |
+| [Nethereum.BlockchainStore.EFCore](data-and-indexing/nethereum-blockchainstore-efcore) | EF Core storage abstraction: entity models, repository interfaces, reorg handling |
 | [Nethereum.BlockchainStore.Postgres](data-and-indexing/nethereum-blockchainstore-postgres) | PostgreSQL storage provider |
 | [Nethereum.BlockchainStore.SqlServer](data-and-indexing/nethereum-blockchainstore-sqlserver) | SQL Server storage provider |
 | [Nethereum.BlockchainStore.Sqlite](data-and-indexing/nethereum-blockchainstore-sqlite) | SQLite storage provider |
-| [Nethereum.BlockchainStorage.Token.Postgres](data-and-indexing/nethereum-blockchainstorage-token-postgres) | Token transfer indexing and balance aggregation |
-| [Nethereum.Explorer](data-and-indexing/nethereum-explorer) | Blazor Server blockchain explorer |
-| [Nethereum.TokenServices](data-services/nethereum-tokenservices) | Token metadata, prices, logos, balance scanning |
+| [Nethereum.BlockchainStorage.Processors](data-and-indexing/nethereum-blockchainstorage-processors) | Hosted services for continuous indexing with retry and chain validation |
+| [Nethereum.BlockchainStorage.Token.Postgres](data-and-indexing/nethereum-blockchainstorage-token-postgres) | ERC-20/721/1155 transfer indexing, balance aggregation, NFT inventory |
+| [Nethereum.Explorer](data-and-indexing/nethereum-explorer) | Blazor Server blockchain explorer with ABI decoding, token pages, EVM debugger, MUD browser |
+| [Nethereum.DataServices](data-services/nethereum-dataservices) | Etherscan, Sourcify, CoinGecko, 4Byte, Chainlist API clients + composite ABI retrieval |
+| [Nethereum.Sourcify.Database](data-services/nethereum-sourcify-database) | Local Sourcify storage in PostgreSQL (EF Core) |
+| [Nethereum.TokenServices](data-services/nethereum-tokenservices) | Token portfolio: multicall balances over known token lists, CoinGecko pricing, multi-account scanning |
 
 ### MUD Framework
 

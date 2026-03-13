@@ -90,10 +90,21 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 | I want to... | Packages |
 |---|---|
-| **Index blockchain data to a database** | `Nethereum.BlockchainProcessing` + storage provider |
-| **Index ERC-20 transfers to PostgreSQL** | `Nethereum.BlockchainStorage.Token.Postgres` |
-| **Build a blockchain explorer** | `Nethereum.Explorer` |
-| **Scan token balances across wallets** | `Nethereum.TokenServices` |
+| **[Crawl blocks and process transactions](data-and-indexing/guide-blockchain-processing)** | `Nethereum.BlockchainProcessing` |
+| **[Process typed event logs from contracts](data-and-indexing/guide-blockchain-processing)** | `Nethereum.BlockchainProcessing` |
+| **[Resume processing after restart](data-and-indexing/guide-blockchain-processing)** | `Nethereum.BlockchainProcessing` |
+| **[Handle chain reorganisations](data-and-indexing/guide-blockchain-processing)** | `Nethereum.BlockchainProcessing` |
+| **[Index blockchain data to PostgreSQL](data-and-indexing/guide-database-storage)** | `BlockchainStore.Postgres` + `Processors.Postgres` |
+| **[Index to SQL Server or SQLite](data-and-indexing/guide-database-storage)** | `BlockchainStore.SqlServer/Sqlite` + `Processors` |
+| **[Run indexing as a hosted service](data-and-indexing/guide-database-storage)** | `BlockchainStorage.Processors.*` |
+| **[Index internal transactions (traces)](data-and-indexing/guide-database-storage)** | `Processors.*` + debug RPC |
+| **[Index ERC-20/721/1155 token transfers](data-and-indexing/guide-token-indexing)** | `BlockchainStorage.Token.Postgres` |
+| **[Aggregate token balances and NFT ownership](data-and-indexing/guide-token-indexing)** | `BlockchainStorage.Token.Postgres` |
+| **[Build a blockchain explorer](data-and-indexing/guide-explorer)** | `Nethereum.Explorer` |
+| **[Browse and search blocks/transactions/logs](data-and-indexing/guide-explorer)** | `Nethereum.Explorer` |
+| **[Interact with contracts via ABI-decoded UI](data-and-indexing/guide-explorer)** | `Nethereum.Explorer` + `DataServices` |
+| **[Debug EVM execution step-by-step in browser](data-and-indexing/guide-explorer)** | `Nethereum.Explorer` |
+| **[Browse MUD World tables in a UI](data-and-indexing/guide-explorer)** | `Nethereum.Explorer` + `Mud.Repositories.Postgres` |
 
 > See the [Data, Indexing & Explorer](./data-and-indexing/overview) section.
 
@@ -103,10 +114,15 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 | I want to... | Packages |
 |---|---|
-| **Fetch ABI from Etherscan or Sourcify** | `Nethereum.DataServices` |
-| **Look up function/event signatures (4Byte)** | `Nethereum.DataServices` |
-| **Get chain metadata and RPC endpoints** | `Nethereum.DataServices` |
-| **Get token prices, metadata, and logos** | `Nethereum.TokenServices` |
+| **Scan thousands of known tokens against a wallet via multicall (no indexer needed)** | [`Nethereum.TokenServices`](data-services/guide-token-portfolio) |
+| **Get token balances with CoinGecko prices** | [`Nethereum.TokenServices`](data-services/guide-token-portfolio) |
+| **Fetch ABI from Etherscan or Sourcify with automatic fallback** | [`Nethereum.DataServices`](data-services/guide-abi-retrieval) |
+| **Look up function/event signatures (4Byte)** | [`Nethereum.DataServices`](data-services/guide-abi-retrieval) |
+| **Discover RPC endpoints and chain metadata from Chainlist** | [`Nethereum.DataServices`](data-services/guide-chainlist-rpc) |
+| **Query gas prices from Etherscan** | [`Nethereum.DataServices`](data-services/guide-etherscan-api) |
+| **Query account transactions and token transfers** | [`Nethereum.DataServices`](data-services/guide-etherscan-api) |
+| **Get token prices and metadata from CoinGecko** | [`Nethereum.DataServices`](data-services/guide-coingecko-api) |
+| **Store Sourcify data locally in PostgreSQL** | [`Nethereum.Sourcify.Database`](data-services/nethereum-sourcify-database) |
 
 > See the [Data Services](./data-services/overview) section.
 

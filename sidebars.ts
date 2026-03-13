@@ -424,6 +424,17 @@ const sidebars: SidebarsConfig = {
         'data-and-indexing/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'data-and-indexing/guide-blockchain-processing',
+            'data-and-indexing/guide-database-storage',
+            'data-and-indexing/guide-token-indexing',
+            'data-and-indexing/guide-explorer',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             {

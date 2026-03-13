@@ -11,8 +11,25 @@ Integrate Ethereum blockchain features into Unity games. Nethereum provides Unit
 
 ## Getting Started
 
-1. Import the compiled Nethereum DLLs from `src/compiledlibraries/net472UnityCommonAOT/` into your Unity project's `Assets/Plugins/` folder
-2. Add the wallet integration package for your target platform
+Install via OpenUPM by adding to your `Packages/manifest.json`:
+
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": ["com.nethereum.unity"]
+    }
+  ],
+  "dependencies": {
+    "com.nethereum.unity": "5.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
+```
+
+Package source: https://github.com/Nethereum/Nethereum.Unity
 
 ## WebGL Wallet Integration
 

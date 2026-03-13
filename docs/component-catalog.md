@@ -151,7 +151,6 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.AccountAbstraction.Bundler](account-abstraction/nethereum-accountabstraction-bundler) | Full bundler: mempool, reputation, BLS aggregation, bundle submission |
 | [Nethereum.AccountAbstraction.Bundler.RpcServer](account-abstraction/nethereum-accountabstraction-bundler-rpcserver) | Bundler JSON-RPC server |
 | [Nethereum.AccountAbstraction.SimpleAccount](account-abstraction/nethereum-accountabstraction-simpleaccount) | SimpleAccount factory interaction |
-| [Nethereum.AccountAbstraction.AppChain](account-abstraction/nethereum-accountabstraction-appchain) | AA integration for AppChain (gasless UX, session keys) |
 
 ### Data Processing & Storage
 

@@ -56,9 +56,9 @@ dotnet add package Nethereum.AccountAbstraction.Bundler.RpcServer
 | Method | Description |
 |--------|-------------|
 | `debug_bundler_dumpMempool` | List all pending UserOperations |
-| `debug_bundler_flush` | Force immediate bundle execution |
+| `debug_bundler_sendBundleNow` | Force immediate bundle execution |
 | `debug_bundler_setReputation` | Set entity reputation entries |
-| `debug_bundler_getReputation` | Get entity reputation status |
+| `debug_bundler_dumpReputation` | Get entity reputation status |
 
 ## Quick Start
 
@@ -72,7 +72,7 @@ registry.Register(new EthEstimateUserOperationGasHandler(bundlerService));
 registry.Register(new EthGetUserOperationByHashHandler(bundlerService));
 registry.Register(new EthGetUserOperationReceiptHandler(bundlerService));
 registry.Register(new EthSupportedEntryPointsHandler(bundlerService));
-registry.Register(new BundlerEthChainIdHandler(chainId));
+registry.Register(new BundlerEthChainIdHandler(bundlerService));
 ```
 
 ## Usage Examples
@@ -93,6 +93,10 @@ registry.Register(new EthSupportedEntryPointsHandler(bundlerService));
 // Debug methods
 registry.Register(new DebugBundlerDumpMempoolHandler(bundlerService));
 registry.Register(new DebugBundlerFlushHandler(bundlerService));
+
+// Recommended: use extension methods for one-line registration
+// registry.AddBundlerHandlers(bundlerService);       // all standard handlers
+// registry.AddBundlerDebugHandlers(bundlerService);  // all debug handlers
 ```
 
 ## API Reference
@@ -110,14 +114,14 @@ Errors: `-32602` (invalid params), `-32500` (validation failed), `-32603` (inter
 Handles `eth_estimateUserOperationGas` - estimates gas limits.
 
 Parameters: `[userOp (JSON object), entryPoint (address)]`
-Returns: `{ preVerificationGas, verificationGasLimit, callGasLimit }`
+Returns: `{ preVerificationGas, verificationGasLimit, callGasLimit, maxFeePerGas, maxPriorityFeePerGas }`
 
 ### EthGetUserOperationReceiptHandler
 
 Handles `eth_getUserOperationReceipt` - retrieves mined operation receipt.
 
 Parameters: `[userOpHash (hex)]`
-Returns: Receipt with `success`, `actualGasUsed`, `actualGasCost`, `sender`, `paymaster`
+Returns: Receipt with `userOpHash`, `entryPoint`, `sender`, `nonce`, `paymaster`, `actualGasUsed`, `actualGasCost`, `success`, `reason`, `logs`, and nested `receipt`
 
 ## Related Packages
 

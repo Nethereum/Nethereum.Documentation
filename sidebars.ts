@@ -390,13 +390,25 @@ const sidebars: SidebarsConfig = {
         'account-abstraction/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'account-abstraction/guide-send-useroperation',
+            'account-abstraction/guide-smart-contracts-with-aa',
+            'account-abstraction/guide-smart-account-deployment',
+            'account-abstraction/guide-batching-and-paymasters',
+            'account-abstraction/guide-modular-accounts',
+            'account-abstraction/guide-run-bundler',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'account-abstraction/nethereum-accountabstraction',
             'account-abstraction/nethereum-accountabstraction-bundler',
             'account-abstraction/nethereum-accountabstraction-bundler-rpcserver',
             'account-abstraction/nethereum-accountabstraction-simpleaccount',
-            'account-abstraction/nethereum-accountabstraction-appchain',
           ],
         },
       ],

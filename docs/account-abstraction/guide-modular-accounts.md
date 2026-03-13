@@ -200,32 +200,54 @@ var config = SmartSessionConfig.CreateWithOwner(
     sessionModuleAddress, sessionValidatorAddress, ownerAddress, salt);
 ```
 
-### Scope Permissions with Policies
+### Scope Permissions with ERC20SpendingLimitBuilder
 
-The real power of sessions is scoping. You can restrict a session key to specific actions with spending limits:
+The real power of sessions is scoping. Use `ERC20SpendingLimitBuilder` to encode spending limit policy data for one or more tokens:
 
 ```csharp
-var tokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
+using Nethereum.AccountAbstraction.ERC7579.Modules.SmartSession;
+
+var usdcToken = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 var spendingLimitPolicy = "0x8888888888888888888888888888888888888888";
-var spendingLimitInitData = new byte[] { /* policy-specific init data */ };
+var dailyLimit = BigInteger.Parse("100000000"); // 100 USDC (6 decimals)
 
-var config = SmartSessionConfig.Create(sessionModuleAddress, sessionValidatorAddress, salt)
-    .WithERC20TransferAction(tokenAddress, spendingLimitPolicy, spendingLimitInitData)
-    .WithUserOpPolicy(policyAddress: "0x9999999999999999999999999999999999999999")
-    .WithPaymasterPermission(permit: true);
+// Single token — use the static helper
+var spendingLimitInitData = ERC20SpendingLimitBuilder.SingleToken(usdcToken, dailyLimit);
+
+var config = new SmartSessionConfig()
+    .WithSessionValidator(sessionValidatorAddress)
+    .WithSalt(salt)
+    .WithERC20TransferAction(usdcToken, spendingLimitPolicy, spendingLimitInitData)
+    .WithPaymasterPermission(true);
 ```
 
-This creates a session that can only transfer ERC-20 tokens on the specified contract, subject to the spending limit policy, and allows a paymaster to sponsor gas.
-
-You can also define custom actions targeting any contract function:
+For multiple tokens, use the fluent builder:
 
 ```csharp
-var targetContract = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-var functionSelector = new byte[] { 0xa9, 0x05, 0x9c, 0xbb }; // transfer(address,uint256)
-
-var config = SmartSessionConfig.Create(sessionModuleAddress, sessionValidatorAddress, salt)
-    .WithAction(targetContract, functionSelector);
+var initData = new ERC20SpendingLimitBuilder()
+    .AddTokenLimit("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", BigInteger.Parse("100000000"))  // 100 USDC
+    .AddTokenLimit("0xdAC17F958D2ee523a2206206994597C13D831ec7", BigInteger.Parse("200000000"))  // 200 USDT
+    .Build();
 ```
+
+The builder validates inputs — `BigInteger.Zero` as a limit throws `ArgumentException`, and calling `Build()` with no tokens throws `InvalidOperationException`.
+
+### Define Custom Actions with ActionDataBuilder
+
+When you need both transfer and approve permissions (common in DeFi), use `ActionDataBuilder` to construct the action configuration:
+
+```csharp
+var transferAction = ActionDataBuilder.ERC20Transfer(usdcToken, spendingLimitPolicy, limit);
+var approveAction = ActionDataBuilder.ERC20Approve(usdcToken, spendingLimitPolicy, limit);
+
+var config = new SmartSessionConfig()
+    .WithSessionValidator(sessionKeyValidator)
+    .WithSalt(salt)
+    .WithAction(transferAction)
+    .WithAction(approveAction);
+```
+
+Each action targets a specific function selector — `0xa9059cbb` for `transfer(address,uint256)` and `0x095ea7b3` for `approve(address,uint256)`. The policy contract enforces the spending limit independently per action.
 
 ### Convert to a Session Object
 
@@ -236,6 +258,31 @@ Session session = config.ToSession();
 ```
 
 This produces the `Session` object that the smart session module expects.
+
+### Manage Session Keys
+
+`SessionKeyManager` handles the lifecycle of session keys — generation, storage, retrieval, and cleanup. Use `InMemorySessionKeyStore` for development or implement `ISessionKeyStore` for persistent storage:
+
+```csharp
+using Nethereum.AccountAbstraction.SessionKeys;
+
+var sessionKeyStore = new InMemorySessionKeyStore();
+var sessionKeyManager = new SessionKeyManager(sessionKeyStore);
+
+// Generate a session key valid for 7 days
+var generatedSession = await sessionKeyManager.GenerateSessionKeyAsync(accountAddress, validDays: 7);
+
+// Mark it as registered after on-chain installation
+await sessionKeyManager.MarkRegisteredAsync(generatedSession.Key);
+
+// Retrieve the best (most recently registered) session key for an account
+var bestKey = await sessionKeyManager.GetBestSessionKeyAsync(accountAddress);
+
+// Remove a session key when it's no longer needed
+await sessionKeyManager.RemoveSessionKeyAsync(generatedSession.Key);
+```
+
+The manager tracks key states (generated, registered, expired) and `GetBestSessionKeyAsync` returns the most suitable active key for a given account. Use this to build session key rotation or expiry workflows in your application.
 
 ## Configure Modules at Account Creation
 

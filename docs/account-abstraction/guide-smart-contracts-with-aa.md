@@ -95,6 +95,33 @@ var aaHandler = erc20Service.ChangeContractHandlerToAA(
 
 Both overloads return the `AAContractHandler`, which you can further configure with factory, paymaster, and gas settings using fluent methods.
 
+## Use Built-in Services with AA
+
+Nethereum's built-in typed services (`web3.Eth.ERC20`, `web3.Eth.ERC721`, `web3.Eth.ERC1155`, ENS) implement `IContractHandlerService` and use `SwitchToAccountAbstraction` instead of `ChangeContractHandlerToAA`. The API is the same — the method name differs because these services use a different base type.
+
+```csharp
+var erc20Service = web3.Eth.ERC20.GetContractService(tokenAddress);
+
+erc20Service.SwitchToAccountAbstraction(
+    accountAddress,
+    accountKey,
+    bundlerService,
+    entryPointAddress,
+    factory: factoryConfig);
+
+var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(
+    recipient, transferAmount);
+```
+
+After switching, all write operations on the service go through the bundler as UserOperations. Read operations like `BalanceOfQueryAsync` still use `eth_call` directly — no UserOperation needed for queries.
+
+| Base Type | Method | Used By |
+|-----------|--------|---------|
+| `ContractWeb3ServiceBase` | `ChangeContractHandlerToAA` | Code-generated services (from ABI) |
+| `IContractHandlerService` | `SwitchToAccountAbstraction` | Built-in services (`web3.Eth.ERC20`, ERC721, ERC1155, ENS) |
+
+Both methods configure the same `AAContractHandler` under the hood and accept the same parameters.
+
 ## First-Time Account Deployment
 
 When a smart account has not been deployed yet, the UserOperation must include `InitCode` so the EntryPoint creates it on-chain. Pass a `FactoryConfig` to handle this automatically:

@@ -109,6 +109,34 @@ Console.WriteLine($"Is deployed:        {await account.IsDeployedAsync()}");
 | `GetAddressAsync()` | Returns the counterfactual address without deploying |
 | `GetInitCodeAsync()` | Returns the init code bytes for use in a UserOperation |
 
+## More Control: SmartAccountFactoryService
+
+If you need lower-level access to the factory contract — for example, to call custom factory methods or inspect factory state — use `SmartAccountFactoryService` directly instead of the builder:
+
+```csharp
+using Nethereum.AccountAbstraction.Services;
+
+var factoryService = await SmartAccountFactoryService.LoadAsync(web3, factoryAddress);
+
+// Predict the address
+var predictedAddress = await factoryService.GetAccountAddressAsync(salt, initData);
+
+// Deploy the account
+await factoryService.CreateAccountAsync(salt, initData);
+
+// Load the deployed account as a SmartAccountService
+var smartAccountService = await SmartAccountService.LoadAsync(web3, predictedAddress);
+```
+
+The builder uses `SmartAccountFactoryService` internally. Use the factory service directly when you need to pass custom `initData` or work with non-standard factory contracts.
+
+Web3 extension methods provide a shorter path to these services:
+
+```csharp
+var factoryService = await web3.GetSmartAccountFactoryAsync(factoryAddress);
+var accountService = await web3.GetSmartAccountAsync(accountAddress);
+```
+
 ## Load an Existing Account
 
 If the smart account is already deployed, you can load it directly without going through the builder's deploy flow.

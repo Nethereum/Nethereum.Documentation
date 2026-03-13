@@ -213,23 +213,42 @@ handler.WithPaymaster(paymasterAddress, paymasterData);
 
 A verifying paymaster requires an off-chain signature to approve each UserOperation. This is the most common pattern for dApp-sponsored transactions: your backend signs each request after checking business rules (rate limits, user eligibility, etc.).
 
-Retrieve a `VerifyingPaymasterManager` from Web3:
+Retrieve a `VerifyingPaymasterManager` from Web3 using the extension method:
 
 ```csharp
+using Nethereum.AccountAbstraction.Paymasters;
+using Nethereum.AccountAbstraction.Extensions;
+
 var paymasterAddress = "0xYourVerifyingPaymasterAddress";
 var paymasterSignerKey = "0xPAYMASTER_SIGNER_PRIVATE_KEY";
 
-var paymaster = web3.GetVerifyingPaymasterAsync(paymasterAddress, paymasterSignerKey);
+var paymaster = await web3.GetVerifyingPaymasterAsync(paymasterAddress, paymasterSignerKey);
 ```
 
 The paymaster signer key is the private key whose address is registered in the paymaster contract as an authorized signer. The manager handles signing the UserOperation hash with the correct format that the on-chain contract expects.
+
+`VerifyingPaymasterManager` also manages deposits and sponsors UserOperations:
+
+```csharp
+// Deposit ETH into the paymaster contract
+await paymaster.DepositAsync(Web3.Convert.ToWei(1));
+
+// Check the deposit balance
+var deposit = await paymaster.GetDepositAsync();
+
+// Sponsor a UserOperation — signs and attaches paymaster data
+var sponsorResult = await paymaster.SponsorUserOperationAsync(userOp);
+if (sponsorResult.IsSponsored)
+{
+    // userOp now has Paymaster, PaymasterData, and gas fields populated
+}
+```
 
 Wire it into the handler using a `PaymasterConfig`:
 
 ```csharp
 var config = new PaymasterConfig(paymasterAddress, async userOp =>
 {
-    // Sign the UserOperation for the paymaster
     return await paymaster.GetPaymasterDataAsync(userOp);
 });
 
@@ -237,6 +256,26 @@ handler.WithPaymaster(config);
 ```
 
 The paymaster signs each UserOperation just before submission, ensuring the signature covers the final gas values.
+
+### More Control: Manual Paymaster Fields
+
+When building UserOperations manually (without `AAContractHandler`), set the paymaster fields directly on the `UserOperation`:
+
+```csharp
+var userOp = new UserOperation
+{
+    Sender = accountAddress,
+    CallData = executeFunction.GetCallData(),
+    Paymaster = paymasterAddress,
+    PaymasterData = Array.Empty<byte>(),
+    PaymasterVerificationGasLimit = 100_000,
+    PaymasterPostOpGasLimit = 50_000,
+    MaxFeePerGas = 2_000_000_000,
+    MaxPriorityFeePerGas = 1_000_000_000
+};
+```
+
+The `Paymaster` field is the paymaster contract address. `PaymasterData` contains any data the paymaster contract requires for validation (empty for accept-all paymasters). `PaymasterVerificationGasLimit` and `PaymasterPostOpGasLimit` control how much gas the paymaster's `validatePaymasterUserOp` and `postOp` functions can consume.
 
 ## Deposit Paymaster
 

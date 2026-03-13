@@ -184,7 +184,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 ---
 
-## Blazor dApp Integration
+## Web (Blazor) dApp Integration
 
 | I want to... | Packages |
 |---|---|
@@ -195,7 +195,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **Interact with any contract dynamically** | `Nethereum.Blazor` |
 | **Debug EVM in browser (Solidity step-through)** | `Nethereum.Blazor.Solidity` |
 
-> See the [Blazor dApp Integration](./blazor-dapp-integration/overview) section.
+> See the [Web (Blazor) dApp Integration](./blazor-dapp-integration/overview) section.
 
 ---
 

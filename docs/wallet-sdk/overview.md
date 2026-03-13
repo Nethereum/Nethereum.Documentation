@@ -60,7 +60,7 @@ builder.Services.AddNethereumWalletBlazorComponents();
 
 | Package | Description |
 |---|---|
-| [`Nethereum.UI`](nethereum-ui) | Abstract `IEthereumHostProvider`, SIWE authenticator, validation helpers |
+| [`Nethereum.UI`](../wallet-connectivity/nethereum-ui) | Abstract `IEthereumHostProvider`, SIWE authenticator, validation helpers |
 | [`Nethereum.Wallet`](nethereum-wallet) | Core wallet: accounts, vaults, chain config, HD wallets, dApp management |
 | [`Nethereum.Wallet.RpcRequests`](nethereum-wallet-rpcrequests) | EIP-1193 JSON-RPC handlers |
 | [`Nethereum.Wallet.UI.Components`](nethereum-wallet-ui-components) | Cross-platform MVVM ViewModels |

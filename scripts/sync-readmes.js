@@ -149,8 +149,10 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Mud.Repositories.Postgres': 'mud-framework',
   'Nethereum.MudBlazorComponents': 'mud-framework',
 
-  // §9 Wallet SDK (was wallet-and-ui)
-  'Nethereum.UI': 'wallet-sdk',
+  // §9 Wallet Connectivity
+  'Nethereum.UI': 'wallet-connectivity',
+
+  // §10 Wallet SDK (was wallet-and-ui)
   'Nethereum.Wallet': 'wallet-sdk',
   'Nethereum.Wallet.UI.Components': 'wallet-sdk',
   'Nethereum.Wallet.UI.Components.Blazor': 'wallet-sdk',

@@ -80,7 +80,8 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 | **[Data & Indexing](/docs/data-and-indexing/overview)** | Blockchain crawling, storage, explorer, token services |
 | **[MUD Framework](/docs/mud-framework/overview)** | Autonomous worlds, table indexing, store queries |
 | **[Wallet SDK](/docs/wallet-sdk/overview)** | Multi-platform wallet: MVVM ViewModels, Blazor/MAUI renderers, hardware wallets |
-| **[Blazor dApp Integration](/docs/blazor-dapp-integration/overview)** | Browser wallets, EIP-6963, MetaMask, WalletConnect, SIWE authentication |
+| **[Wallet Connectivity](/docs/wallet-connectivity/overview)** | `IEthereumHostProvider` — the universal wallet abstraction for all platforms |
+| **[Web (Blazor) dApp Integration](/docs/blazor-dapp-integration/overview)** | Browser wallets, EIP-6963, MetaMask, WalletConnect, SIWE authentication |
 | **[Unity](/docs/unity/overview)** | Unity game engine, WebGL wallets, EIP-6963 |
 
 ## Community

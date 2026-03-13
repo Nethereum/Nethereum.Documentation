@@ -88,13 +88,19 @@ const sections: SectionItem[] = [
     link: '/docs/mud-framework/overview',
   },
   {
+    title: 'Wallet Connectivity',
+    icon: '🔌',
+    description: 'IEthereumHostProvider — the universal wallet abstraction for Blazor, Unity, and Wallet SDK',
+    link: '/docs/wallet-connectivity/overview',
+  },
+  {
     title: 'Wallet SDK',
     icon: '💼',
     description: 'Multi-platform wallet: MVVM ViewModels, Blazor/MAUI renderers, hardware wallets',
     link: '/docs/wallet-sdk/overview',
   },
   {
-    title: 'Blazor dApp Integration',
+    title: 'Web (Blazor) dApp Integration',
     icon: '🌐',
     description: 'Browser wallets, EIP-6963, MetaMask, WalletConnect, SIWE authentication',
     link: '/docs/blazor-dapp-integration/overview',

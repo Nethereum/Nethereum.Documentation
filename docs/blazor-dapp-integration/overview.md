@@ -1,11 +1,11 @@
 ---
-title: Blazor dApp Integration
+title: "Web (Blazor) dApp Integration"
 sidebar_label: Overview
 sidebar_position: 1
 description: Connect browser wallets, authenticate with SIWE, and interact with smart contracts in Blazor web applications
 ---
 
-# Blazor dApp Integration
+# Web (Blazor) dApp Integration
 
 Build Blazor web applications that connect to browser wallets, authenticate users with Sign-In with Ethereum (SIWE), and interact with smart contracts — all without leaving the .NET ecosystem.
 

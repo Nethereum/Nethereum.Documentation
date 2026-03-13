@@ -63,7 +63,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Build MUD table UIs in Blazor | [`Nethereum.MudBlazorComponents`](mud-framework/nethereum-mudblazorcomponents) |
 | **Wallet SDK** | |
 | Build a multi-platform wallet app | [`Nethereum.Wallet`](wallet-sdk/nethereum-wallet) + [`UI.Components`](wallet-sdk/nethereum-wallet-ui-components) + renderer (`.Blazor` / `.Maui`) |
-| **Blazor dApp Integration** | |
+| **Web (Blazor) dApp Integration** | |
 | Integrate browser wallets in Blazor (EIP-6963) | [`Nethereum.Blazor`](blazor-dapp-integration/nethereum-blazor) |
 | Connect via WalletConnect / Reown | [`Nethereum.WalletConnect`](blazor-dapp-integration/nethereum-walletconnect) or [`Nethereum.Reown.AppKit.Blazor`](blazor-dapp-integration/nethereum-reown-appkit-blazor) |
 | Interact with any contract dynamically (no codegen) | [`Nethereum.Blazor`](blazor-dapp-integration/nethereum-blazor) |
@@ -190,7 +190,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 
 | Package | Description |
 |---|---|
-| [Nethereum.UI](wallet-sdk/nethereum-ui) | Abstract `IEthereumHostProvider`, SIWE authenticator, validation helpers |
+| [Nethereum.UI](wallet-connectivity/nethereum-ui) | Abstract `IEthereumHostProvider`, SIWE authenticator, validation helpers |
 | [Nethereum.Wallet](wallet-sdk/nethereum-wallet) | Core wallet: accounts, vaults, chain config, HD wallets, dApp management |
 | [Nethereum.Wallet.RpcRequests](wallet-sdk/nethereum-wallet-rpcrequests) | EIP-1193 JSON-RPC handlers |
 | [Nethereum.Wallet.UI.Components](wallet-sdk/nethereum-wallet-ui-components) | Cross-platform MVVM ViewModels |
@@ -200,7 +200,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.Wallet.UI.Components.Maui](wallet-sdk/nethereum-wallet-ui-components-maui) | .NET MAUI renderer |
 | [Nethereum.Maui.AndroidUsb](wallet-sdk/nethereum-maui-androidusb) | Android USB for Ledger/Trezor on MAUI |
 
-### Blazor dApp Integration
+### Web (Blazor) dApp Integration
 
 | Package | Description |
 |---|---|

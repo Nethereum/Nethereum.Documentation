@@ -494,6 +494,32 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
+    // Wallet Connectivity
+    // ═══════════════════════════════
+    {
+      type: 'category',
+      label: 'Wallet Connectivity',
+      items: [
+        'wallet-connectivity/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'wallet-connectivity/guide-host-providers',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'wallet-connectivity/nethereum-ui',
+          ],
+        },
+      ],
+    },
+
+    // ═══════════════════════════════
     // Wallet SDK
     // ═══════════════════════════════
     {
@@ -510,6 +536,7 @@ const sidebars: SidebarsConfig = {
             'wallet-sdk/guide-wallet-architecture',
             'wallet-sdk/guide-wallet-accounts',
             'wallet-sdk/guide-wallet-transactions',
+            'wallet-sdk/guide-wallet-rpc-provider',
           ],
         },
         {
@@ -520,7 +547,6 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Wallet Core',
               items: [
-                'wallet-sdk/nethereum-ui',
                 'wallet-sdk/nethereum-wallet',
                 'wallet-sdk/nethereum-wallet-rpcrequests',
                 'wallet-sdk/nethereum-wallet-ui-components',
@@ -549,11 +575,11 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
-    // Blazor dApp Integration
+    // Web (Blazor) dApp Integration
     // ═══════════════════════════════
     {
       type: 'category',
-      label: 'Blazor dApp Integration',
+      label: 'Web (Blazor) dApp Integration',
       items: [
         'blazor-dapp-integration/overview',
         {

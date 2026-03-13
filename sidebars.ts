@@ -558,7 +558,9 @@ const sidebars: SidebarsConfig = {
           items: [
             'data-services/guide-abi-retrieval',
             'data-services/guide-token-portfolio',
-            'data-services/guide-chain-metadata',
+            'data-services/guide-chainlist-rpc',
+            'data-services/guide-etherscan-api',
+            'data-services/guide-coingecko-api',
           ],
         },
         {

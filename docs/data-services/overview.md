@@ -20,8 +20,13 @@ Independent API clients for external blockchain data sources — Etherscan, Sour
 | Get ERC-20 token balances for a wallet | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
 | Discover tokens and refresh prices (CoinGecko) | [Token Portfolio](guide-token-portfolio) | `Nethereum.TokenServices` |
 | Manage a persistent token catalog | [Token Portfolio](guide-token-portfolio#token-catalog-for-persistent-registries) | `Nethereum.TokenServices` |
-| Query gas prices from Etherscan | [Chain Metadata](guide-chain-metadata) | `Nethereum.DataServices` |
-| Discover RPC endpoints from Chainlist | [Chain Metadata](guide-chain-metadata) | `Nethereum.DataServices` |
+| Discover RPC endpoints and chain metadata | [Chainlist RPC](guide-chainlist-rpc) | `Nethereum.DataServices` |
+| Get native currency info and block explorers | [Chainlist RPC](guide-chainlist-rpc) | `Nethereum.DataServices` |
+| Query gas prices from Etherscan | [Etherscan API](guide-etherscan-api) | `Nethereum.DataServices` |
+| Query account transactions and token transfers | [Etherscan API](guide-etherscan-api) | `Nethereum.DataServices` |
+| Download bulk Sourcify data (Parquet exports) | [Etherscan API](guide-etherscan-api#sourcify-parquet-exports) | `Nethereum.DataServices` |
+| Get token prices and metadata from CoinGecko | [CoinGecko API](guide-coingecko-api) | `Nethereum.DataServices` |
+| Map chain IDs to CoinGecko platform identifiers | [CoinGecko API](guide-coingecko-api) | `Nethereum.DataServices` |
 
 ## Packages
 
@@ -35,4 +40,6 @@ Independent API clients for external blockchain data sources — Etherscan, Sour
 
 1. **[ABI Retrieval](guide-abi-retrieval)** — Start here to fetch contract ABIs from multiple sources with automatic fallback
 2. **[Token Portfolio](guide-token-portfolio)** — Build wallet portfolio displays with token balances and prices
-3. **[Chain Metadata](guide-chain-metadata)** — Query gas prices, discover RPC endpoints, and fetch chain information
+3. **[Chainlist RPC](guide-chainlist-rpc)** — Discover EVM chains, RPC endpoints, and native currencies
+4. **[Etherscan API](guide-etherscan-api)** — Query gas prices, account transactions, balances, and contract data
+5. **[CoinGecko API](guide-coingecko-api)** — Fetch token metadata and prices directly from CoinGecko

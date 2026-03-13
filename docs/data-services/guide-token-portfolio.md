@@ -543,6 +543,8 @@ services.AddErc20TokenServices()
 
 ## Next Steps
 
-- **[Chain Metadata](guide-chain-metadata)** -- Query gas prices, chain IDs, and RPC endpoint information
-- **[ABI Retrieval](guide-abi-retrieval)** -- Fetch contract ABIs for decoded interactions
-- **[Nethereum.TokenServices](nethereum-tokenservices)** -- Full package API reference
+- **[Chainlist RPC](guide-chainlist-rpc)** — Discover EVM chains and RPC endpoints
+- **[Etherscan API](guide-etherscan-api)** — Query gas prices, account transactions, and contract data
+- **[CoinGecko API](guide-coingecko-api)** — Fetch token metadata and prices directly
+- **[ABI Retrieval](guide-abi-retrieval)** — Fetch contract ABIs for decoded interactions
+- **[Nethereum.TokenServices](nethereum-tokenservices)** — Full package API reference

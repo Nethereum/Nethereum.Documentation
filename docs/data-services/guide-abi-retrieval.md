@@ -349,7 +349,9 @@ The sync is incremental (using ETags), so subsequent runs only download new data
 
 ## Next steps
 
-- **[Token Portfolio](guide-token-portfolio)** -- Use the token discovery and pricing APIs to build portfolio views, building on the ABI retrieval covered here
-- **[Chain Metadata](guide-chain-metadata)** -- Query gas prices and discover RPC endpoints for any chain
-- **[Nethereum.DataServices](nethereum-dataservices)** -- Full package API reference
-- **[Nethereum.Sourcify.Database](nethereum-sourcify-database)** -- Database schema and import API reference
+- **[Token Portfolio](guide-token-portfolio)** — Use the token discovery and pricing APIs to build portfolio views, building on the ABI retrieval covered here
+- **[Chainlist RPC](guide-chainlist-rpc)** — Discover EVM chains and RPC endpoints
+- **[Etherscan API](guide-etherscan-api)** — Query gas prices, account transactions, and contract data
+- **[CoinGecko API](guide-coingecko-api)** — Fetch token metadata and prices
+- **[Nethereum.DataServices](nethereum-dataservices)** — Full package API reference
+- **[Nethereum.Sourcify.Database](nethereum-sourcify-database)** — Database schema and import API reference

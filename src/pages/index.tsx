@@ -120,7 +120,7 @@ const sections: SectionItem[] = [
   {
     title: 'Consensus Light Client',
     icon: '🔭',
-    description: 'Beacon chain API, light client proofs, SSZ serialization',
+    description: 'Verified state queries, beacon chain light client, storage proofs, SSZ serialization',
     link: '/docs/consensus-light-client/overview',
   },
   {
@@ -177,6 +177,13 @@ const taskGroups: TaskGroup[] = [
       {task: 'Index ERC-20/721/1155 token transfers', packages: 'BlockchainStorage.Token.Postgres', link: '/docs/data-and-indexing/guide-token-indexing'},
       {task: 'Build a blockchain explorer', packages: 'Nethereum.Explorer', link: '/docs/data-and-indexing/guide-explorer'},
       {task: 'Scan token balances via multicall (no indexer)', packages: 'Nethereum.TokenServices', link: '/docs/data-services/guide-token-portfolio'},
+    ],
+  },
+  {
+    category: 'Verification',
+    tasks: [
+      {task: 'Verify state without trusting RPC', packages: 'ChainStateVerification + LightClient', link: '/docs/consensus-light-client/guide-verified-state'},
+      {task: 'Track finalized beacon headers', packages: 'Consensus.LightClient', link: '/docs/consensus-light-client/guide-light-client'},
     ],
   },
   {

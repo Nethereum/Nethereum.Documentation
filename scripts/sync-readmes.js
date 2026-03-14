@@ -182,7 +182,7 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Merkle.Patricia': 'consensus-and-cryptography',
   'Nethereum.Ssz': 'consensus-and-cryptography',
   'Nethereum.Consensus.LightClient': 'consensus-and-cryptography',
-  'Nethereum.Beaconchain': 'consensus-and-cryptography',
+  'Nethereum.Beaconchain': 'consensus-light-client',
 
   // §10 Client Extensions
   'Nethereum.Geth': 'client-extensions',

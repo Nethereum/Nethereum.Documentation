@@ -637,10 +637,19 @@ const sidebars: SidebarsConfig = {
         'unity/overview',
         {
           type: 'category',
-          label: 'Guides',
+          label: 'Getting Started',
           collapsed: false,
           items: [
             'unity/guide-unity-quickstart',
+            'unity/guide-unity-wallets',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Smart Contracts & Code Sharing',
+          items: [
+            'unity/guide-unity-smart-contracts',
+            'unity/guide-unity-code-generation',
           ],
         },
         {
@@ -672,6 +681,7 @@ const sidebars: SidebarsConfig = {
             'data-services/guide-token-portfolio',
             'data-services/guide-chainlist-rpc',
             'data-services/guide-etherscan-api',
+            'data-services/guide-sourcify-api',
             'data-services/guide-coingecko-api',
           ],
         },
@@ -693,6 +703,15 @@ const sidebars: SidebarsConfig = {
       label: 'Consensus Light Client',
       items: [
         'consensus-light-client/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'consensus-light-client/guide-verified-state',
+            'consensus-light-client/guide-light-client',
+          ],
+        },
         {
           type: 'category',
           label: 'Package Reference',

@@ -68,9 +68,13 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Connect via WalletConnect / Reown | [`Nethereum.WalletConnect`](blazor-dapp-integration/nethereum-walletconnect) or [`Nethereum.Reown.AppKit.Blazor`](blazor-dapp-integration/nethereum-reown-appkit-blazor) |
 | Interact with any contract dynamically (no codegen) | [`Nethereum.Blazor`](blazor-dapp-integration/nethereum-blazor) |
 | **Unity** | |
-| Build a Unity game with Ethereum | [`Nethereum.Unity`](unity/nethereum-unity) |
+| Build a Unity game with Ethereum | [`Nethereum.Unity`](unity/nethereum-unity) — [Quickstart guide](unity/guide-unity-quickstart) |
+| Connect browser wallets in WebGL | [`Nethereum.Unity.EIP6963`](unity/nethereum-unity-eip6963) — [Wallets guide](unity/guide-unity-wallets) |
+| Deploy and interact with contracts in Unity | [`Nethereum.Unity`](unity/nethereum-unity) — [Smart Contracts guide](unity/guide-unity-smart-contracts) |
 | **Verification & Cryptography** | |
-| Verify beacon chain state via light client | `Nethereum.Consensus.LightClient` + [`Nethereum.Signer.Bls.Herumi`](signing-and-key-management/nethereum-signer-bls-herumi) |
+| [Verify ETH balances without trusting RPC](consensus-light-client/guide-verified-state) | `Nethereum.ChainStateVerification` + `Nethereum.Consensus.LightClient` |
+| [Track finalized beacon headers](consensus-light-client/guide-light-client) | `Nethereum.Consensus.LightClient` + [`Nethereum.Signer.Bls.Herumi`](signing-and-key-management/nethereum-signer-bls-herumi) |
+| [Verify storage proofs and contract code](consensus-light-client/guide-verified-state) | `Nethereum.ChainStateVerification` |
 | Calculate Merkle proofs and state roots | [`Nethereum.Merkle`](consensus-and-cryptography/nethereum-merkle) + [`Nethereum.Merkle.Patricia`](consensus-and-cryptography/nethereum-merkle-patricia) |
 | **Infrastructure** | |
 | Run a custom AppChain | [`Nethereum.AppChain`](application-chain/nethereum-appchain) (Preview) |
@@ -241,6 +245,16 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.Merkle.Patricia](consensus-and-cryptography/nethereum-merkle-patricia) | Modified Merkle Patricia Trie |
 | [Nethereum.Ssz](consensus-and-cryptography/nethereum-ssz) | Simple Serialize (SSZ) encoding |
 | [Nethereum.Signer.Bls.Herumi](signing-and-key-management/nethereum-signer-bls-herumi) | BLS signatures via Herumi |
+
+### Consensus Light Client
+
+| Package | Description |
+|---|---|
+| [Nethereum.Consensus.LightClient](consensus-and-cryptography/nethereum-consensus-lightclient) | Beacon chain light client: sync committee tracking, header verification, finality proofs |
+| [Nethereum.ChainStateVerification](data-and-indexing/nethereum-chainstateverification) | Verified state queries: account balances, storage proofs, contract code without trusting RPC |
+| [Nethereum.Beaconchain](consensus-light-client/nethereum-beaconchain) | Beacon Chain REST API client |
+| [Nethereum.Consensus.Ssz](consensus-and-cryptography/nethereum-consensus-ssz) | Consensus-layer SSZ type serialization |
+| [Nethereum.SSZ](consensus-and-cryptography/nethereum-ssz) | Simple Serialize (SSZ) encoding |
 
 ### Client Extensions
 

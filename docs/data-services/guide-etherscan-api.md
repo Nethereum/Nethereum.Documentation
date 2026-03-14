@@ -236,52 +236,6 @@ foreach (var (name, chainId) in chains)
 
 Not all chains support every module. Check `response.Status` before accessing `response.Result`.
 
-## Sourcify Parquet Exports
-
-Sourcify publishes its entire database of verified contracts as Parquet files, updated regularly. This is useful for analytics pipelines, local search indexes, or bulk ABI imports — scenarios where calling the Sourcify REST API per-contract would be too slow.
-
-```csharp
-using Nethereum.DataServices.Sourcify;
-
-var parquet = new SourcifyParquetExportService();
-```
-
-### Listing Files
-
-Each table is split into multiple Parquet files:
-
-```csharp
-var files = await parquet.ListTableFilesAsync("verified_contracts");
-Console.WriteLine($"Verified contracts files: {files.Count}");
-
-foreach (var file in files.Take(3))
-    Console.WriteLine($"  {file.Key} ({file.Size} bytes)");
-```
-
-### Downloading Files
-
-Download individual files as streams:
-
-```csharp
-var allFiles = await parquet.ListTableFilesAsync("signatures");
-var firstFile = allFiles.First();
-
-using var stream = await parquet.DownloadFileAsync(firstFile.Key);
-// Stream contains Parquet-format data (header bytes: PAR1)
-```
-
-### Available Tables
-
-Sourcify organizes its export into ten tables:
-
-```csharp
-string[] tables = SourcifyParquetExportService.AvailableTables;
-// "sourcify_matches", "verified_contracts", "sources",
-// "compiled_contracts_sources", "compiled_contracts",
-// "contract_deployments", "contracts", "code",
-// "compiled_contracts_signatures", "signatures"
-```
-
 ## Common Gotchas
 
 **API keys are per-account, not per-chain.** A single free-tier key works across all Etherscan V2 chains, but the rate limit (5 calls/second) is shared across all chains.
@@ -298,7 +252,7 @@ string[] tables = SourcifyParquetExportService.AvailableTables;
 
 ## Next Steps
 
-- **[Data Services Overview](overview)** — return to the section overview for the full picture
+- **[Sourcify API](guide-sourcify-api)** — verify contracts, decode selectors, and sync bulk Parquet exports (free, no API key)
 - **[ABI Retrieval](guide-abi-retrieval)** — composite ABI lookup with automatic fallback across Sourcify, Etherscan, and 4Byte
 - **[Chainlist RPC](guide-chainlist-rpc)** — discover chains and RPC endpoints
 - **[CoinGecko API](guide-coingecko-api)** — fetch token metadata and prices

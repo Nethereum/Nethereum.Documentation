@@ -201,11 +201,12 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 ## Unity
 
-| I want to... | Packages |
-|---|---|
-| **Build a Unity game with Ethereum** | `Nethereum.Unity` |
-| **Integrate browser wallets in Unity WebGL (EIP-6963)** | `Nethereum.Unity.EIP6963` |
-| **Use MetaMask in Unity** | `Nethereum.Unity.Metamask` |
+| I want to... | Guide | Packages |
+|---|---|---|
+| **Get started with Ethereum in Unity** | [Quickstart](./unity/guide-unity-quickstart) | `Nethereum.Unity` |
+| **Connect browser wallets in Unity WebGL** | [WebGL Wallets](./unity/guide-unity-wallets) | `Nethereum.Unity.EIP6963`, `Nethereum.Unity.Metamask` |
+| **Deploy and interact with smart contracts** | [Smart Contracts & ERC-20](./unity/guide-unity-smart-contracts) | `Nethereum.Unity` |
+| **Share contract code between Unity and .NET** | [Code Generation](./unity/guide-unity-code-generation) | `Nethereum.Generator.Console` |
 
 > See the [Unity](./unity/overview) section.
 
@@ -215,9 +216,10 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 | I want to... | Packages |
 |---|---|
-| **Verify beacon chain state via light client** | `Nethereum.Consensus.LightClient` + `Nethereum.Signer.Bls.Herumi` |
+| **[Verify ETH balances without trusting RPC](consensus-light-client/guide-verified-state)** | `Nethereum.ChainStateVerification` + `Nethereum.Consensus.LightClient` |
+| **[Track finalized beacon headers](consensus-light-client/guide-light-client)** | `Nethereum.Consensus.LightClient` + `Nethereum.Signer.Bls.Herumi` |
+| **[Verify storage proofs and contract code](consensus-light-client/guide-verified-state)** | `Nethereum.ChainStateVerification` |
 | **Query Beacon Chain REST API** | `Nethereum.Beaconchain` |
-| **Verify on-chain state with light client proofs** | `Nethereum.ChainStateVerification` |
 | **Serialize consensus-layer types (SSZ)** | `Nethereum.Consensus.Ssz` + `Nethereum.SSZ` |
 
 > See the [Consensus Light Client](./consensus-light-client/overview) section.

@@ -23,18 +23,20 @@ MetaMask integration for Unity WebGL builds. Provides JavaScript interop to conn
 | `MetamaskWebglCoroutineRequestRpcClient` | Unity coroutine-based RPC client routing requests through MetaMask |
 | `MetamaskTransactionCoroutineUnityRequest` | Coroutine wrapper for sending transactions via MetaMask |
 | `MetamaskRpcRequestMessage` | RPC request message model |
+| `MetamaskWebglCoroutineRequestRpcClientFactory` | Factory for creating coroutine RPC clients with custom timeouts |
+| `MetamaskWebglTaskRequestInterop` | Task-based async interop — used internally by `MetamaskWebglHostProvider` |
 
 ## Usage
 
 ```csharp
-// In a MonoBehaviour
-var metamaskProvider = new MetamaskWebglHostProvider();
+// In a MonoBehaviour — use singleton pattern
+var metamaskProvider = MetamaskWebglHostProvider.CreateOrGetCurrentInstance();
 await metamaskProvider.EnableProviderAsync();
 var web3 = await metamaskProvider.GetWeb3Async();
 
-// Send a transaction
-var transactionHash = await web3.Eth.GetEtherTransferService()
-    .TransferEtherAsync(toAddress, 0.1m);
+// Send a transaction — wallet handles signing
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync(toAddress, 0.1m);
 ```
 
 ## Relationship to Other Packages

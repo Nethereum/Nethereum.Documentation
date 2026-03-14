@@ -2,12 +2,12 @@
 title: Tables and Records
 sidebar_label: Tables & Records
 sidebar_position: 3
-description: Work with MUD table records, typed services, in-memory repositories, predicate queries, change tracking, and multicall batch operations
+description: Work with MUD table records, typed services, in-memory repositories, predicate queries, REST API client, change tracking, and multicall batch operations
 ---
 
 # Tables and Records
 
-MUD tables are the core data model — typed records with defined key and value schemas, stored on-chain and accessible through generated table services. This guide covers the table record model, repository pattern for local state, predicate-based queries, change tracking, and batch operations via multicall.
+MUD tables are the data layer of the enhanced diamond pattern — typed records with defined schemas stored in the World contract, accessible through generated table services. As covered in the [Quickstart](guide-mud-quickstart), systems (smart contracts) read and write these tables via delegatecall, and every mutation emits a Store event for off-chain indexing. This guide covers the table record model, repository pattern, predicate queries, REST API access, change tracking, and batch operations.
 
 :::tip The Simple Way
 ```csharp
@@ -215,6 +215,29 @@ var encodedValues = record.Values.GetEncodeValues();
 ```
 
 You typically don't need to work with encoded values directly — the table services handle encoding and decoding. This is useful when building custom indexing or debugging store events.
+
+## REST API Client
+
+If you have a MUD indexer running with a REST API, the `StoredRecordRestApiClient` queries it using the same `TablePredicate` system used for local repositories:
+
+```csharp
+using Nethereum.Mud.TableRepository;
+using Nethereum.Util.Rest;
+
+var restClient = new StoredRecordRestApiClient(
+    new RestHttpHelper(httpClient),
+    "https://indexer.example.com",
+    postPath: "storedrecords");
+
+// Query typed records via HTTP POST with predicates
+var predicate = playerService.CreateTablePredicateBuilder()
+    .Equals(x => x.Address, playerAddress)
+    .Expand();
+
+var players = await restClient.GetTableRecordsAsync<PlayerTableRecord>(predicate);
+```
+
+The REST client implements `ITablePredicateQueryRepository`, so it's interchangeable with in-memory and database repositories — your query code works the same regardless of where the data lives.
 
 ## Common Gotchas
 

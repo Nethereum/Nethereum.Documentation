@@ -345,45 +345,6 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
-    // AppChains
-    // ═══════════════════════════════
-    {
-      type: 'category',
-      label: 'AppChains (Preview)',
-      items: [
-        'application-chain/overview',
-        {
-          type: 'category',
-          label: 'Package Reference',
-          items: [
-            'application-chain/nethereum-appchain',
-            'application-chain/nethereum-appchain-server',
-            'application-chain/nethereum-appchain-sequencer',
-            {
-              type: 'category',
-              label: 'Networking',
-              items: [
-                'application-chain/nethereum-appchain-sync',
-                'application-chain/nethereum-appchain-p2p',
-                'application-chain/nethereum-appchain-p2p-dotnetty',
-                'application-chain/nethereum-appchain-p2p-server',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Governance & Anchoring',
-              items: [
-                'application-chain/nethereum-appchain-policy',
-                'application-chain/nethereum-appchain-anchoring',
-                'application-chain/nethereum-consensus-clique',
-              ],
-            },
-          ],
-        },
-      ],
-    },
-
-    // ═══════════════════════════════
     // Account Abstraction (ERC-4337 / ERC-7579)
     // ═══════════════════════════════
     {
@@ -753,6 +714,45 @@ const sidebars: SidebarsConfig = {
             'client-extensions/nethereum-geth',
             'client-extensions/nethereum-besu',
             'client-extensions/nethereum-quorum',
+          ],
+        },
+      ],
+    },
+
+    // ═══════════════════════════════
+    // AppChains (Preview)
+    // ═══════════════════════════════
+    {
+      type: 'category',
+      label: 'AppChains (Preview)',
+      items: [
+        'application-chain/overview',
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'application-chain/nethereum-appchain',
+            'application-chain/nethereum-appchain-server',
+            'application-chain/nethereum-appchain-sequencer',
+            {
+              type: 'category',
+              label: 'Networking',
+              items: [
+                'application-chain/nethereum-appchain-sync',
+                'application-chain/nethereum-appchain-p2p',
+                'application-chain/nethereum-appchain-p2p-dotnetty',
+                'application-chain/nethereum-appchain-p2p-server',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Governance & Anchoring',
+              items: [
+                'application-chain/nethereum-appchain-policy',
+                'application-chain/nethereum-appchain-anchoring',
+                'application-chain/nethereum-consensus-clique',
+              ],
+            },
           ],
         },
       ],

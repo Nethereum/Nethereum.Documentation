@@ -64,12 +64,6 @@ const sections: SectionItem[] = [
     link: '/docs/devchain/overview',
   },
   {
-    title: 'AppChains',
-    icon: '🌍',
-    description: 'Production app chains — sequencer, P2P networking, L1 anchoring',
-    link: '/docs/application-chain/overview',
-  },
-  {
     title: 'Account Abstraction',
     icon: '🔑',
     description: 'ERC-4337 UserOps, bundler, paymaster, ERC-7579 smart accounts',
@@ -128,6 +122,12 @@ const sections: SectionItem[] = [
     icon: '🔌',
     description: 'Geth, Besu, and Quorum-specific admin and debug APIs',
     link: '/docs/client-extensions/overview',
+  },
+  {
+    title: 'AppChains (Preview)',
+    icon: '🌍',
+    description: 'Production app chains — sequencer, P2P networking, L1 anchoring',
+    link: '/docs/application-chain/overview',
   },
 ];
 

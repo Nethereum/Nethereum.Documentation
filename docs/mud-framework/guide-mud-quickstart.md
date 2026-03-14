@@ -2,37 +2,86 @@
 title: MUD Quickstart
 sidebar_label: MUD Quickstart
 sidebar_position: 2
-description: Understand MUD's structured data model, define tables in Solidity, generate typed C# services, and interact with tables and systems
+description: Understand MUD as an enhanced diamond pattern — systems as smart contracts, typed tables, namespaces as unified contexts, and code generation
 ---
 
 # MUD Quickstart
 
-MUD gives you a structured data layer on-chain — typed tables with defined schemas, systems that operate on those tables, and a World contract that ties everything together. Every table mutation emits an event, so you can rebuild the entire state from logs. This guide covers what MUD is, how to define tables, generate C# code, and use the generated services.
+MUD is an enhanced version of the [EIP-2535 Diamond pattern](https://eips.ethereum.org/EIPS/eip-2535) for building complex smart contract applications. A **World** contract acts as a diamond proxy — routing calls to **system** contracts via delegatecall, with all state stored in typed **tables**. **Namespaces** group systems and tables together, giving you a unified context for your entire application — similar to how `web3.Eth` organises all Ethereum operations under one entry point.
+
+This guide covers the architecture, code generation workflow, and how to use the generated services.
 
 :::tip The Simple Way
 ```csharp
-// Read a table record (generated typed service)
-var player = await playerTableService.GetTableRecordAsync(new PlayerKey { Address = playerAddress });
+var app = new AppNamespace(web3, worldAddress);
 
-// Write a table record
-await playerTableService.SetRecordRequestAndWaitForReceiptAsync(
-    new PlayerKey { Address = playerAddress },
-    new PlayerValue { Score = 100, Name = "Alice" });
+// Call a system (smart contract routed through World)
+await app.Systems.Game.MoveRequestAndWaitForReceiptAsync(new MoveFunction { X = 10, Y = 20 });
+
+// Read a table
+var player = await app.Tables.Player.GetTableRecordAsync(new PlayerKey { Address = addr });
 ```
-Table services handle encoding, World contract routing, gas, and nonce automatically.
+Systems, tables, gas, nonce, World routing — all handled through the namespace.
 :::
 
-## What Is MUD?
+## The Architecture
 
-MUD is a framework from [Lattice](https://mud.dev) for building on-chain applications with structured data. Instead of writing custom Solidity storage mappings, you define **tables** with typed schemas and **systems** that operate on them. A **World** contract manages registration, access control, and routing.
+### World = Enhanced Diamond
 
-This is useful for any application that needs structured on-chain state — not just games. Supply chain tracking, on-chain registries, DAOs with complex governance state, DeFi configuration management — any domain where you want typed, indexable, structured data on-chain.
+In a standard Diamond (EIP-2535), you manually manage facets and storage slots. MUD automates this:
 
-Key properties:
-- **Every mutation is an event** — you can rebuild the full state from Store events at any point
-- **Typed schemas** — tables have defined key and value fields with Solidity types
-- **Namespace isolation** — tables and systems are grouped under namespaces with access control
-- **Composability** — systems can call other systems through the World contract
+- The **World contract** is the diamond — it routes all calls and holds all storage
+- **Systems** are the facets — smart contracts that execute via delegatecall within the World's context
+- **Tables** replace raw storage — typed schemas registered on-chain, with every mutation emitting a Store event
+- **Namespaces** replace manual facet management — they group related systems and tables with shared access control
+
+When you call a system through the World, the World looks up the system's address from its resource ID and delegatecalls it. The system executes in the World's storage context, so it can read and write any table in its namespace.
+
+### Systems Are Smart Contracts
+
+This is a critical point: **systems are regular smart contracts**. They're written in Solidity, compiled with Forge, and have ABIs like any other contract. Nethereum generates typed C# service classes from their ABIs — the same `FunctionMessage`, `RequestAsync`, and `RequestAndWaitForReceiptAsync` patterns you use for any contract.
+
+The difference is that systems are **registered with the World** and called through it. Instead of calling the system contract directly, you call `World.call(systemId, callData)` — the World delegatecalls the system, which executes with access to the World's storage (tables).
+
+In Nethereum, this routing is transparent. The generated system services handle the wrapping automatically — you call methods on the service, and it routes through the World:
+
+```csharp
+// This looks like a normal contract call, but it routes through the World
+await gameSystemService.MoveRequestAndWaitForReceiptAsync(
+    new MoveFunction { X = 10, Y = 20 });
+```
+
+### Tables Are Typed Storage
+
+Tables replace Solidity's raw `mapping` and `struct` storage with a structured, schema-aware data layer. Each table has:
+
+- **Keys** — the lookup index (like a primary key in a database)
+- **Values** — the stored data fields
+- **Schema** — registered on-chain, so indexers can decode any table's data
+
+Every table mutation emits a Store event (`Store_SetRecord`, `Store_SpliceStaticData`, `Store_SpliceDynamicData`, `Store_DeleteRecord`), which means the entire state history is available in event logs — you can rebuild the full state from genesis at any time.
+
+### Namespaces = Unified Context
+
+A namespace groups systems and tables into a single access-controlled unit. In Nethereum, the `NamespaceBase` class composes all generated services:
+
+```csharp
+// The namespace is your application's entry point
+var app = new AppNamespace(web3, worldAddress);
+
+// Access systems (smart contracts)
+app.Systems.Crafting.CraftItemRequestAndWaitForReceiptAsync(...);
+app.Systems.Trade.ListItemRequestAndWaitForReceiptAsync(...);
+
+// Access tables (typed storage)
+app.Tables.Player.GetTableRecordAsync(key);
+app.Tables.Inventory.GetTableRecordAsync(key);
+
+// Business logic combining both
+app.GetPlayerInventoryAsync(playerId);
+```
+
+This mirrors the `web3.Eth` pattern — one object, organised access to everything, IntelliSense-discoverable.
 
 ## Prerequisites
 
@@ -47,11 +96,11 @@ For code generation, install the .NET CLI tool:
 dotnet tool install -g Nethereum.Generator.Console
 ```
 
-You'll also need a MUD project with tables defined at [mud.dev](https://mud.dev) and contracts compiled with Forge.
+You'll also need a MUD project with tables and systems defined at [mud.dev](https://mud.dev) and contracts compiled with Forge.
 
 ## Define Tables in Solidity
 
-Tables are defined in `mud.config.ts` using the `defineWorld()` function. This is standard MUD — see the [MUD documentation](https://mud.dev) for the full reference. Here's a minimal example:
+Tables are defined in `mud.config.ts` using the `defineWorld()` function — this is standard MUD, see [mud.dev](https://mud.dev). Here's a minimal example:
 
 ```typescript
 import { defineWorld } from "@latticexyz/world";
@@ -72,21 +121,26 @@ export default defineWorld({
         maxPlayers: "uint32",
         roundDuration: "uint32",
       },
-      key: [],  // empty key = singleton table (one record)
+      key: [],  // singleton table — one record, no key
     },
   },
 });
 ```
 
-Key concepts:
-- Fields listed in `key` become the table's lookup keys — you query records by providing key values
-- Fields NOT in `key` become the value schema
-- `key: []` creates a singleton table with exactly one record (no key needed to look it up)
+- Fields in `key` become lookup keys; the rest become values
+- `key: []` creates a singleton table (one record, no key needed)
 - Solidity types (`uint256`, `address`, `string`, `bool`, `bytes32`, `string[]`) map automatically to C# types
 
-## Generate C# Code
+Systems are regular Solidity contracts — write them as you would any smart contract, then register them with the World.
 
-After defining tables and compiling contracts with Forge, configure the Nethereum code generator. Create a `.nethereum-gen.multisettings` file:
+## Code Generation
+
+Nethereum generates two kinds of C# services from your MUD project:
+
+- **`MudTables`** — parses `mud.config.ts` and generates `TableRecord` + `TableService` classes for each table
+- **`MudExtendedService`** — parses compiled system ABIs and generates system service classes (like standard contract services, but with MUD namespace/resource configuration)
+
+Configure code generation in `.nethereum-gen.multisettings`:
 
 ```json
 [
@@ -102,40 +156,29 @@ After defining tables and compiling contracts with Forge, configure the Nethereu
     ]
   },
   {
-    "paths": ["path/to/compiled/System.json"],
+    "paths": ["path/to/compiled/GameSystem.json"],
     "generatorConfigs": [
       {
         "baseNamespace": "MyProject.Contracts",
         "basePath": "Generated/Systems",
         "codeGenLang": 0,
-        "generatorType": "MudExtendedService"
+        "generatorType": "MudExtendedService",
+        "mudNamespace": "app"
       }
     ]
   }
 ]
 ```
 
-The `generatorType` values:
-- **`MudTables`** — parses `mud.config.ts` and generates `TableRecord` and `TableService` classes for each table
-- **`MudExtendedService`** — parses compiled system JSON and generates typed system service wrappers
-- **`ContractDefinition`** — standard ABI-to-C# generation (for non-MUD contracts in the project)
-
 Run the generator using one of three methods:
 
-**VS Code** (recommended for interactive use): Install the [Nethereum Solidity extension](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity), right-click the `.nethereum-gen.multisettings` file, and select "Generate Nethereum code".
+- **VS Code**: Install the [Nethereum Solidity extension](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity), right-click `.nethereum-gen.multisettings` → "Generate Nethereum code"
+- **.NET CLI**: `Nethereum.Generator.Console generate from-config --config path/to/.nethereum-gen.multisettings`
+- **Node.js**: Use the JavaScript generator package for Node.js build pipelines
 
-**.NET CLI** (recommended for CI/CD):
-```bash
-Nethereum.Generator.Console generate from-config --config path/to/.nethereum-gen.multisettings
-```
+## Generated Table Services
 
-**Node.js**: Use the JavaScript generator package for integration with Node.js build pipelines.
-
-## Generated Code Structure
-
-For each table, the generator produces a `.gen.cs` file with three classes:
-
-**TableRecord** — the typed record with key and value inner classes:
+For each table, the generator produces a `TableRecord` with key/value inner classes and a `TableService` with typed CRUD methods:
 
 ```csharp
 // Generated: PlayerTableRecord.gen.cs
@@ -158,148 +201,151 @@ public partial class PlayerTableRecord : TableRecord<PlayerTableRecord.PlayerKey
     {
         [Parameter("uint256", "score", 1)]
         public virtual BigInteger Score { get; set; }
-
         [Parameter("string", "name", 2)]
         public virtual string Name { get; set; }
     }
 }
-```
 
-**TableService** — typed CRUD operations routed through the World contract:
-
-```csharp
 // Generated: PlayerTableService.gen.cs
 public partial class PlayerTableService : TableService<PlayerTableRecord, PlayerTableRecord.PlayerKey, PlayerTableRecord.PlayerValue>
 {
     public PlayerTableService(IWeb3 web3, string contractAddress) : base(web3, contractAddress) { }
-
-    public virtual Task<PlayerTableRecord> GetTableRecordAsync(PlayerTableRecord.PlayerKey key, BlockParameter blockParameter = null);
-    public virtual Task<string> SetRecordRequestAsync(PlayerTableRecord.PlayerKey key, PlayerTableRecord.PlayerValue value);
-    public virtual Task<TransactionReceipt> SetRecordRequestAndWaitForReceiptAsync(PlayerTableRecord.PlayerKey key, PlayerTableRecord.PlayerValue value);
-    public virtual Task<string> DeleteRecordRequestAsync(PlayerTableRecord.PlayerKey key);
+    // GetTableRecordAsync, SetRecordRequestAsync, DeleteRecordRequestAsync, etc.
 }
 ```
 
-Singleton tables (like `GameConfig` with `key: []`) generate a `TableSingletonService` instead — no key parameter needed for reads and writes.
+Singleton tables (`key: []`) generate `TableSingletonService` — no key parameter needed.
 
-## Use Generated Services
+## Generated System Services
 
-Connect to a deployed World contract and use the generated table services:
+For each system contract, `MudExtendedService` generates a service class that extends the standard Nethereum contract service with MUD resource configuration:
 
 ```csharp
-using Nethereum.Web3;
+// Generated: GameSystemServiceMudExt.gen.cs
+public partial class GameSystemService : ContractWeb3ServiceBase, ISystemService<GameSystemResource>
+{
+    public GameSystemService(IWeb3 web3, string contractAddress) : base(web3, contractAddress) { }
 
-var web3 = new Web3(new Account(privateKey), "https://rpc.example.com");
-string worldAddress = "0x..."; // your deployed World contract
+    // Same patterns as any Nethereum contract service:
+    public Task<TransactionReceipt> MoveRequestAndWaitForReceiptAsync(MoveFunction moveFunction, ...);
+    public Task<string> AttackRequestAsync(AttackFunction attackFunction);
 
-// Create a table service pointing at the World
-var playerService = new PlayerTableService(web3, worldAddress);
+    // Plus MUD-specific:
+    public IResource Resource { get; }  // The system's resource ID
+    public Task<Create2ContractDeploymentTransactionReceiptResult> DeployCreate2ContractAndWaitForReceiptAsync(...);
+}
 ```
 
-Read a record by providing the key:
+The generated service implements `ISystemService<TSystemResource>` — this interface provides CREATE2 deployment, resource encoding, and function ABI metadata that the namespace uses for batch registration.
+
+## Build the Namespace
+
+With generated table and system services, compose them into the namespace pattern:
 
 ```csharp
-var record = await playerService.GetTableRecordAsync(
-    new PlayerTableRecord.PlayerKey { Address = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B" });
-
-Console.WriteLine($"Player: {record.Name}, Score: {record.Score}");
-```
-
-Write a record — the service encodes the key and value, routes through the World contract, and handles gas/nonce:
-
-```csharp
-var receipt = await playerService.SetRecordRequestAndWaitForReceiptAsync(
-    new PlayerTableRecord.PlayerKey { Address = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B" },
-    new PlayerTableRecord.PlayerValue { Score = 250, Name = "Alice" });
-```
-
-Delete a record:
-
-```csharp
-await playerService.DeleteRecordRequestAndWaitForReceiptAsync(
-    new PlayerTableRecord.PlayerKey { Address = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B" });
-```
-
-## The Namespace Pattern
-
-In production MUD applications, you aggregate generated table services and system services into namespace classes. This provides a clean API for interacting with all tables and systems in a namespace.
-
-The pattern uses three layers:
-
-```csharp
-// 1. TablesServices — aggregates all table services
-public class AppTablesServices : TablesServices
+// Aggregate all table services
+public class AppTables : TablesServices
 {
     public PlayerTableService Player { get; private set; }
-    public GameConfigTableService GameConfig { get; private set; }
+    public GameConfigTableSingletonService GameConfig { get; private set; }
 
-    public AppTablesServices(IWeb3 web3, string contractAddress) : base(web3, contractAddress)
+    public AppTables(IWeb3 web3, string contractAddress) : base(web3, contractAddress)
     {
         Player = new PlayerTableService(web3, contractAddress);
-        GameConfig = new GameConfigTableService(web3, contractAddress);
+        GameConfig = new GameConfigTableSingletonService(web3, contractAddress);
     }
 }
 
-// 2. SystemsServices — aggregates all system services
+// Aggregate all system services
 public class AppSystems : SystemsServices
 {
     public GameSystemService Game { get; private set; }
+    public TradeSystemService Trade { get; private set; }
 
     public AppSystems(IWeb3 web3, string contractAddress) : base(web3, contractAddress)
     {
         Game = new GameSystemService(web3, contractAddress);
+        Trade = new TradeSystemService(web3, contractAddress);
     }
 }
 
-// 3. Namespace — combines tables and systems with business logic
-public class AppNamespace : NamespaceBase<AppNamespaceResource, AppSystems, AppTablesServices>
+// The namespace — unified entry point
+public class AppNamespace : NamespaceBase<AppNamespaceResource, AppSystems, AppTables>
 {
     public AppNamespace(IWeb3 web3, string contractAddress) : base(web3, contractAddress)
     {
         Systems = new AppSystems(web3, contractAddress);
-        Tables = new AppTablesServices(web3, contractAddress);
+        Tables = new AppTables(web3, contractAddress);
+    }
+
+    // Business logic methods that combine system calls and table reads
+    public async Task<PlayerTableRecord> GetPlayerWithScoreAsync(string address)
+    {
+        var player = await Tables.Player.GetTableRecordAsync(
+            new PlayerTableRecord.PlayerKey { Address = address });
+        return player;
     }
 }
 ```
 
-Then use the namespace as a single entry point:
+`TablesServices` provides batch registration (`BatchRegisterAllTablesRequestAndWaitForReceiptAsync`). `SystemsServices` provides CREATE2 deployment (`DeployAllCreate2ContractSystemsRequestAndWaitForReceiptAsync`) and batch registration (`BatchRegisterAllSystemsRequestAndWaitForReceiptAsync`).
+
+## Use the Namespace
 
 ```csharp
 var app = new AppNamespace(web3, worldAddress);
 
-// Access tables
-var player = await app.Tables.Player.GetTableRecordAsync(key);
+// Read tables
+var player = await app.Tables.Player.GetTableRecordAsync(
+    new PlayerTableRecord.PlayerKey { Address = playerAddress });
+Console.WriteLine($"{player.Name}: {player.Score}");
 
 // Call systems
+var receipt = await app.Systems.Game.MoveRequestAndWaitForReceiptAsync(
+    new MoveFunction { X = 10, Y = 20 });
+
+// Batch read via multicall
+var keys = new List<PlayerTableRecord.PlayerKey> { key1, key2, key3 };
+var players = await app.Tables.Player.GetTableRecordsMulticallRpcAsync(keys);
+
+// Singleton tables — no key needed
+var config = await app.Tables.GameConfig.GetTableRecordAsync();
+```
+
+## System Delegation
+
+The World supports delegated calls — calling a system on behalf of another account. The `MudCallFromContractHandler` handles this transparently:
+
+```csharp
+// Enable delegation — all subsequent system calls route through World.callFrom()
+app.Systems.Game.SetSystemCallFromDelegatorContractHandler(delegatorAddress);
+
+// This now calls World.callFrom(delegator, systemId, callData) instead of World.call()
 await app.Systems.Game.MoveRequestAndWaitForReceiptAsync(moveFunction);
 ```
 
-For a production example of this pattern with 35+ tables and 17+ systems, see [CafeCosmos](https://github.com/CafeCosmosHQ/CafeCosmosDotNet).
-
 ## Resource Encoding
 
-MUD identifies tables, systems, and namespaces using 32-byte resource IDs. Nethereum provides `ResourceEncoder` for creating these:
+MUD identifies tables, systems, and namespaces using 32-byte resource IDs. `ResourceEncoder` provides encoding:
 
 ```csharp
-using Nethereum.Mud;
-
-// Encode resource IDs
 byte[] tableId = ResourceEncoder.EncodeTable("app", "Player");
 byte[] systemId = ResourceEncoder.EncodeSystem("app", "GameSystem");
 byte[] namespaceId = ResourceEncoder.EncodeNamespace("app");
 ```
 
-These resource IDs are used internally by table services and Store event processing — you typically don't need to encode them manually unless building custom tooling.
+These resource IDs are used internally by the World for routing and access control — you typically don't encode them manually unless building custom tooling.
 
 ## Common Gotchas
 
-- **Table names are case-sensitive** — `"Player"` and `"player"` are different tables with different resource IDs
-- **Singleton tables have no key** — use `TableSingletonService` (generated automatically for `key: []` tables). Don't try to create a key class for them.
-- **Generated files are `.gen.cs`** — don't edit them directly; they'll be overwritten on the next code generation run. Use `partial` classes to extend generated types.
-- **World address is the contract address** — all table and system services point at the World contract, not individual system contracts. The World routes calls internally.
+- **Systems are called through the World** — don't call system contracts directly. The generated services handle routing, but if you're debugging, remember that `World.call(systemId, callData)` is what's actually sent.
+- **Generated files are `.gen.cs`** — don't edit them; use `partial` classes to extend. They'll be overwritten on next code generation.
+- **World address is the contract address** — all table and system services point at the World, not individual system contracts.
+- **Table names are case-sensitive** — `"Player"` and `"player"` produce different resource IDs.
+- **Singleton tables have no key** — `key: []` in `mud.config.ts` generates `TableSingletonService`, not `TableService`.
 
 ## Next Steps
 
-- **[Tables and Records](guide-mud-tables)** — deep dive into table records, repositories, predicate queries, local state with change tracking, and multicall batch operations
-- **[Indexing Store Events](guide-mud-indexing)** — process Store events into repositories, EF Core and PostgreSQL storage, schema normalisation
-- **[Deploy a MUD World](guide-mud-deployment)** — World factory deployment, namespace/table/system registration, access control
+- **[Tables and Records](guide-mud-tables)** — deep dive into table records, repositories, predicate queries, REST API client, change tracking, and multicall batch operations
+- **[Indexing Store Events](guide-mud-indexing)** — process Store events into repositories, continuous sync, EF Core and PostgreSQL storage, schema normalisation, query service
+- **[Deploy a MUD World](guide-mud-deployment)** — World factory, CREATE2 system deployment, batch table/system registration, namespace access control

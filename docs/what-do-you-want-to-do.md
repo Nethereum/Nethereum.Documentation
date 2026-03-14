@@ -53,7 +53,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **Filter & query contract events** | `Nethereum.Contracts` |
 | **Handle contract errors & reverts** | `Nethereum.Contracts` |
 | **Resolve an ENS name** | `Nethereum.Contracts` (built-in ENS) |
-| **Implement Sign-In with Ethereum (SIWE)** | `Nethereum.Siwe` |
+| **[Implement Sign-In with Ethereum (SIWE)](./protocols/guide-siwe)** | `Nethereum.Siwe` |
 
 > See the [Smart Contracts](./smart-contracts/overview) section.
 
@@ -161,10 +161,12 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 | I want to... | Packages |
 |---|---|
-| **Work with MUD World systems and tables** | `Nethereum.Mud` + `Nethereum.Mud.Contracts` |
-| **Index MUD store records to PostgreSQL** | `Nethereum.Mud.Repositories.Postgres` |
-| **Query normalised MUD tables** | `Nethereum.Mud` |
-| **Build MUD table UIs in Blazor** | `Nethereum.MudBlazorComponents` |
+| **[Understand MUD and generate C# code](mud-framework/guide-mud-quickstart)** | `Nethereum.Mud` + `Nethereum.Mud.Contracts` |
+| **[Work with MUD table records and queries](mud-framework/guide-mud-tables)** | `Nethereum.Mud` + `Nethereum.Mud.Contracts` |
+| **[Index MUD Store events to PostgreSQL](mud-framework/guide-mud-indexing)** | `Nethereum.Mud.Repositories.Postgres` |
+| **[Index MUD Store events with EF Core](mud-framework/guide-mud-indexing)** | `Nethereum.Mud.Repositories.EntityFramework` |
+| **[Deploy a MUD World with tables and systems](mud-framework/guide-mud-deployment)** | `Nethereum.Mud.Contracts` |
+| **[Query normalised MUD tables in PostgreSQL](mud-framework/guide-mud-indexing)** | `Nethereum.Mud.Repositories.Postgres` |
 
 > See the [MUD Framework](./mud-framework/overview) section.
 
@@ -191,7 +193,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **Integrate browser wallets (EIP-6963)** | `Nethereum.Blazor` + `Nethereum.EIP6963WalletInterop` |
 | **Build a Blazor dApp with MetaMask** | `Nethereum.Blazor` + `Nethereum.Metamask.Blazor` |
 | **Connect via WalletConnect / Reown** | `Nethereum.WalletConnect` / `Nethereum.Reown.AppKit.Blazor` |
-| **Authenticate with Sign-In with Ethereum (SIWE)** | `Nethereum.Siwe` + `Nethereum.Blazor` |
+| **[Authenticate with Sign-In with Ethereum (SIWE)](./protocols/guide-siwe)** | `Nethereum.Siwe` + `Nethereum.Blazor` |
 | **Interact with any contract dynamically** | `Nethereum.Blazor` |
 | **Debug EVM in browser (Solidity step-through)** | `Nethereum.Blazor.Solidity` |
 

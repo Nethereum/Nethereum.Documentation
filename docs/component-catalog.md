@@ -49,7 +49,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Use Permit2 for gasless token approvals | [`Nethereum.Uniswap`](defi/nethereum-uniswap) (includes Permit2) |
 | Accept crypto payments in my API (x402) | [`Nethereum.X402`](defi/nethereum-x402) |
 | Resolve ENS names | [`Nethereum.Contracts`](core-foundation/nethereum-contracts) (includes ENS) |
-| Implement Sign-In with Ethereum | [`Nethereum.Siwe`](https://www.nuget.org/packages/Nethereum.Siwe) |
+| Implement Sign-In with Ethereum | [`Nethereum.Siwe`](protocols/nethereum-siwe) |
 | Use Gnosis Safe multi-sig | [`Nethereum.GnosisSafe`](protocols/nethereum-gnosissafe) |
 | **Account Abstraction** | |
 | Use smart accounts (ERC-4337 UserOps) | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
@@ -57,10 +57,10 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Run a bundler RPC server | [`Nethereum.AccountAbstraction.Bundler.RpcServer`](account-abstraction/nethereum-accountabstraction-bundler-rpcserver) |
 | Deploy ERC-7579 modular smart accounts | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
 | **MUD (Autonomous Worlds)** | |
-| Work with MUD World systems and tables | [`Nethereum.Mud`](mud-framework/nethereum-mud) + [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
-| Index and normalise MUD store records to Postgres | [`Nethereum.Mud.Repositories.Postgres`](mud-framework/nethereum-mud-repositories-postgres) |
-| Query normalised MUD tables with predicates | [`Nethereum.Mud`](mud-framework/nethereum-mud) |
-| Build MUD table UIs in Blazor | [`Nethereum.MudBlazorComponents`](mud-framework/nethereum-mudblazorcomponents) |
+| [Understand MUD and generate C# code](mud-framework/guide-mud-quickstart) | [`Nethereum.Mud`](mud-framework/nethereum-mud) + [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
+| [Work with MUD table records and queries](mud-framework/guide-mud-tables) | [`Nethereum.Mud`](mud-framework/nethereum-mud) + [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
+| [Index MUD Store events to PostgreSQL](mud-framework/guide-mud-indexing) | [`Nethereum.Mud.Repositories.Postgres`](mud-framework/nethereum-mud-repositories-postgres) |
+| [Deploy a MUD World with tables and systems](mud-framework/guide-mud-deployment) | [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
 | **Wallet SDK** | |
 | Build a multi-platform wallet app | [`Nethereum.Wallet`](wallet-sdk/nethereum-wallet) + [`UI.Components`](wallet-sdk/nethereum-wallet-ui-components) + renderer (`.Blazor` / `.Maui`) |
 | **Web (Blazor) dApp Integration** | |
@@ -129,7 +129,8 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 |---|---|
 | [Nethereum.ENS](https://www.nuget.org/packages/Nethereum.ENS) | Ethereum Name Service: resolution, registration, reverse lookup |
 | [Nethereum.GnosisSafe](protocols/nethereum-gnosissafe) | Safe multi-signature wallet interaction |
-| [Nethereum.Siwe](https://www.nuget.org/packages/Nethereum.Siwe) | Sign-In with Ethereum (EIP-4361) |
+| [Nethereum.Siwe.Core](protocols/nethereum-siwe-core) | SIWE core models, message parsing, and RECAP capabilities (EIP-4361/EIP-5573) |
+| [Nethereum.Siwe](protocols/nethereum-siwe) | Sign-In with Ethereum — session management, signature verification, NFT gating |
 | [Nethereum.Circles](protocols/nethereum-circles) | Circles UBI protocol |
 | [Nethereum.GSN](protocols/nethereum-gsn) | Gas Station Network meta-transaction relay |
 
@@ -184,11 +185,10 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 
 | Package | Description |
 |---|---|
-| [Nethereum.Mud](mud-framework/nethereum-mud) | MUD client: table schemas, record encoding, store subscriptions, predicate queries |
-| [Nethereum.Mud.Contracts](mud-framework/nethereum-mud-contracts) | MUD World/Store contract services and event processing |
-| [Nethereum.Mud.Repositories.EntityFramework](mud-framework/nethereum-mud-repositories-entityframework) | EF Core repository for MUD store records |
-| [Nethereum.Mud.Repositories.Postgres](mud-framework/nethereum-mud-repositories-postgres) | PostgreSQL MUD store with normalisation and background processing |
-| [Nethereum.MudBlazorComponents](mud-framework/nethereum-mudblazorcomponents) | Blazor UI for MUD table interaction |
+| [Nethereum.Mud](mud-framework/nethereum-mud) | Table schemas, record encoding/decoding, repositories, predicate queries |
+| [Nethereum.Mud.Contracts](mud-framework/nethereum-mud-contracts) | World/Store contract services, Store event processing, table/system registration |
+| [Nethereum.Mud.Repositories.EntityFramework](mud-framework/nethereum-mud-repositories-entityframework) | EF Core repository for MUD records |
+| [Nethereum.Mud.Repositories.Postgres](mud-framework/nethereum-mud-repositories-postgres) | PostgreSQL storage with schema normalisation |
 
 ### Wallet SDK
 

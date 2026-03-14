@@ -84,7 +84,7 @@ const sections: SectionItem[] = [
   {
     title: 'MUD Framework',
     icon: '🌐',
-    description: 'Autonomous worlds, MUD tables, Blazor components, PostgreSQL sync',
+    description: 'Build structured on-chain applications — typed tables, systems, code generation, Store event indexing, and PostgreSQL normalisation',
     link: '/docs/mud-framework/overview',
   },
   {
@@ -222,7 +222,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title="Documentation"
-      description="Nethereum is the .NET integration platform for Ethereum and EVM-compatible blockchains. 130+ packages for smart contracts, wallets, indexing, DeFi, account abstraction, and more.">
+      description="Nethereum is the Ethereum development platform for the .NET ecosystem — providing libraries and developer infrastructure for smart contracts, wallets, indexing, developer tooling, and blockchain applications.">
 
       {/* Hero */}
       <header className={styles.hero}>
@@ -232,7 +232,7 @@ export default function Home(): ReactNode {
             Nethereum Documentation
           </Heading>
           <p className={styles.heroSubtitle}>
-            The .NET integration platform for Ethereum — 130+ packages for smart contracts, wallets, indexing, DeFi, and more
+            The Ethereum development platform for the .NET ecosystem — providing libraries and developer infrastructure for smart contracts, wallets, indexing, developer tooling, and blockchain applications
           </p>
           <div className={styles.heroButtons}>
             <Link className="button button--primary button--lg" to="/docs/getting-started/welcome">

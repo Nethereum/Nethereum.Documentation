@@ -32,6 +32,8 @@ For every row above, Nethereum handles gas estimation, nonce management, EIP-155
 | `Nethereum.GnosisSafe` | Safe (Gnosis Safe) | Multi-signature transaction assembly, EIP-712 signing, SafeAccount, MultiSend |
 | `Nethereum.X402` | x402 Protocol | HTTP 402 payments with EIP-3009 USDC transfers, ASP.NET middleware, client library |
 | `Nethereum.Circles` | Circles UBI | Balance queries, personal minting, trust management, transaction history |
+| `Nethereum.Siwe` | Sign-In with Ethereum | EIP-4361 authentication, session management, NFT gating, RECAP capabilities |
+| `Nethereum.Siwe.Core` | SIWE Core | Message model, parser, string builder, RECAP (EIP-5573) |
 
 ## Guides
 
@@ -42,3 +44,4 @@ For every row above, Nethereum handles gas estimation, nonce management, EIP-155
 | [Gnosis Safe](guide-gnosis-safe) | Build multi-sig transactions, collect signatures, SafeAccount, MultiSend |
 | [x402 Payments](guide-x402-payments) | Protect API endpoints, accept USDC payments, EIP-3009 authorization flow |
 | [Circles UBI](guide-circles) | Query balances, mint CRC, manage trust relationships on Gnosis Chain |
+| [SIWE Authentication](../protocols/guide-siwe) | Sign-In with Ethereum, session management, NFT gating, smart contract wallets, RECAP capabilities |

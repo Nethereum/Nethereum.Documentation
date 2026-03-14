@@ -224,6 +224,7 @@ const sidebars: SidebarsConfig = {
             'defi/guide-gnosis-safe',
             'defi/guide-x402-payments',
             'defi/guide-circles',
+            'protocols/guide-siwe',
           ],
         },
         {
@@ -234,6 +235,8 @@ const sidebars: SidebarsConfig = {
             'defi/nethereum-x402',
             'protocols/nethereum-gnosissafe',
             'protocols/nethereum-circles',
+            'protocols/nethereum-siwe-core',
+            'protocols/nethereum-siwe',
           ],
         },
       ],
@@ -472,7 +475,7 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
-    // MUD Framework (Autonomous Worlds)
+    // MUD Framework
     // ═══════════════════════════════
     {
       type: 'category',
@@ -481,11 +484,21 @@ const sidebars: SidebarsConfig = {
         'mud-framework/overview',
         {
           type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'mud-framework/guide-mud-quickstart',
+            'mud-framework/guide-mud-tables',
+            'mud-framework/guide-mud-indexing',
+            'mud-framework/guide-mud-deployment',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'mud-framework/nethereum-mud',
             'mud-framework/nethereum-mud-contracts',
-            'mud-framework/nethereum-mudblazorcomponents',
             'mud-framework/nethereum-mud-repositories-entityframework',
             'mud-framework/nethereum-mud-repositories-postgres',
           ],
@@ -620,6 +633,7 @@ const sidebars: SidebarsConfig = {
               label: 'Tools',
               items: [
                 'blazor-dapp-integration/nethereum-blazor-solidity',
+                'blazor-dapp-integration/nethereum-mudblazorcomponents',
               ],
             },
           ],

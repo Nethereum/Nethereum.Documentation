@@ -147,7 +147,7 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Mud.Contracts': 'mud-framework',
   'Nethereum.Mud.Repositories.EntityFramework': 'mud-framework',
   'Nethereum.Mud.Repositories.Postgres': 'mud-framework',
-  'Nethereum.MudBlazorComponents': 'mud-framework',
+  'Nethereum.MudBlazorComponents': 'blazor-dapp-integration',
 
   // §9 Wallet Connectivity
   'Nethereum.UI': 'wallet-connectivity',

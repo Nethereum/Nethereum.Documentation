@@ -126,7 +126,7 @@ const sections: SectionItem[] = [
   {
     title: 'AppChains (Preview)',
     icon: '🌍',
-    description: 'Production app chains — sequencer, P2P networking, L1 anchoring',
+    description: 'Domain-specific Ethereum extension layers — sequencer, RocksDB storage, multi-peer sync, L1 anchoring',
     link: '/docs/application-chain/overview',
   },
 ];
@@ -167,7 +167,7 @@ const taskGroups: TaskGroup[] = [
       {task: 'Run a local dev chain (no external node)', packages: 'Nethereum.DevChain.Server', link: '/docs/devchain/overview'},
       {task: 'Simulate EVM execution in-process', packages: 'Nethereum.EVM', link: '/docs/evm-simulator/overview'},
       {task: 'Spin up a dev environment with Aspire', packages: 'dotnet new nethereum-devchain', link: '/docs/devchain/overview'},
-      {task: 'Deploy a production app chain', packages: 'Nethereum.AppChain', link: '/docs/application-chain/overview'},
+      {task: 'Launch a production AppChain', packages: 'Nethereum.AppChain.Server', link: '/docs/application-chain/guide-appchain-quickstart'},
     ],
   },
   {

@@ -729,6 +729,16 @@ const sidebars: SidebarsConfig = {
         'application-chain/overview',
         {
           type: 'category',
+          label: 'Getting Started',
+          collapsed: false,
+          items: [
+            'application-chain/guide-appchain-quickstart',
+            'application-chain/guide-appchain-storage',
+            'application-chain/guide-appchain-sync',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'application-chain/nethereum-appchain',

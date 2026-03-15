@@ -418,6 +418,8 @@ interceptor.FallbackTriggered += (sender, args) =>
 
 **State consistency errors** can occur in optimistic mode when the optimistic header is very close to the chain head. The RPC node may not yet have consistent state for that block. These are transient and resolve on the next update.
 
+![Mainnet balances verified using storage proofs and light client](../screenshots/walletsdk-2-Dashboard-MainnetBalancesAreVerfiedUsingProofsStorageLightClient.png)
+
 ## Real-World Example: Wallet Dashboard
 
 The Nethereum Wallet uses `VerifiedBalanceService` to display trustlessly verified balances on its dashboard. The production implementation follows a dual-mode strategy:

@@ -87,6 +87,8 @@ builder.Services.AddAuthorizationCore();
 }
 ```
 
+![EIP-6963 wallet discovery detecting MetaMask, Brave, and Coinbase wallets in Blazor Server](../screenshots/Explorer-Eip6963-serverside-blazorsupport-not%20just%20wasm%20example%20dectecting%20metamask,%20brave%20and%20coinbase%20wallets.png)
+
 ### Get Web3 After Connection
 
 Once connected through any provider, get a `Web3` instance for RPC calls:

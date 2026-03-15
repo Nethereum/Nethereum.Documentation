@@ -35,6 +35,8 @@ public interface IWalletAccount
 | **Smart Contract** | `SmartContractWalletAccount` | No | Multisig or AA contract wallets |
 | **Hardware** | via Trezor/Ledger packages | Yes (device) | USB-connected signing |
 
+![Add account dialog — Mnemonic, Private Key, View-Only, and Trezor hardware wallet](../screenshots/walletsdk-3-AddAccount-Mnemonic-PrivateKey-ViewOnly-Trezor-PlugableTypes.png)
+
 ## WalletVault
 
 `WalletVault` holds all accounts, mnemonics, and hardware device references. It serialises to JSON and encrypts with AES-256 via `IEncryptionStrategy`.
@@ -89,6 +91,8 @@ await VaultService.LockAsync();
 ```
 
 ## Mnemonic Accounts (BIP39/BIP44)
+
+![Mnemonic account creation with 12/24-word support and optional passphrase](../screenshots/walletsdk-4-AddAccountMnemonic-Support12-24wordsAndPassphraseUsingMinimalHdWallet.png)
 
 `MinimalHDWallet` in `Nethereum.Accounts.Bip32` implements BIP32 key derivation and BIP39 seed generation.
 

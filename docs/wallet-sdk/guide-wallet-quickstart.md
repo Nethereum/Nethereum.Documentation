@@ -99,6 +99,8 @@ For a full wallet experience with account creation, network selection, and trans
 
 This renders the complete wallet dashboard including account list, token balances, and send transaction flows. Customise the dashboard plugins and configuration via `AddNethereumWalletUIConfiguration`.
 
+![Wallet dashboard with mainnet balances verified using light client proofs](../screenshots/walletsdk-2-Dashboard-MainnetBalancesAreVerfiedUsingProofsStorageLightClient.png)
+
 ## Next Steps
 
 - [Architecture](guide-wallet-architecture) -- understand the 3-layer MVVM model

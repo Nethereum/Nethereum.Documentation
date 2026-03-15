@@ -49,6 +49,8 @@ var host = builder.Build();
 await host.RunAsync();
 ```
 
+![PostgreSQL database with tables for blocks, transactions, tokens, and MUD records](../screenshots/indexer-postgres-tableview-blockchain-tokens-mud-tables.png)
+
 ### SQL Server
 
 ```bash

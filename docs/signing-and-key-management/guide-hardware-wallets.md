@@ -207,6 +207,8 @@ Force the device to re-derive and return the address (useful if you suspect the 
 var freshAddress = await signer.RefreshAddressFromDeviceAsync();
 ```
 
+![Trezor connection with PIN prompt, passphrase entry, and account scanning](../screenshots/walletsdk-5-AddAccountTrezor-SupportPromptsForPinsLegacy-PassPhrase-AccountIndexScanning.png)
+
 ## Ledger
 
 Ledger has a simpler setup — no PIN handler needed (PIN entry happens on the device itself). The trade-off is fewer software-side features: EIP-712 signing uses hash-based verification rather than interactive field display, and the factory is Windows-only (though you can use Ledger.Net directly on other platforms).

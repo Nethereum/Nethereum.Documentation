@@ -235,6 +235,8 @@ stateChanges.Traces = execResult.Traces;
 stateChanges.GasUsed = execResult.GasUsed;
 ```
 
+![Transaction simulation preview showing state changes before signing](../screenshots/walletsdk-12-Transfers-Transfer%20EVM%20simulation.png)
+
 ## Next Steps
 
 - [Call Tree Decoding](guide-call-tree-decoding) — inspect the full call hierarchy with decoded function names and parameters

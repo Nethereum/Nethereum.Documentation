@@ -203,6 +203,8 @@ await processingService.ProcessAllStoreChangesAsync(web3, worldAddress);
 
 This combines event processing, decoding, and normalisation into a single call.
 
+![MUD World tables indexed to PostgreSQL with querying and filtering](../screenshots/explorer-animated-gif-mud%20worlds%20tables%20querying%20and%20filtering.gif)
+
 ### Query Normalised Tables
 
 Once data is normalised, use `NormalisedTableQueryService` to query the typed PostgreSQL tables:

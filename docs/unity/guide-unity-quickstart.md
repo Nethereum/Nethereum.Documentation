@@ -40,6 +40,8 @@ This installs all core Nethereum libraries including WebGL wallet support (MetaM
 
 Package source: https://github.com/Nethereum/Nethereum.Unity
 
+![CafeCosmos — a Unity game built with Nethereum](../screenshots/unity-cafecosmos.png)
+
 ### Important Notes
 
 - **AOT builds**: The package uses AOT-compatible builds with Unity's custom Newtonsoft Json.NET

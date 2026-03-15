@@ -176,6 +176,8 @@ The replay service:
 4. Matches deployed bytecode to compiled artifacts for source mapping
 5. Handles multi-contract transactions — discovers all code addresses and matches each to its source
 
+![EVM debugger replaying transaction with opcode step-through and source mapping](../screenshots/explorer-transaction-debugging.png)
+
 ## Next Steps
 
 - [Bytecode Execution](guide-bytecode-execution) — lower-level opcode execution without source maps

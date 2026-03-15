@@ -97,6 +97,8 @@ The `TokenInfo` model carries everything you need for display:
 | `ChainId` | `long` | Chain the token belongs to |
 | `CoinGeckoId` | `string` | CoinGecko identifier used for price lookups |
 
+![Cross-chain portfolio scanning with token balances and CoinGecko prices](../screenshots/walletsdk-6-HoldingsScanning-ScanPortfolioAccrossDifferentChainsUsingTokenListsIndependentOfIndexers.png)
+
 ## Balances Without Prices
 
 If you only need balances and do not need pricing (for example, in a token selector or transfer UI), use `GetAllBalancesAsync`. This skips the CoinGecko call entirely and returns faster:

@@ -161,6 +161,8 @@ await devChain.StartAsync(account);
 // Automatically disposed at end of scope
 ```
 
+![Aspire dashboard showing DevChain, Explorer, Indexer, Bundler, and PostgreSQL](../screenshots/aspire-devchain-explorer-indexer-bundler-postgress.png)
+
 ## Next Steps
 
 - [HTTP Server](guide-http-server) — expose DevChain as an HTTP endpoint for MetaMask, Foundry, or any Ethereum tool

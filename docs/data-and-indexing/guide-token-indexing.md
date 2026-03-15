@@ -40,6 +40,8 @@ await host.RunAsync();
 
 All three services start automatically as hosted services. Each tracks its own progress independently.
 
+![Token indexing pipeline with PostgreSQL storage for transfers, balances, and NFTs](../screenshots/indexer-postgres-tableview-blockchain-tokens-mud-tables.png)
+
 ---
 
 ## Three-Stage Pipeline

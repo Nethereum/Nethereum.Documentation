@@ -30,6 +30,8 @@ Nethereum.Wallet                              Core services: accounts, vaults, B
 | **RPC** | `Nethereum.Wallet.RpcRequests` | EIP-1193 JSON-RPC request handlers for wallet-to-dApp communication |
 | **Hardware** | `Nethereum.Maui.AndroidUsb` | Android USB transport for Ledger/Trezor on MAUI |
 
+![Wallet SDK login with vault data stored in Web3 KeyStore](../screenshots/walletsdk-1-Login-vaultDataStoredInWeb3KeyStore.png)
+
 ## Account Types
 
 The wallet supports multiple account types:

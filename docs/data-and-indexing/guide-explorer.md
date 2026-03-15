@@ -33,6 +33,8 @@ dotnet add package Nethereum.Explorer
 - **Blob data** (EIP-4844 type 3) — Blob commitments and proofs display
 - **EIP-7702 authorizations** (type 4) — Authorization list display
 
+![Explorer dashboard showing latest blocks and transactions](../screenshots/Exploer-dashboard-latestblocks-transactions.png)
+
 ### Account & Contract Pages
 - **Accounts page** — Paginated address list with EOA/contract badges
 - **Account detail** — Balance, nonce, QR code, transaction history with direction filter
@@ -40,6 +42,8 @@ dotnet add package Nethereum.Explorer
 - **Contracts page** — Paginated list with creator address and deployment transaction
 - **Contract detail** — ABI-decoded read/write functions, event history, bytecode, source code
 - **Proxy detection** — Automatically detects proxy contracts and links to implementation
+
+![Contract interaction — query, transact, receipt and event decoding](../screenshots/explorer-animated-gif-contract intraction, query, transact, receipt decoding with event decoding, events, transactions.gif)
 
 ### Token Features
 - **Token balances** per account (ERC-20/721/1155)
@@ -54,10 +58,14 @@ dotnet add package Nethereum.Explorer
 - **Memory/stack/storage inspection** — View EVM state at each step
 - Requires `debug_traceTransaction` RPC support
 
+![Transaction debugger with opcode step-through and EVM state inspection](../screenshots/explorer-transaction-debugging.png)
+
 ### MUD World Browser
 - **MUD Worlds page** — List deployed MUD World contracts
 - **MUD Tables** — Browse table schemas with key/value fields, normalised SQL indicator
 - **MUD Records** — Raw hex view, decoded view, normalised SQL view, query builder
+
+![MUD World tables with querying and filtering](../screenshots/explorer-animated-gif-mud worlds tables querying and filtering.gif)
 
 ### Search
 - Search by block number, transaction hash, address, or ENS name

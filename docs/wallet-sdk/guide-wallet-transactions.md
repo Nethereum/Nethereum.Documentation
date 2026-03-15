@@ -47,6 +47,8 @@ The `TransactionManager` handles nonce assignment, gas estimation, and signing u
 
 ## Sending ERC-20 Tokens
 
+![Transfer support for native ETH and ERC-20 tokens](../screenshots/walletsdk-9-Transfers-Transfer support for native or erc20 tokens.png)
+
 Use the typed contract services from `Nethereum.Contracts.Standards`:
 
 ```csharp
@@ -89,6 +91,8 @@ var gasPrice = await web3.Eth.GasPrice.SendRequestAsync();
 txInput.GasPrice = gasPrice;
 ```
 
+![Gas pricing estimation with EIP-1559 fee configuration](../screenshots/walletsdk-12-Transfers-Transfer gas pricing estimation.png)
+
 ## EVM State Preview
 
 Before signing, you can simulate the transaction locally to preview state changes (balance deltas, storage writes, event logs). This uses the [EVM Simulator](../evm-simulator/guide-transaction-simulation):
@@ -114,6 +118,8 @@ foreach (var transfer in result.Transfers)
 ```
 
 This is useful for showing "you will send X ETH and receive Y tokens" previews in a wallet UI before the user confirms.
+
+![EVM simulation showing state changes and balance deltas before signing](../screenshots/walletsdk-12-Transfers-Transfer EVM simulation.png)
 
 ## Signing with Different Account Types
 

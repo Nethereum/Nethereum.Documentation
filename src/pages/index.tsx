@@ -64,6 +64,12 @@ const sections: SectionItem[] = [
     link: '/docs/devchain/overview',
   },
   {
+    title: 'Aspire Templates',
+    icon: '🚀',
+    description: 'One-command dev environments — DevChain + Explorer, or full-stack dApp with Solidity, C# codegen, and Blazor',
+    link: '/docs/aspire-templates/overview',
+  },
+  {
     title: 'Account Abstraction',
     icon: '🔑',
     description: 'ERC-4337 UserOps, bundler, paymaster, ERC-7579 smart accounts',
@@ -166,7 +172,8 @@ const taskGroups: TaskGroup[] = [
     tasks: [
       {task: 'Run a local dev chain (no external node)', packages: 'Nethereum.DevChain.Server', link: '/docs/devchain/overview'},
       {task: 'Simulate EVM execution in-process', packages: 'Nethereum.EVM', link: '/docs/evm-simulator/overview'},
-      {task: 'Spin up a dev environment with Aspire', packages: 'dotnet new nethereum-devchain', link: '/docs/devchain/overview'},
+      {task: 'Spin up a dev environment with Aspire', packages: 'dotnet new nethereum-devchain', link: '/docs/aspire-templates/guide-devchain-template'},
+      {task: 'Build a full-stack dApp (Blazor + Solidity)', packages: 'dotnet new nethereum-dapp', link: '/docs/aspire-templates/guide-dapp-template'},
       {task: 'Launch a production AppChain', packages: 'Nethereum.AppChain.Server', link: '/docs/application-chain/guide-appchain-quickstart'},
     ],
   },

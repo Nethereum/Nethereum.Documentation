@@ -345,6 +345,54 @@ const sidebars: SidebarsConfig = {
     },
 
     // ═══════════════════════════════
+    // Aspire Templates
+    // ═══════════════════════════════
+    {
+      type: 'category',
+      label: 'Aspire Templates',
+      items: [
+        'aspire-templates/overview',
+        {
+          type: 'category',
+          label: 'Getting Started',
+          collapsed: false,
+          items: [
+            'aspire-templates/guide-devchain-template',
+            'aspire-templates/guide-dapp-template',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Solidity Development',
+          items: [
+            'aspire-templates/guide-solidity-setup',
+            'aspire-templates/guide-solidity-contracts',
+            'aspire-templates/guide-forge-testing',
+            'aspire-templates/guide-forge-deploy',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'C# Integration',
+          items: [
+            'aspire-templates/guide-codegen',
+            'aspire-templates/guide-csharp-unit-testing',
+            'aspire-templates/guide-integration-testing',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'dApp Development',
+          items: [
+            'aspire-templates/guide-wallet-integration',
+            'aspire-templates/guide-webapp-token-interaction',
+            'aspire-templates/guide-explorer-abi-discovery',
+          ],
+        },
+      ],
+    },
+
+    // ═══════════════════════════════
     // Account Abstraction (ERC-4337 / ERC-7579)
     // ═══════════════════════════════
     {

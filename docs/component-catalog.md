@@ -26,7 +26,8 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Run a local dev chain (no external node) | [`Nethereum.DevChain.Server`](devchain/nethereum-devchain-server) |
 | Simulate EVM execution in-process | [`Nethereum.EVM`](evm-simulator/nethereum-evm) |
 | Preview transaction state changes before signing | `Nethereum.Wallet` + [`Nethereum.EVM`](evm-simulator/nethereum-evm) |
-| Spin up a full dev environment with Aspire | `dotnet new nethereum-devchain` template |
+| Spin up a full dev environment with Aspire | [`dotnet new nethereum-devchain`](aspire-templates/guide-devchain-template) |
+| Build a full-stack dApp with Blazor and Solidity | [`dotnet new nethereum-dapp`](aspire-templates/guide-dapp-template) |
 | **Code Generation** | |
 | Generate C# contract services from Solidity ABI | `Nethereum.Generator.Console` (CLI) or VS Code Solidity extension |
 | Generate UI components from contract definitions | `Nethereum.Generator.Console` (CLI) or VS Code Solidity extension |
@@ -157,6 +158,16 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.CoreChain.RocksDB](devchain/nethereum-corechain-rocksdb) | RocksDB persistent storage |
 | [Nethereum.DevChain](devchain/nethereum-devchain) | Development chain: pre-funded accounts, auto-mine, SQLite, time manipulation |
 | [Nethereum.DevChain.Server](devchain/nethereum-devchain-server) | HTTP server for DevChain (MetaMask/Foundry/Hardhat compatible) |
+
+### Aspire Templates
+
+| Template / Resource | Description |
+|---|---|
+| [`nethereum-devchain`](aspire-templates/guide-devchain-template) | Aspire template: DevChain + Indexer + Explorer + PostgreSQL in one command |
+| [`nethereum-dapp`](aspire-templates/guide-dapp-template) | Aspire template: full-stack dApp with Blazor WebApp, Foundry contracts, C# codegen, EIP-6963 wallet |
+| [Solidity → C# codegen](aspire-templates/guide-codegen) | End-to-end code generation from Forge-compiled Solidity to typed C# services |
+| [EIP-6963 wallet integration](aspire-templates/guide-wallet-integration) | Browser wallet connection in Blazor with chain validation and switching |
+| [Explorer ABI discovery](aspire-templates/guide-explorer-abi-discovery) | Automatic contract ABI resolution from Foundry build artifacts |
 
 ### Account Abstraction (ERC-4337 / ERC-7579)
 

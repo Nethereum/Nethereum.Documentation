@@ -235,6 +235,12 @@ Safe transactions have their own gas configuration, separate from the Ethereum t
 
 For most use cases, setting all gas parameters to 0 is correct — the Safe uses Ethereum's standard gas mechanism.
 
+## Safe Transaction Verification
+
+[SafeVerify](https://safeverify.nethereum.com/) is a standalone tool for verifying Gnosis Safe transactions before signing. It decodes the transaction data, shows the target contract and function being called, and validates the EIP-712 typed data hash — so owners can confirm exactly what they're approving.
+
+Try it at [safeverify.nethereum.com](https://safeverify.nethereum.com/) or view the source: [Nethereum.GnosisSafeVerify on GitHub](https://github.com/Nethereum/Nethereum.GnosisSafeVerify)
+
 ## Next Steps
 
 - [x402 Payments](guide-x402-payments) -- accept crypto payments in your API

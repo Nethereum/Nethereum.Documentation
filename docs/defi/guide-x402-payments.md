@@ -264,6 +264,69 @@ Both processors return structured error codes in `VerificationResponse.InvalidRe
 | `invalid_exact_evm_payload_recipient_mismatch` | Receiver doesn't match (Receive model) |
 | `invalid_exact_evm_payload_authorization_nonce_used` | Nonce already consumed |
 
+## Demo Projects
+
+The Nethereum repo includes three runnable demo projects that demonstrate the full x402 flow end-to-end:
+
+### Simple Client
+
+A console app demonstrating both automatic and manual payment flows against a local Anvil chain:
+
+```csharp
+// Automatic: client handles 402 detection, EIP-3009 signing, and retry
+var x402Client = new X402HttpClient(httpClient, privateKey, options);
+var response = await x402Client.GetAsync("http://localhost:5000/premium");
+
+// Check settlement result
+if (response.HasPaymentResponse())
+    Console.WriteLine($"TX: {response.GetTransactionHash()}, Success: {response.IsPaymentSuccessful()}");
+```
+
+The demo also shows the manual flow — parsing the 402 response, selecting a payment option, and sending the authorization header step-by-step.
+
+Source: [`src/demos/Nethereum.X402.SimpleClient`](https://github.com/Nethereum/Nethereum/tree/master/src/demos/Nethereum.X402.SimpleClient)
+
+### Simple Server
+
+A minimal ASP.NET Core server that protects a `/premium` endpoint requiring 0.01 USDC payment on Base Sepolia, using the external facilitator at `https://x402.org/facilitator`:
+
+```csharp
+builder.Services.AddX402Services("https://x402.org/facilitator");
+
+app.UseX402(options => options.Routes.Add(
+    new RoutePaymentConfig("/premium", new PaymentRequirements
+    {
+        Scheme = "exact",
+        Network = "base-sepolia",
+        MaxAmountRequired = "10000",  // 0.01 USDC
+        PayTo = receiverAddress,
+        Resource = "/premium",
+        Description = "Premium content access"
+    })));
+
+app.MapGet("/premium", () => "This is premium content!");
+app.MapGet("/free", () => "This is free content!");
+```
+
+Source: [`src/demos/Nethereum.X402.SimpleServer`](https://github.com/Nethereum/Nethereum/tree/master/src/demos/Nethereum.X402.SimpleServer)
+
+### Facilitator Server
+
+A self-hosted facilitator service that verifies and settles x402 payments on-chain. Supports multiple networks (Sepolia, Base Sepolia) with configurable RPC endpoints and token addresses:
+
+```csharp
+builder.Services.AddX402TransferProcessor(
+    facilitatorPrivateKey, rpcEndpoints, tokenAddresses, chainIds, tokenNames, tokenVersions);
+builder.Services.AddControllers().AddX402FacilitatorControllers();
+```
+
+Exposes three endpoints:
+- `POST /facilitator/verify` — verify a payment authorization
+- `POST /facilitator/settle` — settle a payment on-chain
+- `GET /facilitator/supported` — list supported payment kinds
+
+Source: [`src/demos/Nethereum.X402.FacilitatorServer`](https://github.com/Nethereum/Nethereum/tree/master/src/demos/Nethereum.X402.FacilitatorServer/FacilitatorServer)
+
 ## Next Steps
 
 - [Circles UBI](guide-circles) -- interact with the Circles protocol

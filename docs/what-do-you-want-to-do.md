@@ -129,9 +129,25 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **[Write integration tests against a local chain](devchain/guide-testing-patterns)** | `Nethereum.DevChain` |
 | **[Fork a live network and manipulate state/time](devchain/guide-forking-and-state)** | `Nethereum.DevChain` |
 | **[Trace and debug transactions (opcode-level)](devchain/guide-debug-trace)** | `Nethereum.DevChain` |
-| **Spin up a full dev environment with Aspire** | `dotnet new nethereum-devchain` template |
+| **[Spin up a full dev environment with Aspire](aspire-templates/overview)** | `dotnet new nethereum-devchain` template |
 
 > See the [DevChain](./devchain/overview) section.
+
+---
+
+## Aspire Templates
+
+| I want to... | Packages |
+|---|---|
+| **[Set up a local Ethereum dev environment in one command](aspire-templates/guide-devchain-template)** | `dotnet new nethereum-devchain` |
+| **[Build a full-stack dApp with Blazor, Solidity, and C#](aspire-templates/guide-dapp-template)** | `dotnet new nethereum-dapp` |
+| **[Generate C# typed services from Solidity contracts](aspire-templates/guide-codegen)** | `Nethereum.Generator.Console` (via template scripts) |
+| **[Connect browser wallets via EIP-6963 in Blazor](aspire-templates/guide-wallet-integration)** | `Nethereum.Blazor` + `Nethereum.EIP6963WalletInterop` |
+| **[Auto-discover contract ABIs in Explorer](aspire-templates/guide-explorer-abi-discovery)** | `Nethereum.Explorer` |
+| **[Deploy Solidity contracts with Forge](aspire-templates/guide-forge-deploy)** | `dotnet new nethereum-dapp` (includes Foundry) |
+| **[Write integration tests against a live DevChain](aspire-templates/guide-integration-testing)** | `dotnet new nethereum-dapp` (includes Tests project) |
+
+> See the [Aspire Templates](./aspire-templates/overview) section.
 
 ---
 

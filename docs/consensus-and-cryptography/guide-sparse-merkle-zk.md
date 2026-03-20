@@ -106,7 +106,7 @@ var root = smt.ComputeRoot();
 ```
 
 `CelestiaSmtHasher` uses domain-separated SHA-256:
-- **Leaf**: `SHA256(0x00 || SHA256(value) || path)`
+- **Leaf**: `SHA256(0x00 || path || SHA256(value))`
 - **Node**: `SHA256(0x01 || leftHash || rightHash)`
 
 ## Example 3: Persistent Storage with Async API

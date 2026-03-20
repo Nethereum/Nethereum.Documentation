@@ -100,23 +100,19 @@ var result = verifier.Verify(proof, vk, publicInputs);
 
 ## Example 3: Detect Tampered Proofs
 
-Groth16 verification rejects any modification to the proof, inputs, or verification key:
+Groth16 verification rejects any modification to the proof, inputs, or verification key. The simplest way to demonstrate this is to verify a valid proof against a different circuit's verification key or public inputs:
 
 ```csharp
 using Nethereum.ZkProofsVerifier.Circom;
-using Nethereum.ZkProofsVerifier.Groth16;
-using System.Numerics;
 
-var proof = SnarkjsProofParser.Parse(proofJson);
-var vk = SnarkjsVerificationKeyParser.Parse(vkJson);
-var publicInputs = SnarkjsPublicInputParser.Parse(publicJson);
+// Verify with mismatched files — proof from circuit A, VK from circuit B
+var result = CircomGroth16Adapter.Verify(proofJsonA, vkJsonB, publicJsonA);
+// result.IsValid == false — VK doesn't match the proof's circuit
 
-// Tamper with a public input
-var wrongInputs = new BigInteger[] { BigInteger.Zero };
-
-var verifier = new Groth16Verifier();
-var result = verifier.Verify(proof, vk, wrongInputs);
-// result.IsValid == false — tampered inputs detected
+// Or verify with tampered public inputs JSON
+var tamperedPublicJson = "[\"999\"]";
+var result2 = CircomGroth16Adapter.Verify(proofJson, vkJson, tamperedPublicJson);
+// result2.IsValid == false — inputs don't match what was proven
 ```
 
 ## Understanding the G2 Coordinate Swap

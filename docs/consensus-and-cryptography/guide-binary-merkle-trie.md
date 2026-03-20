@@ -188,11 +188,11 @@ var retrieved = trie.GetValuesAtStem(stem);
 using Nethereum.Merkle.Binary.Hashing;
 using Nethereum.Util.HashProviders;
 
-// BLAKE3 — default, faster, managed .NET implementation
-var blake3Trie = new BinaryTrie(new Blake3HashProvider());
-
-// SHA-256 — alternative
+// SHA-256 — default
 var sha256Trie = new BinaryTrie(new Sha256HashProvider());
+
+// BLAKE3 — faster, managed .NET implementation
+var blake3Trie = new BinaryTrie(new Blake3HashProvider());
 ```
 
 ## Related

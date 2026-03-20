@@ -720,6 +720,37 @@ const sidebars: SidebarsConfig = {
       ],
     },
 
+    // ─── Consensus & Cryptography ───
+    {
+      type: 'category',
+      label: 'Consensus & Cryptography',
+      items: [
+        'consensus-and-cryptography/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'consensus-and-cryptography/guide-zk-proof-verification',
+            'consensus-and-cryptography/guide-sparse-merkle-zk',
+            'consensus-and-cryptography/guide-binary-merkle-trie',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'consensus-and-cryptography/nethereum-zkproofsverifier',
+            'consensus-and-cryptography/nethereum-merkle',
+            'consensus-and-cryptography/nethereum-merkle-binary',
+            'consensus-and-cryptography/nethereum-ssz',
+            'consensus-and-cryptography/nethereum-consensus-ssz',
+            'consensus-and-cryptography/nethereum-consensus-lightclient',
+          ],
+        },
+      ],
+    },
+
     // ─── Consensus Light Client ───
     {
       type: 'category',

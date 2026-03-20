@@ -76,29 +76,7 @@ else
 }
 ```
 
-## Example 2: Parse and Inspect Before Verifying
-
-When you need to inspect the proof structure or validate inputs before verification:
-
-```csharp
-using Nethereum.ZkProofsVerifier.Circom;
-using Nethereum.ZkProofsVerifier.Groth16;
-
-// Parse each component
-var proof = SnarkjsProofParser.Parse(proofJson);
-var vk = SnarkjsVerificationKeyParser.Parse(vkJson);
-var publicInputs = SnarkjsPublicInputParser.Parse(publicJson);
-
-// Inspect structure
-Console.WriteLine($"Public inputs: {publicInputs.Length}");
-Console.WriteLine($"IC points in VK: {vk.IC.Length}");  // Must be publicInputs.Length + 1
-
-// Verify
-var verifier = new Groth16Verifier();
-var result = verifier.Verify(proof, vk, publicInputs);
-```
-
-## Example 3: Detect Tampered Proofs
+## Example 2: Detect Tampered Proofs
 
 Groth16 verification rejects any modification to the proof, inputs, or verification key. The simplest way to demonstrate this is to verify a valid proof against a different circuit's verification key or public inputs:
 
@@ -115,18 +93,16 @@ var result2 = CircomGroth16Adapter.Verify(proofJson, vkJson, tamperedPublicJson)
 // result2.IsValid == false — inputs don't match what was proven
 ```
 
-## Understanding the G2 Coordinate Swap
-
-When working with G2 curve points directly (not through the parsers), be aware that snarkjs stores Fp2 elements as `[c0, c1]` (imaginary, real) while the internal `Fp2` constructor takes `Fp2(a, b)` where the parameters are swapped. The built-in parsers handle this automatically — you only need to account for this if constructing `TwistPoint` objects manually.
-
 ## Error Messages
+
+When verification fails, `result.Error` contains one of these messages:
 
 | Error | Cause |
 |-------|-------|
-| `"Proof is null"` | Null proof object passed to verifier |
-| `"Public inputs array is null"` | Null public inputs |
-| `"Expected N public inputs but got M"` | IC array length doesn't match inputs + 1 |
-| `"Pairing check failed"` | Proof is invalid (tampered or wrong inputs) |
+| `"Pairing check failed"` | Proof is invalid — tampered proof, wrong inputs, or mismatched VK |
+| `"Proof JSON is null or empty"` | Empty or null proof JSON string |
+| `"Verification key JSON is null or empty"` | Empty or null VK JSON string |
+| `"Public inputs JSON is null or empty"` | Empty or null public inputs JSON string |
 
 ## Related
 

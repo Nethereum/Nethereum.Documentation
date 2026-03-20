@@ -744,6 +744,7 @@ const sidebars: SidebarsConfig = {
             'consensus-and-cryptography/nethereum-merkle',
             'consensus-and-cryptography/nethereum-merkle-binary',
             'consensus-and-cryptography/nethereum-ssz',
+            'consensus-and-cryptography/nethereum-model-ssz',
             'consensus-and-cryptography/nethereum-consensus-ssz',
             'consensus-and-cryptography/nethereum-consensus-lightclient',
           ],

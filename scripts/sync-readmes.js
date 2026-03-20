@@ -179,8 +179,10 @@ const PACKAGE_CATEGORY = {
 
   // §10 Consensus & Cryptography
   'Nethereum.Merkle': 'consensus-and-cryptography',
+  'Nethereum.Merkle.Binary': 'consensus-and-cryptography',
   'Nethereum.Merkle.Patricia': 'consensus-and-cryptography',
   'Nethereum.Ssz': 'consensus-and-cryptography',
+  'Nethereum.ZkProofsVerifier': 'consensus-and-cryptography',
   'Nethereum.Consensus.LightClient': 'consensus-and-cryptography',
   'Nethereum.Beaconchain': 'consensus-light-client',
 

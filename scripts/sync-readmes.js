@@ -78,6 +78,8 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Circles': 'protocols',
   'Nethereum.GSN': 'protocols',
   'Nethereum.Optimism': 'protocols',
+  'Nethereum.PrivacyPools': 'protocols',
+  'Nethereum.PrivacyPools.Circuits': 'protocols',
 
   // §3 DeFi
   'Nethereum.Uniswap': 'defi',

@@ -225,6 +225,7 @@ const sidebars: SidebarsConfig = {
             'defi/guide-x402-payments',
             'defi/guide-circles',
             'protocols/guide-siwe',
+            'protocols/guide-privacy-pools',
           ],
         },
         {
@@ -237,6 +238,8 @@ const sidebars: SidebarsConfig = {
             'protocols/nethereum-circles',
             'protocols/nethereum-siwe-core',
             'protocols/nethereum-siwe',
+            'protocols/nethereum-privacypools',
+            'protocols/nethereum-privacypools-circuits',
           ],
         },
       ],

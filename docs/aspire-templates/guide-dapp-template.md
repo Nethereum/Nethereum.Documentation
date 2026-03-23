@@ -69,6 +69,8 @@ dotnet run --project AppHost
 
 The Aspire dashboard opens at `https://localhost:17178`. All 6 services start up — DevChain, Indexer, Explorer, WebApp, LoadGenerator, and PostgreSQL.
 
+![Aspire DevChain dApp in action](../screenshots/aspire-devchain-dapp-animated.gif)
+
 ## Step 5: Use the WebApp
 
 Open the **WebApp** URL from the Aspire dashboard. The Token Interaction page walks you through the full ERC-20 lifecycle:

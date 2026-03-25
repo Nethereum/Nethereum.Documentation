@@ -225,6 +225,7 @@ const sidebars: SidebarsConfig = {
             'defi/guide-x402-payments',
             'defi/guide-circles',
             'protocols/guide-siwe',
+            'protocols/guide-privacy-pools',
           ],
         },
         {
@@ -237,6 +238,8 @@ const sidebars: SidebarsConfig = {
             'protocols/nethereum-circles',
             'protocols/nethereum-siwe-core',
             'protocols/nethereum-siwe',
+            'protocols/nethereum-privacypools',
+            'protocols/nethereum-privacypools-circuits',
           ],
         },
       ],
@@ -715,6 +718,43 @@ const sidebars: SidebarsConfig = {
             'data-services/nethereum-dataservices',
             'data-services/nethereum-sourcify-database',
             'data-services/nethereum-tokenservices',
+          ],
+        },
+      ],
+    },
+
+    // ─── Consensus & Cryptography ───
+    {
+      type: 'category',
+      label: 'Consensus & Cryptography',
+      items: [
+        'consensus-and-cryptography/overview',
+        {
+          type: 'category',
+          label: 'Guides',
+          collapsed: false,
+          items: [
+            'consensus-and-cryptography/guide-zk-proof-verification',
+            'consensus-and-cryptography/guide-zk-proof-demos',
+            'consensus-and-cryptography/guide-sparse-merkle-zk',
+            'consensus-and-cryptography/guide-binary-merkle-trie',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'consensus-and-cryptography/nethereum-zkproofs',
+            'consensus-and-cryptography/nethereum-zkproofsverifier',
+            'consensus-and-cryptography/nethereum-zkproofs-snarkjs-blazor',
+            'consensus-and-cryptography/nethereum-zkproofs-rapidsnark',
+            'consensus-and-cryptography/nethereum-circomwitnesscalc',
+            'consensus-and-cryptography/nethereum-merkle',
+            'consensus-and-cryptography/nethereum-merkle-binary',
+            'consensus-and-cryptography/nethereum-ssz',
+            'consensus-and-cryptography/nethereum-model-ssz',
+            'consensus-and-cryptography/nethereum-consensus-ssz',
+            'consensus-and-cryptography/nethereum-consensus-lightclient',
           ],
         },
       ],

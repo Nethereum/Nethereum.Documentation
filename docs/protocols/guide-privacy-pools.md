@@ -15,6 +15,15 @@ dotnet add package Nethereum.PrivacyPools.Circuits  # embedded circuit artifacts
 dotnet add package Nethereum.ZkProofs.Snarkjs       # proof generation (requires Node.js)
 ```
 
+**Native proof generation** (no Node.js required — recommended for desktop/server):
+
+```bash
+dotnet add package Nethereum.CircomWitnessCalc       # native witness generation (C, P/Invoke)
+dotnet add package Nethereum.ZkProofs.RapidSnark     # native Groth16 proof generation (C++, P/Invoke)
+```
+
+For browser-based Blazor WASM applications, use `Nethereum.ZkProofs.Snarkjs.Blazor` instead. See the [ZK Proof Demos guide](/docs/consensus-and-cryptography/guide-zk-proof-demos) for working examples of both approaches.
+
 ## Create an Account
 
 Privacy Pool accounts are deterministically derived from a BIP-39 mnemonic. The same mnemonic always produces the same master keys, enabling recovery across devices.

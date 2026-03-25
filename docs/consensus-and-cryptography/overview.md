@@ -58,13 +58,46 @@ smt.Put(key, value);
 var root = smt.ComputeRoot();
 ```
 
-## Zero-Knowledge Proof Verification
+## Zero-Knowledge Proofs
 
-`Nethereum.ZkProofsVerifier` provides native .NET Groth16 proof verification on the BN128 curve. Directly consumes snarkjs/Circom JSON output for one-liner verification:
+Nethereum provides a complete ZK proof pipeline — generation, verification, and Solidity-compatible proof formatting — for Groth16 proofs on the BN128 curve.
+
+### Proof Generation
+
+Two proof generation paths are available depending on your platform:
+
+**Browser (Blazor WebAssembly)** — `Nethereum.ZkProofs.Snarkjs.Blazor` calls snarkjs via JS interop. Private inputs never leave the browser.
+
+```csharp
+var provider = new SnarkjsBlazorProvider(jsRuntime, "./js/snarkjs.min.js");
+await provider.InitializeAsync();
+var result = await provider.FullProveAsync(request);
+```
+
+**Native (Desktop/Server)** — `Nethereum.CircomWitnessCalc` + `Nethereum.ZkProofs.RapidSnark` use native C/C++ libraries via P/Invoke. Typically 10-50x faster than browser-based generation.
+
+```csharp
+byte[] witness = WitnessCalculator.CalculateWitness(graphData, inputsJson);
+using var prover = new RapidSnarkProver();
+var (proofJson, publicSignalsJson) = prover.Prove(zkeyBytes, witness);
+```
+
+Both paths implement `IZkProofProvider` from `Nethereum.ZkProofs`, making them interchangeable.
+
+### Proof Verification
+
+`Nethereum.ZkProofsVerifier` provides pure C# Groth16 verification on the BN128 curve. Directly consumes snarkjs/Circom JSON output:
 
 ```csharp
 var result = CircomGroth16Adapter.Verify(proofJson, vkJson, publicJson);
 ```
+
+### Demo Applications
+
+Two working demos show the full generate-and-verify flow with educational UI:
+
+- **Blazor WASM** — `src/demos/Nethereum.ZkProofs.Blazor.Demo/` (browser-based, snarkjs)
+- **Avalonia Desktop** — `src/demos/Nethereum.ZkProofs.Avalonia.Demo/` (native, rapidsnark)
 
 ## SSZ (Simple Serialize)
 
@@ -81,6 +114,10 @@ var result = CircomGroth16Adapter.Verify(proofJson, vkJson, publicJson);
 | `Nethereum.Merkle` | Standard, incremental, sparse, and ZK-optimized Merkle trees |
 | `Nethereum.Merkle.Binary` | EIP-7864 Binary Merkle Trie for stateless execution |
 | `Nethereum.Merkle.Patricia` | Modified Merkle Patricia Trie |
+| `Nethereum.ZkProofs` | Provider-agnostic interfaces and models for ZK proof generation |
 | `Nethereum.ZkProofsVerifier` | Groth16 proof verification on BN128 (Circom/snarkjs) |
+| `Nethereum.ZkProofs.Snarkjs.Blazor` | Browser-based Groth16 proof generation via snarkjs JS interop |
+| `Nethereum.ZkProofs.RapidSnark` | Native Groth16 proof generation via rapidsnark (P/Invoke) |
+| `Nethereum.CircomWitnessCalc` | Native witness generation via circom-witnesscalc (P/Invoke) |
 | `Nethereum.Ssz` | Simple Serialize (SSZ) encoding |
 | `Nethereum.Consensus.LightClient` | Beacon chain light client verification |

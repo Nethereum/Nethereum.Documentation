@@ -735,6 +735,7 @@ const sidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             'consensus-and-cryptography/guide-zk-proof-verification',
+            'consensus-and-cryptography/guide-zk-proof-demos',
             'consensus-and-cryptography/guide-sparse-merkle-zk',
             'consensus-and-cryptography/guide-binary-merkle-trie',
           ],
@@ -743,7 +744,11 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Package Reference',
           items: [
+            'consensus-and-cryptography/nethereum-zkproofs',
             'consensus-and-cryptography/nethereum-zkproofsverifier',
+            'consensus-and-cryptography/nethereum-zkproofs-snarkjs-blazor',
+            'consensus-and-cryptography/nethereum-zkproofs-rapidsnark',
+            'consensus-and-cryptography/nethereum-circomwitnesscalc',
             'consensus-and-cryptography/nethereum-merkle',
             'consensus-and-cryptography/nethereum-merkle-binary',
             'consensus-and-cryptography/nethereum-ssz',

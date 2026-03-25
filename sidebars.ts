@@ -101,7 +101,8 @@ const sidebars: SidebarsConfig = {
             'core-foundation/nethereum-rpc',
             'core-foundation/nethereum-rpc-extensions',
             'core-foundation/nethereum-rpc-reactive',
-            'consensus-and-cryptography/nethereum-merkle',
+            'core-foundation/nethereum-merkle',
+            'core-foundation/nethereum-merkle-binary',
             {
               type: 'category',
               label: 'JSON-RPC Transport',
@@ -310,7 +311,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'chain-infrastructure/nethereum-corechain',
             'chain-infrastructure/nethereum-corechain-rocksdb',
-            'consensus-and-cryptography/nethereum-merkle-patricia',
+            'core-foundation/nethereum-merkle-patricia',
           ],
         },
       ],
@@ -723,38 +724,31 @@ const sidebars: SidebarsConfig = {
       ],
     },
 
-    // ─── Consensus & Cryptography ───
+    // ─── Zero-Knowledge Proofs ───
     {
       type: 'category',
-      label: 'Consensus & Cryptography',
+      label: 'Zero-Knowledge Proofs',
       items: [
-        'consensus-and-cryptography/overview',
+        'zk-proofs/overview',
         {
           type: 'category',
           label: 'Guides',
           collapsed: false,
           items: [
-            'consensus-and-cryptography/guide-zk-proof-verification',
-            'consensus-and-cryptography/guide-zk-proof-demos',
-            'consensus-and-cryptography/guide-sparse-merkle-zk',
-            'consensus-and-cryptography/guide-binary-merkle-trie',
+            'zk-proofs/guide-zk-proof-verification',
+            'zk-proofs/guide-zk-proof-demos',
+            'zk-proofs/guide-sparse-merkle-zk',
           ],
         },
         {
           type: 'category',
           label: 'Package Reference',
           items: [
-            'consensus-and-cryptography/nethereum-zkproofs',
-            'consensus-and-cryptography/nethereum-zkproofsverifier',
-            'consensus-and-cryptography/nethereum-zkproofs-snarkjs-blazor',
-            'consensus-and-cryptography/nethereum-zkproofs-rapidsnark',
-            'consensus-and-cryptography/nethereum-circomwitnesscalc',
-            'consensus-and-cryptography/nethereum-merkle',
-            'consensus-and-cryptography/nethereum-merkle-binary',
-            'consensus-and-cryptography/nethereum-ssz',
-            'consensus-and-cryptography/nethereum-model-ssz',
-            'consensus-and-cryptography/nethereum-consensus-ssz',
-            'consensus-and-cryptography/nethereum-consensus-lightclient',
+            'zk-proofs/nethereum-zkproofs',
+            'zk-proofs/nethereum-zkproofsverifier',
+            'zk-proofs/nethereum-zkproofs-snarkjs-blazor',
+            'zk-proofs/nethereum-zkproofs-rapidsnark',
+            'zk-proofs/nethereum-circomwitnesscalc',
           ],
         },
       ],
@@ -780,9 +774,10 @@ const sidebars: SidebarsConfig = {
           label: 'Package Reference',
           items: [
             'consensus-light-client/nethereum-beaconchain',
-            'consensus-and-cryptography/nethereum-ssz',
-            'consensus-and-cryptography/nethereum-consensus-ssz',
-            'consensus-and-cryptography/nethereum-consensus-lightclient',
+            'consensus-light-client/nethereum-ssz',
+            'consensus-light-client/nethereum-model-ssz',
+            'consensus-light-client/nethereum-consensus-ssz',
+            'consensus-light-client/nethereum-consensus-lightclient',
             'data-and-indexing/nethereum-chainstateverification',
           ],
         },

@@ -86,11 +86,11 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **[Interact with Circles UBI protocol](defi/guide-circles)** | `Nethereum.Circles` |
 | **[Authenticate with Sign-In with Ethereum (SIWE)](protocols/guide-siwe)** | `Nethereum.Siwe` |
 | **[Deposit and withdraw privately with Privacy Pools](protocols/guide-privacy-pools)** | `Nethereum.PrivacyPools` + `Nethereum.PrivacyPools.Circuits` |
-| **[Generate ZK proofs natively (desktop/server)](consensus-and-cryptography/guide-zk-proof-demos)** | `Nethereum.ZkProofs.RapidSnark` + `Nethereum.CircomWitnessCalc` |
-| **[Generate ZK proofs in the browser (Blazor WASM)](consensus-and-cryptography/guide-zk-proof-demos)** | `Nethereum.ZkProofs.Snarkjs.Blazor` |
-| **[Verify Groth16 proofs in pure C#](consensus-and-cryptography/guide-zk-proof-verification)** | `Nethereum.ZkProofsVerifier` |
+| **[Generate ZK proofs natively (desktop/server)](zk-proofs/guide-zk-proof-demos)** | `Nethereum.ZkProofs.RapidSnark` + `Nethereum.CircomWitnessCalc` |
+| **[Generate ZK proofs in the browser (Blazor WASM)](zk-proofs/guide-zk-proof-demos)** | `Nethereum.ZkProofs.Snarkjs.Blazor` |
+| **[Verify Groth16 proofs in pure C#](zk-proofs/guide-zk-proof-verification)** | `Nethereum.ZkProofsVerifier` |
 
-> See the [DeFi & Protocols](./defi/overview) section and [Consensus & Cryptography](./consensus-and-cryptography/overview) for ZK proofs.
+> See the [DeFi & Protocols](./defi/overview) section and [Zero-Knowledge Proofs](./zk-proofs/overview) for ZK proofs.
 
 ---
 

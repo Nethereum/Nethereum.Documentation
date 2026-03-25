@@ -12,7 +12,7 @@ format: md
 > **NuGet**: [`Nethereum.CircomWitnessCalc`](https://www.nuget.org/packages/Nethereum.CircomWitnessCalc/) | **Source**: [`src/Nethereum.CircomWitnessCalc/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.CircomWitnessCalc)
 Native circom witness generation for .NET using [iden3/circom-witnesscalc](https://github.com/iden3/circom-witnesscalc). Computes witnesses from circom circuit graphs without JavaScript or Node.js — works on desktop, server, and mobile.
 
-Companion to [Nethereum.ZkProofs.RapidSnark](../Nethereum.ZkProofs.RapidSnark/) for a fully native ZK proof pipeline.
+Companion to [Nethereum.ZkProofs.RapidSnark](nethereum-zkproofs-rapidsnark) for a fully native ZK proof pipeline.
 
 ## How It Works
 
@@ -20,7 +20,7 @@ Circom circuits are normally executed via JavaScript (snarkjs + Node.js). This p
 
 1. **Compile** your `.circom` circuit into a binary graph (`.graph.bin`) using `build-circuit` (one-time)
 2. **At runtime**, pass the graph + JSON inputs to `WitnessCalculator.CalculateWitness()` which returns the witness bytes (`.wtns` format)
-3. **Feed the witness** to [Nethereum.ZkProofs.RapidSnark](../Nethereum.ZkProofs.RapidSnark/) for fast native proof generation
+3. **Feed the witness** to [Nethereum.ZkProofs.RapidSnark](nethereum-zkproofs-rapidsnark) for fast native proof generation
 
 ```
                           ONE-TIME (build step)

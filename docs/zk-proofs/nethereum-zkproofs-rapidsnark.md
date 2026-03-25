@@ -12,11 +12,11 @@ format: md
 > **NuGet**: [`Nethereum.ZkProofs.RapidSnark`](https://www.nuget.org/packages/Nethereum.ZkProofs.RapidSnark/) | **Source**: [`src/Nethereum.ZkProofs.RapidSnark/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.ZkProofs.RapidSnark)
 Native Groth16 proof generation for .NET using [iden3/rapidsnark](https://github.com/iden3/rapidsnark). Significantly faster than snarkjs — no Node.js dependency.
 
-Pair with [Nethereum.CircomWitnessCalc](../Nethereum.CircomWitnessCalc/) for a fully native ZK proof pipeline (witness generation + proving, zero JavaScript).
+Pair with [Nethereum.CircomWitnessCalc](nethereum-circomwitnesscalc) for a fully native ZK proof pipeline (witness generation + proving, zero JavaScript).
 
 ## How It Works
 
-RapidSnark is a fast C++ Groth16 prover. It takes a **proving key** (`.zkey`) and a **witness** (`.wtns`) and outputs a proof. It does NOT generate witnesses — that's handled by [Nethereum.CircomWitnessCalc](../Nethereum.CircomWitnessCalc/).
+RapidSnark is a fast C++ Groth16 prover. It takes a **proving key** (`.zkey`) and a **witness** (`.wtns`) and outputs a proof. It does NOT generate witnesses — that's handled by [Nethereum.CircomWitnessCalc](nethereum-circomwitnesscalc).
 
 This package provides three levels of API:
 
@@ -180,9 +180,9 @@ Nethereum.CircomWitnessCalc          Nethereum.ZkProofs.RapidSnark (this)
 
 | Package | Source | Role |
 |---------|--------|------|
-| [Nethereum.CircomWitnessCalc](../Nethereum.CircomWitnessCalc/) | [iden3/circom-witnesscalc](https://github.com/iden3/circom-witnesscalc) | Native witness generation |
+| [Nethereum.CircomWitnessCalc](nethereum-circomwitnesscalc) | [iden3/circom-witnesscalc](https://github.com/iden3/circom-witnesscalc) | Native witness generation |
 | **Nethereum.ZkProofs.RapidSnark** (this) | [iden3/rapidsnark](https://github.com/iden3/rapidsnark) | Native proof generation |
-| [Nethereum.ZkProofs](../Nethereum.ZkProofs/) | — | `IZkProofProvider` interface + `ZkProofRequest`/`ZkProofResult` |
+| [Nethereum.ZkProofs](nethereum-zkproofs) | — | `IZkProofProvider` interface + `ZkProofRequest`/`ZkProofResult` |
 
 ## Credits
 

@@ -95,7 +95,7 @@ The `.graph.bin` files are pre-compiled and embedded. If you need to recompile t
   cargo build --release -p build-circuit
   ```
 
-  See [Nethereum.CircomWitnessCalc README](../consensus-and-cryptography/nethereum-circomwitnesscalc) for build dependencies (Rust, protoc, LLVM/clang).
+  See [Nethereum.CircomWitnessCalc README](../zk-proofs/nethereum-circomwitnesscalc) for build dependencies (Rust, protoc, LLVM/clang).
 
 - [0xbow-io/privacy-pools-core](https://github.com/0xbow-io/privacy-pools-core) — circuit source and circomlib dependency:
 

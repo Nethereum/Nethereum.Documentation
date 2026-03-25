@@ -179,18 +179,22 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Unity.EIP6963': 'unity',
   'Nethereum.Unity.Metamask': 'unity',
 
-  // §10 Consensus & Cryptography
-  'Nethereum.Merkle': 'consensus-and-cryptography',
-  'Nethereum.Merkle.Binary': 'consensus-and-cryptography',
-  'Nethereum.Merkle.Patricia': 'consensus-and-cryptography',
-  'Nethereum.Ssz': 'consensus-and-cryptography',
-  'Nethereum.ZkProofs': 'consensus-and-cryptography',
-  'Nethereum.ZkProofsVerifier': 'consensus-and-cryptography',
-  'Nethereum.ZkProofs.Snarkjs.Blazor': 'consensus-and-cryptography',
-  'Nethereum.ZkProofs.RapidSnark': 'consensus-and-cryptography',
-  'Nethereum.CircomWitnessCalc': 'consensus-and-cryptography',
-  'Nethereum.Model.SSZ': 'consensus-and-cryptography',
-  'Nethereum.Consensus.LightClient': 'consensus-and-cryptography',
+  // §10 Core — Merkle Trees
+  'Nethereum.Merkle': 'core-foundation',
+  'Nethereum.Merkle.Binary': 'core-foundation',
+  'Nethereum.Merkle.Patricia': 'core-foundation',
+
+  // §11 Zero-Knowledge Proofs
+  'Nethereum.ZkProofs': 'zk-proofs',
+  'Nethereum.ZkProofsVerifier': 'zk-proofs',
+  'Nethereum.ZkProofs.Snarkjs.Blazor': 'zk-proofs',
+  'Nethereum.ZkProofs.RapidSnark': 'zk-proofs',
+  'Nethereum.CircomWitnessCalc': 'zk-proofs',
+
+  // §12 Consensus Light Client
+  'Nethereum.Ssz': 'consensus-light-client',
+  'Nethereum.Model.SSZ': 'consensus-light-client',
+  'Nethereum.Consensus.LightClient': 'consensus-light-client',
   'Nethereum.Beaconchain': 'consensus-light-client',
 
   // §10 Client Extensions
@@ -199,7 +203,7 @@ const PACKAGE_CATEGORY = {
 
   // Misc packages
   'Nethereum.BigInteger.N351': 'core-foundation',
-  'Nethereum.Consensus.Ssz': 'consensus-and-cryptography',
+  'Nethereum.Consensus.Ssz': 'consensus-light-client',
   'Nethereum.Quorum': 'client-extensions',
   'Nethereum.RPC.Extensions': 'core-foundation',
 };

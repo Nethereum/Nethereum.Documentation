@@ -48,6 +48,30 @@ Ethereum has evolved to support multiple transaction formats:
 - **EIP-2930** (`Transaction2930`): Transactions with access lists for gas optimization
 - **EIP-1559** (`Transaction1559`): Fee market transactions with base fee and priority fee
 - **EIP-7702** (`Transaction7702`): Account abstraction with authorization lists
+- **EIP-4844** (`Transaction4844`): Blob transactions with KZG commitments for data availability
+
+### Blob Encoding
+
+`BlobEncoder` converts arbitrary data to/from EIP-4844 blobs (131,072 bytes each, 4096 field elements):
+
+```csharp
+// Encode data into blobs (auto-splits if > 126,976 bytes)
+var blobs = BlobEncoder.EncodeBlobs(myData);
+
+// Decode blobs back to original data
+var decoded = BlobEncoder.DecodeBlobs(blobs);
+```
+
+`BlobSidecar` carries the blob data alongside the transaction for network transmission:
+
+```csharp
+var tx = new Transaction4844(chainId, nonce, maxPriorityFee, maxFee, gasLimit,
+    to, value, data, accessList, maxFeePerBlobGas, blobVersionedHashes);
+tx.Sidecar = new BlobSidecar(blobs, commitments, proofs);
+
+// Encode with sidecar for eth_sendRawTransaction
+var networkBytes = tx.GetRLPEncodedWithSidecar();
+```
 
 ### RLP Encoding
 
@@ -66,6 +90,32 @@ Ethereum uses ECDSA signatures with three components:
 ### Chain Identification
 
 The `Chain` enum provides constants for major Ethereum networks (MainNet, Sepolia, Polygon, Arbitrum, Optimism, Base, etc.) and is used with EIP-155 to prevent cross-chain replay attacks.
+
+### Numeric Types — `EvmUInt256`
+
+Transaction amounts, gas limits, fees, nonces, chain IDs, block numbers,
+balances, and cumulative gas — every 256-bit scalar field on the model
+types — are typed as `Nethereum.Util.EvmUInt256`. The struct provides
+EVM-semantic unsigned arithmetic (wrap-around, divide-by-zero → zero)
+without `System.Numerics.BigInteger` allocations in hot paths.
+
+`BigInteger` remains supported at the API boundary through an implicit
+conversion, so existing consumer code like
+`amount: BigInteger.Parse("1000000000000000000")` continues to compile
+and behave identically. For new code, prefer the direct `EvmUInt256`
+constructor for small values (`new EvmUInt256(1_000_000_000_000_000_000UL)`)
+or the conversion helpers in `EvmUInt256BigIntegerExtensions` for
+arbitrary-precision input.
+
+### Block / Receipt Encoding Providers
+
+`IBlockEncodingProvider` abstracts over the binary encoding of block
+headers, receipts, accounts, logs, and withdrawals so callers outside
+`Nethereum.Model` (state-root calculators, witness producers, SSZ
+encoders) can swap in alternative encoders without taking a direct RLP
+dependency. The default implementation is `RlpBlockEncodingProvider`
+(RLP canonical encoding for Ethereum mainnet); `Nethereum.Model.SSZ`
+supplies the beacon-chain SSZ variant.
 
 ## Quick Start
 

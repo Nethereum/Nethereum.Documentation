@@ -70,6 +70,16 @@ Ethereum signatures consist of three components:
 
 Combined signature format: `0x` + r (64 hex) + s (64 hex) + v (2 hex) = 132 hex characters
 
+Both `ECDSASignature` and `EthECDSASignature` expose predicates for
+spec compliance:
+
+- **`IsLowS`** — `s ≤ N/2` (EIP-2 malleability guard; signatures where
+  `s > N/2` are rejected by Ethereum consensus since Homestead).
+- **`IsCanonical`** — stricter: `0 < r < N` AND `0 < s ≤ N/2`. Use
+  this to validate any received signature (transaction, EIP-7702
+  authorization tuple, off-chain message) before address recovery.
+  EIP-7702 specifically requires canonical form on each auth entry.
+
 ### Ethereum Message Signing
 
 Ethereum messages are prefixed before signing to prevent signing malicious transactions:
@@ -501,6 +511,12 @@ public class Transaction1559Signer
 public class Transaction7702Signer
 {
     public void SignTransaction(byte[] privateKey, Transaction7702 transaction);
+}
+
+// EIP-4844 blob transactions
+public class Transaction4844Signer
+{
+    public void SignTransaction(byte[] privateKey, Transaction4844 transaction);
 }
 
 // Authorization lists (EIP-7702)

@@ -124,6 +124,10 @@ public class DevChainConfig : ChainConfig
     public BigInteger BaseFee { get; set; } = 1_000_000_000; // 1 gwei
     public BigInteger InitialBalance { get; set; }; // Default: 10000 ETH (BigInteger.Parse("10000000000000000000000"))
 
+    // State trie (inherited from ChainConfig)
+    public StateTreeType StateTree { get; set; } = StateTreeType.Patricia;
+    public IHashProvider StateTreeHashProvider { get; set; }; // null = Blake3 for Binary, Keccak for Patricia
+
     // Forking
     public string ForkUrl { get; set; }
     public long? ForkBlockNumber { get; set; }
@@ -137,9 +141,41 @@ public class DevChainConfig : ChainConfig
 var config = DevChainConfig.Default;   // ChainId 1337
 var config = DevChainConfig.Hardhat;   // ChainId 31337
 var config = DevChainConfig.Anvil;     // ChainId 31337
+
+// Binary trie with Poseidon (ZK-friendly)
+var zkConfig = new DevChainConfig
+{
+    StateTree = StateTreeType.Binary,
+    StateTreeHashProvider = new BN254PoseidonPairHashProvider()
+};
+
+// Binary trie with Blake3 (fastest)
+var fastConfig = new DevChainConfig
+{
+    StateTree = StateTreeType.Binary,
+    StateTreeHashProvider = new Blake3HashProvider()
+};
 ```
 
 ## Core Features
+
+### EIP-4844 Blob Transactions
+
+DevChain stores blob sidecars in-memory and exposes a beacon-compatible REST endpoint:
+
+```csharp
+// Send blob transaction with sidecar
+var tx = new Transaction4844(..., blobVersionedHashes);
+tx.Sidecar = sidecar;
+await node.SendTransactionAsync(tx);
+await node.MineBlockAsync();
+
+// Fetch stored blobs by block number
+var blobs = await node.BlobStore.GetBlobsByBlockNumberAsync(blockNumber);
+var originalData = BlobEncoder.DecodeBlobs(blobs.Select(b => b.Blob).ToList());
+```
+
+When running as an ASP.NET hosted service, blobs are also available via the beacon REST API at `GET /eth/v1/beacon/blob_sidecars/{block_id}`.
 
 ### Transaction Processing
 
@@ -186,7 +222,16 @@ await node.SetBalanceAsync(address, newBalance);
 await node.SetCodeAsync(address, bytecode);
 await node.SetStorageAtAsync(address, slot, value);
 await node.SetNonceAsync(address, nonce);
+await node.SetBlockHashAsync(blockNumber, hash);
 ```
+
+`SetBlockHashAsync` stamps the hash into the block store **and**
+mirrors it into the EIP-2935 history contract's storage at
+`0x0000F90827F1C53a10cb7A02335B175320002935`, slot `blockNumber %
+8191`. That mirror keeps the BLOCKHASH opcode consistent with the
+in-guest state-reader view for state tests and stateless replays
+where the block-hash history is seeded explicitly rather than built
+up from actual block production.
 
 ### Snapshots
 

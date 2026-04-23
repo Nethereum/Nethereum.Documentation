@@ -159,20 +159,25 @@ Pack account state into a single 32-byte leaf:
 
 ```csharp
 using Nethereum.Merkle.Binary.Keys;
-using System.Numerics;
+using Nethereum.Util;
 
 byte version = 1;
 uint codeSize = 24576;
 ulong nonce = 42;
-var balance = BigInteger.Parse("1000000000000000000");  // 1 ETH in wei
+EvmUInt256 balance = 1_000_000_000_000_000_000UL;  // 1 ETH in wei
 
 // Pack into 32 bytes
 var packed = BasicDataLeaf.Pack(version, codeSize, nonce, balance);
 
 // Unpack
-BasicDataLeaf.Unpack(packed, out var v, out var cs, out var n, out var b);
-// v == 1, cs == 24576, n == 42, b == 1000000000000000000
+BasicDataLeaf.Unpack(packed, out var v, out var cs, out var n, out EvmUInt256 b);
+// v == 1, cs == 24576, n == 42, b == 1_000_000_000_000_000_000
+
+// balance is a 128-bit field in the leaf — Pack throws
+// ArgumentOutOfRangeException if balance.U2 or balance.U3 is non-zero.
 ```
+
+The `balance` parameter is `EvmUInt256`, not `BigInteger` — the leaf layout allocates **16 bytes** (128 bits) for balance, so values above `2^128 - 1` are rejected up front to preserve round-trip safety. `BigInteger` callers can pass directly via `EvmUInt256`'s implicit conversion.
 
 **Leaf layout (32 bytes):**
 
@@ -411,6 +416,35 @@ public class InMemoryBinaryTrieStorage : IBinaryTrieStorage
 | Hashing | Keccak-256, Poseidon | BLAKE3, SHA-256 |
 | Specification | Various | EIP-7864 |
 | Proofs | OpenZeppelin-compatible | Binary inclusion proofs |
+
+## Performance
+
+Block production benchmarks comparing Patricia Merkle Trie (Keccak) vs Binary Trie with Blake3 and Poseidon (BN254 Montgomery) hash providers. All tests use simple ETH transfers with JIT warmup. Release build, .NET 10.
+
+### In-Memory (100 blocks x 100 txs = 10,000 transactions)
+
+| | Patricia | Binary (Blake3) | Binary (Poseidon) |
+|---|---|---|---|
+| Avg/block | 127ms | 145ms | 207ms |
+| Ratio | 1.0x | 1.14x | 1.63x |
+
+### SQLite (50 blocks x 50 txs = 2,500 transactions)
+
+| | Patricia | Binary (Blake3) | Binary (Poseidon) |
+|---|---|---|---|
+| Avg/block | 109ms | 95ms | 136ms |
+| Ratio | 1.0x | 0.87x | 1.25x |
+
+### RocksDB (50 blocks x 50 txs = 2,500 transactions)
+
+| | Patricia | Binary (Blake3) | Binary (Poseidon) |
+|---|---|---|---|
+| Avg/block | 69ms | 70ms | 113ms |
+| Ratio | 1.0x | 1.01x | 1.64x |
+
+Blake3 binary trie matches Patricia performance and is faster on SQLite due to simpler tree structure (binary vs hex branching, no RLP encoding). Poseidon adds 1.25-1.64x overhead depending on backend — the algebraic hash cost is offset by incremental hashing (only dirty paths recomputed) and Montgomery CIOS field arithmetic.
+
+The tradeoff: Poseidon is ZK-native. State trie validation accounts for ~43% of total ZK proving cost with Keccak. Replacing it with Poseidon eliminates that cost entirely in the proving circuit.
 
 ## Related Packages
 

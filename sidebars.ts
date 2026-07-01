@@ -194,6 +194,7 @@ const sidebars: SidebarsConfig = {
             'smart-contracts/guide-events',
             'smart-contracts/guide-error-handling',
             'smart-contracts/guide-built-in-standards',
+            'smart-contracts/guide-ens',
           ],
         },
         {

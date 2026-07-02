@@ -218,10 +218,10 @@ Endpoints: `POST /facilitator/verify`, `POST /facilitator/settle`, `GET /facilit
 
 | Code | Meaning |
 |------|---------|
-| `insufficient_funds` | Payer doesn't have enough tokens |
-| `invalid_exact_evm_payload_signature` | EIP-3009 signature verification failed |
-| `invalid_exact_evm_payload_authorization_value` | Amount below the requirement |
-| `invalid_exact_evm_payload_recipient_mismatch` | Receiver doesn't match `PayTo` |
+| `invalid_exact_evm_insufficient_balance` | Payer doesn't have enough tokens |
+| `invalid_exact_evm_signature` | EIP-3009 signature verification failed |
+| `invalid_exact_evm_authorization_value` | Amount below the requirement |
+| `invalid_exact_evm_recipient_mismatch` | Receiver doesn't match `PayTo` |
 | `invalid_network` / `unsupported_scheme` | Network/scheme not supported |
 | `invalid_permit2_recipient_mismatch` | Permit2 witness recipient ≠ `PayTo` |
 | `permit2_allowance_required` | Payer hasn't approved Permit2 for the asset |

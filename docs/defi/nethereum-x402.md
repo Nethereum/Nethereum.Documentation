@@ -432,13 +432,13 @@ public class SettlementResponse
 
 | Code | Meaning |
 |------|---------|
-| `insufficient_funds` | Payer doesn't have enough tokens |
-| `invalid_exact_evm_payload_signature` | EIP-712 signature verification failed |
-| `invalid_exact_evm_payload_authorization_value` | Amount below the requirement |
-| `invalid_exact_evm_payload_recipient_mismatch` | Recipient doesn't match `PayTo` |
-| `invalid_exact_evm_payload_authorization_nonce_used` | Nonce already consumed |
+| `invalid_exact_evm_insufficient_balance` | Payer doesn't have enough tokens |
+| `invalid_exact_evm_signature` | EIP-712 signature verification failed |
+| `invalid_exact_evm_authorization_value` | Amount below the requirement |
+| `invalid_exact_evm_recipient_mismatch` | Recipient doesn't match `PayTo` |
+| `invalid_exact_evm_nonce_already_used` | Nonce already consumed |
 | `invalid_network` | Unsupported / unconfigured network |
-| `unsupported_scheme` | Scheme not supported |
+| `unsupported_payload_type` | Scheme not supported |
 | `invalid_payment_requirements` | Requirement missing/invalid (e.g. no `extra`) |
 | `invalid_permit2_spender` | Permit2 spender is not the x402ExactPermit2Proxy |
 | `invalid_permit2_recipient_mismatch` | Permit2 witness `to` doesn't match `PayTo` |

@@ -50,7 +50,7 @@ using Nethereum.X402.Client;
 
 var options = new X402HttpClientOptions
 {
-    MaxPaymentAmount = 0.1m,           // Safety limit per request (USDC)
+    MaxAmount = "100000",           // Safety limit per request (USDC)
     PreferredNetwork = "eip155:8453",  // CAIP-2 (Base)
     PreferredScheme = "exact"
 };
@@ -59,7 +59,7 @@ var x402Client = new X402HttpClient(httpClient, privateKey, options);
 var response = await x402Client.GetAsync("https://api.example.com/premium/content");
 ```
 
-Supports `GetAsync`, `PostAsync`, `PutAsync`, `DeleteAsync`, `SendAsync`. If the requested amount exceeds `MaxPaymentAmount`, the client throws `X402PaymentExceedsMaximumException` instead of signing. The client automatically produces the correct payload for the selected requirement's method — EIP-3009, or Permit2 when `extra.assetTransferMethod == "permit2"`.
+Supports `GetAsync`, `PostAsync`, `PutAsync`, `DeleteAsync`, `SendAsync`. If the requested amount exceeds `MaxAmount`, the client throws `X402PaymentExceedsMaximumException` instead of signing. The client automatically produces the correct payload for the selected requirement's method — EIP-3009, or Permit2 when `extra.assetTransferMethod == "permit2"`.
 
 ### Check Payment Results
 

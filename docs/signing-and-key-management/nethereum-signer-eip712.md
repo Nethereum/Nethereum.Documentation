@@ -560,6 +560,47 @@ else
 }
 ```
 
+### Example 10: Uniswap Permit2
+
+`PermitSigner` signs the Uniswap [Permit2](https://github.com/Uniswap/permit2) messages against the
+Permit2 domain (name `"Permit2"`, the chain id, and the Permit2 verifying contract). The message types
+live in `Nethereum.ABI.EIP712.Permit2`; the on-chain call tuples live in `Nethereum.Contracts.Standards.Permit2`.
+
+**AllowanceTransfer** — `PermitSingle` / `PermitBatch` carry `spender` as a real field:
+
+```csharp
+using Nethereum.ABI.EIP712.Permit2;
+using Nethereum.Signer.EIP712.Permit2;
+
+var permitSingle = new PermitSingle
+{
+    Details = new PermitDetails { Token = token, Amount = amount, Expiration = expiration, Nonce = nonce },
+    Spender = spender,
+    SigDeadline = sigDeadline
+};
+string signature = PermitSigner.SignPermitSingle(chainId, permit2Address, permitSingle, key);
+```
+
+**SignatureTransfer** — Permit2 hashes the caller (`msg.sender`) as the `spender`, so the *signed*
+message must include it even though the on-chain `permitTransferFrom` tuple does not. Sign the
+`PermitTransferFromWithSpender` model (the `Spender` is the address that will call Permit2):
+
+```csharp
+var signature = PermitSigner.SignPermitTransferFrom(
+    chainId, permit2Address,
+    new PermitTransferFromWithSpender
+    {
+        Permitted = new TokenPermissions { Token = token, Amount = amount },
+        Spender = spender,      // the caller; hashed as msg.sender on-chain
+        Nonce = nonce,
+        Deadline = deadline
+    },
+    key);
+```
+
+`SignPermitBatch`, `SignPermitBatchTransferFrom`, `HashPermitSingle` and the recover helpers follow the
+same pattern. For the x402 witness variant (`permitWitnessTransferFrom`) see `Nethereum.X402`.
+
 ## API Reference
 
 ### Eip712TypedDataSigner

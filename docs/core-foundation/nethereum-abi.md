@@ -660,6 +660,33 @@ catch (AbiEncodingException ex)
 }
 ```
 
+### Example 14: Uniswap Permit2 EIP-712 Types
+
+The `Nethereum.ABI.EIP712.Permit2` namespace provides the Permit2 EIP-712 **signing** types and their
+`TypedData` definitions (`Permit2TypedData`). Signing itself is done by `PermitSigner` in
+`Nethereum.Signer.EIP712`; the on-chain call tuples live in `Nethereum.Contracts.Standards.Permit2`.
+
+Signing types (each matches a Permit2 typehash):
+
+- `TokenPermissions` — `token`, `amount`
+- `PermitDetails` — `token`, `amount` (uint160), `expiration`/`nonce` (uint48)
+- `PermitSingle` / `PermitBatch` — AllowanceTransfer: `details`, `spender`, `sigDeadline`
+- `PermitTransferFromWithSpender` / `PermitBatchTransferFromWithSpender` — SignatureTransfer:
+  `permitted`, `spender`, `nonce`, `deadline`
+
+```csharp
+using Nethereum.ABI.EIP712.Permit2;
+
+var typedData = Permit2TypedData.GetPermitTransferFromTypeDefinition(chainId, permit2Address);
+// PrimaryType "PermitTransferFrom", domain name "Permit2"
+```
+
+**Why a separate `...WithSpender` type:** for SignatureTransfer, Permit2 hashes the caller
+(`msg.sender`) into the typehash's `spender` field, so the *signed* message must include `spender`
+even though the on-chain `PermitTransferFrom` argument tuple (in `Nethereum.Contracts.Standards.Permit2`)
+does not. AllowanceTransfer's `PermitSingle`/`PermitBatch` carry `spender` as a real field, so they are
+used unchanged for both signing and the on-chain call.
+
 ## API Reference
 
 ### Core Classes

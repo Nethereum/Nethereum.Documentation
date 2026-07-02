@@ -22,6 +22,7 @@ format: md
 - **Event Handling** - Query and decode contract events
 - **ERC Standards** - Built-in support for ERC20, ERC721, ERC1155, ERC1271, ERC1820, ERC165, ERC2535, ERC6492
 - **EIP Standards** - EIP-3009 (transfer with authorization), EIP-6093 (custom errors)
+- **Permit2** - Uniswap Permit2 (canonical, via `web3.Eth.GetPermit2Service()`)
 - **ENS Support** - Ethereum Name Service resolution
 - **Multicall** - Batch multiple contract calls
 - **Query Handlers** - Simplified contract queries
@@ -1040,7 +1041,8 @@ using Nethereum.Contracts.Standards.ENS;
 
 var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
 
-// Get ENS service
+// Get ENS service. Resolution defaults to the ENSIP-23 Universal Resolver, with
+// automatic EIP-3668 CCIP-Read for offchain and wildcard (ENSIP-10) names.
 var ensService = web3.Eth.GetEnsService();
 
 // Resolve ENS name to address
@@ -1052,8 +1054,62 @@ var ensName = await ensService.ReverseResolveAsync(address);
 Console.WriteLine($"{address} reverse resolves to: {ensName}");
 
 // Resolve text records
-var url = await ensService.ResolveTextAsync("vitalik.eth", ENSTextRecordKey.Url);
-var avatar = await ensService.ResolveTextAsync("vitalik.eth", ENSTextRecordKey.Avatar);
+var url = await ensService.ResolveTextAsync("vitalik.eth", TextDataKey.url);
+var avatar = await ensService.ResolveTextAsync("vitalik.eth", TextDataKey.avatar);
+```
+
+#### Universal Resolver (ENSIP-23) - batched resolution
+
+The Universal Resolver resolves a name and its records in a single onchain
+round-trip, transparently following EIP-3668 CCIP-Read reverts for offchain and
+wildcard (ENSIP-10) names. Access it directly for batched profiles:
+
+```csharp
+using Nethereum.Web3;
+using Nethereum.Contracts.Standards.ENS;
+
+var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+var universalResolver = web3.Eth.GetEnsUniversalResolverService();
+
+// Address + content hash + selected text records for one name, single round-trip
+var record = await universalResolver.ResolveRecordAsync("nick.eth", TextDataKey.url, TextDataKey.avatar);
+Console.WriteLine($"{record.Name} -> {record.Address}");
+Console.WriteLine($"url: {record.Texts["url"]}");
+
+// Multiple text records for one name
+var texts = await universalResolver.ResolveTextsAsync("nick.eth", "url", "avatar");
+
+// Multiple names in one batch (each independently CCIP-capable)
+var records = await universalResolver.ResolveRecordsAsync(
+    new[] { "nick.eth", "nethereum.eth" }, TextDataKey.url);
+```
+
+#### CCIP-Read: offchain names (EIP-3668)
+
+Offchain names resolve transparently — the Universal Resolver raises an
+`OffchainLookup` revert that the CCIP layer fetches from the gateway and completes:
+
+```csharp
+var universalResolverService = web3.Eth.GetEnsUniversalResolverService();
+// Offchain (CCIP-Read) name: the Universal Resolver raises OffchainLookup, routed through the CCIP layer.
+var theAddress = await universalResolverService.ResolveAddressAsync("1.offchainexample.eth");
+// theAddress -> 0x41563129cDbbD0c5D3e1c86cf9563926b243834d
+```
+
+#### ENSIP-21 local batch gateway (BGOLP)
+
+When a record for an offchain name batches several sub-lookups, the Universal
+Resolver bundles them into an ENSIP-21 batch gateway request (`x-batch-gateway:true`),
+which the client performs locally rather than calling an external batch service:
+
+```csharp
+var universalResolverService = web3.Eth.GetEnsUniversalResolverService();
+
+// Resolving a record batches addr + contenthash + text through the resolver multicall. For an
+// offchain (CCIP-Read) name the Universal Resolver bundles the sub-lookups into an ENSIP-21 batch
+// gateway request (x-batch-gateway:true), which the client performs locally (BGOLP).
+var record = await universalResolverService.ResolveRecordAsync("1.offchainexample.eth", TextDataKey.url);
+// record.Address -> 0x41563129cDbbD0c5D3e1c86cf9563926b243834d
 ```
 
 ### Example 7: Multicall - Batch Contract Calls
@@ -1322,6 +1378,42 @@ var receipt = await eip3009Service.TransferWithAuthorizationRequestAndWaitForRec
 );
 ```
 
+### Permit2 (Uniswap)
+
+[Permit2](https://github.com/Uniswap/permit2) is a canonical token-approval contract deployed at the
+same address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`, `CommonAddresses.PERMIT2_ADDRESS`) on every
+EVM chain. It is consumed like the other standards, via `web3.Eth.GetPermit2Service()` (defaulting to the
+canonical address; pass an address to target a different deployment):
+
+```csharp
+using Nethereum.Contracts.Standards.Permit2;
+
+var permit2 = web3.Eth.GetPermit2Service();
+
+// SignatureTransfer: a facilitator moves the owner's tokens with a one-time signature.
+// `permit` is the on-chain tuple (no spender — Permit2 uses msg.sender); the owner's signature
+// is produced with Nethereum.Signer.EIP712 (see the Permit2 signing section of that package).
+var receipt = await permit2.PermitTransferFromRequestAndWaitForReceiptAsync(
+    permit,                                                    // PermitTransferFrom { permitted, nonce, deadline }
+    new SignatureTransferDetails { To = recipient, RequestedAmount = amount },
+    owner,                                                     // the address that signed
+    signature);
+
+// AllowanceTransfer: register/inspect allowances and unordered nonces.
+var allowance = await permit2.AllowanceQueryAsync(owner, token, spender);
+await permit2.InvalidateUnorderedNoncesRequestAndWaitForReceiptAsync(wordPos, mask);
+```
+
+The service covers both Permit2 flows — AllowanceTransfer (`approve`/`permit`/`transferFrom`) and
+SignatureTransfer (`permitTransferFrom`/`permitWitnessTransferFrom`) — plus nonce management and events.
+
+**Layering:** the contract function-argument tuples (`PermitTransferFrom`, `PermitBatchTransferFrom`,
+`SignatureTransferDetails`, `TokenSpenderPair`, `AllowanceTransferDetails`) live here in
+`Nethereum.Contracts.Standards.Permit2`. The EIP-712 signing types and the signer live in
+`Nethereum.ABI` and `Nethereum.Signer.EIP712` respectively (see those packages). Note that the
+SignatureTransfer permit tuple deliberately omits `spender` — Permit2 hashes the caller (`msg.sender`)
+as the spender — while the *signed* message includes it.
+
 ## Best Practices
 
 1. **Use Strongly-Typed DTOs**: Better IntelliSense, compile-time safety
@@ -1460,7 +1552,8 @@ catch (RpcResponseException ex)
 - **ERC2535DiamondService** - Diamond proxy standard
 - **ERC6492Service** - Pre-deployed contract signature validation
 - **EIP3009Service** - Transfer with authorization (USDC/stablecoins)
-- **ENSService** - Ethereum Name Service resolution
+- **ENSService** - Ethereum Name Service resolution (defaults to the ENSIP-23 Universal Resolver)
+- **ENSUniversalResolverService** - ENSIP-23 Universal Resolver with EIP-3668 CCIP-Read and batched records
 - **ProofOfHumanityService** - Proof of Humanity registry
 
 ## Playground Examples

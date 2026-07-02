@@ -672,6 +672,14 @@ var permitService = new Permit2Service(web3, permit2);
 var signedPermit = await permitService.GetSinglePermitWithSignatureAsync(permit, new EthECKey(privateKey));
 ```
 
+> **Note:** The Permit2 message types (`PermitSingle`, `PermitDetails`, `PermitTransferFrom`, …) and the
+> EIP-712 signer used above are shared primitives that now live outside this package:
+> the signing types in `Nethereum.ABI.EIP712.Permit2`, the contract call tuples in
+> `Nethereum.Contracts.Standards.Permit2`, and `PermitSigner` in `Nethereum.Signer.EIP712`. The
+> `Permit2Service` shown here (Web3-based, with deployment helpers) stays in this package for the
+> Universal Router flow. For standalone Permit2 access on any chain you can also use the canonical
+> first-class service `web3.Eth.GetPermit2Service()` (from `Nethereum.Contracts`).
+
 ### Build and Execute Swap
 ```csharp
 var universalRouterService = new UniversalRouterService(web3, universalRouter);

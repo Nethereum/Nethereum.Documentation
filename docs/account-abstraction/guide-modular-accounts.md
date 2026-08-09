@@ -149,7 +149,7 @@ Or use the shortcut:
 
 ```csharp
 var receipt = await accountService.InstallSocialRecoveryAndWaitForReceiptAsync(
-    moduleAddress, threshold: 2, guardian1, guardian2, guardian3);
+    moduleAddress, threshold: 2, new[] { guardian1, guardian2, guardian3 });
 ```
 
 With a threshold of 2, any two guardians can trigger recovery. The third guardian is a safety net in case one guardian becomes unavailable.

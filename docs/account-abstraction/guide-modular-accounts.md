@@ -138,7 +138,7 @@ var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(config);
 The fluent builder works the same way:
 
 ```csharp
-var config = new SocialRecoveryConfig(moduleAddress)
+var config = new SocialRecoveryConfig { ModuleAddress = moduleAddress }
     .WithGuardian(guardian1)
     .WithGuardian(guardian2)
     .WithGuardian(guardian3)

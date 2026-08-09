@@ -130,7 +130,9 @@ var bundler = new BundlerService(web3, config);
 var mempool = new InMemoryUserOpMempool(
     maxSize: 5000, entryTtl: TimeSpan.FromMinutes(30));
 
-var bundler = new BundlerService(web3, config, mempool: mempool);
+// validator and executor default to a UserOpValidator/BundleExecutor built from
+// web3 + config when passed null; pass real instances to customize them instead.
+var bundler = new BundlerService(web3, config, mempool: mempool, validator: null, executor: null);
 ```
 
 ### Example 3: Manual Bundle Execution
@@ -159,10 +161,10 @@ Core bundler implementing `IBundlerServiceExtended`.
 public class BundlerService : IBundlerServiceExtended, IDisposable
 {
     // ERC-4337 spec methods
-    public Task<string> SendUserOperationAsync(PackedUserOperation userOp, string entryPoint);
-    public Task<UserOperationGasEstimate> EstimateUserOperationGasAsync(PackedUserOperation userOp, string entryPoint);
+    public Task<string> SendUserOperationAsync(PackedUserOperation userOp, string entryPoint, Authorisation eip7702Auth = null);
+    public Task<UserOperationGasEstimate> EstimateUserOperationGasAsync(UserOperation userOp, string entryPoint);
     public Task<UserOperationReceipt?> GetUserOperationReceiptAsync(string userOpHash);
-    public Task<UserOperationInfo?> GetUserOperationByHashAsync(string userOpHash);
+    public Task<IncludedUserOperation?> GetUserOperationByHashAsync(string userOpHash);
     public Task<string[]> SupportedEntryPointsAsync();
 
     // Extended methods
@@ -171,6 +173,11 @@ public class BundlerService : IBundlerServiceExtended, IDisposable
 }
 ```
 
+`SendUserOperationAsync` takes the packed operation form plus an optional EIP-7702
+authorisation tuple (v0.9 EntryPoint), carried as a side-channel alongside the op.
+`EstimateUserOperationGasAsync` takes the unpacked `UserOperation` (before packing)
+and does not accept an authorisation tuple.
+
 ### InMemoryUserOpMempool
 
 Thread-safe in-memory mempool.
@@ -178,14 +185,19 @@ Thread-safe in-memory mempool.
 ```csharp
 public class InMemoryUserOpMempool : IUserOpMempool
 {
-    public Task<bool> AddAsync(MempoolEntry entry);
+    public Task<MempoolAddOutcome> AddAsync(MempoolEntry entry);
     public Task<MempoolEntry?> GetAsync(string userOpHash);
     public Task<MempoolEntry[]> GetPendingAsync(int maxCount, BigInteger? maxGas = null);
-    public Task MarkIncludedAsync(string[] userOpHashes, string transactionHash, BigInteger blockNumber);
+    public Task MarkIncludedAsync(string[] userOpHashes, string transactionHash, BigInteger blockNumber, string? blockHash = null);
     public Task MarkFailedAsync(string[] userOpHashes, string error);
-    public Task PruneAsync();
+    public Task<int> PruneAsync();
 }
 ```
+
+`AddAsync` returns a `MempoolAddOutcome` (`Added`, `Replaced`, `RejectedDuplicate`,
+`RejectedUnderpriced`, or `RejectedFull`) rather than a plain success flag, so callers
+can distinguish a fee-bump replacement from a rejection. `PruneAsync` returns the
+number of expired/stale entries removed.
 
 ### ERC7562SimulationService
 
@@ -197,8 +209,20 @@ EVM rules to apply). The recommended way to resolve the config is via
 ```csharp
 public class ERC7562SimulationService
 {
-    public ERC7562SimulationService(IStateReader stateReader, HardforkConfig hardforkConfig);
-    public Task<ERC7562ValidationResult> ValidateUserOperationAsync(PackedUserOperation userOp, string entryPoint);
+    public ERC7562SimulationService(IStateReader nodeDataService, HardforkConfig hardforkConfig);
+
+    public Task<ERC7562ValidationResult> ValidateUserOperationAsync(
+        PackedUserOperationDTO userOp,
+        string entryPointAddress,
+        Erc4337Entity sender,
+        Erc4337Entity factory = null,
+        Erc4337Entity paymaster = null,
+        Erc4337Entity aggregator = null,
+        long blockNumber = -1,
+        long timestamp = -1,
+        string coinbase = null,
+        BigInteger chainId = default,
+        Authorisation eip7702Auth = null);
 }
 ```
 
@@ -212,7 +236,7 @@ service.
 public class TransactionExecutorGasEstimator : IEvmGasEstimator
 {
     public TransactionExecutorGasEstimator(
-        IStateReader stateReader,
+        IStateReader nodeDataService,
         BigInteger chainId,
         HardforkConfig hardforkConfig);
 }

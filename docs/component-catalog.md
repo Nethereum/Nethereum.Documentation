@@ -57,6 +57,11 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Build an ERC-4337 bundler | [`Nethereum.AccountAbstraction.Bundler`](account-abstraction/nethereum-accountabstraction-bundler) |
 | Run a bundler RPC server | [`Nethereum.AccountAbstraction.Bundler.RpcServer`](account-abstraction/nethereum-accountabstraction-bundler-rpcserver) |
 | Deploy ERC-7579 modular smart accounts | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
+| [Own a smart account with a passkey, no private key](account-abstraction/guide-webauthn-passkeys) | [`Nethereum.AccountAbstraction.WebAuthn`](account-abstraction/nethereum-accountabstraction-webauthn) |
+| [Upgrade an existing, funded EOA into a smart account (EIP-7702)](account-abstraction/guide-eip7702-smart-accounts) | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
+| [Scope a disposable session key with spending-limit policies](account-abstraction/guide-smart-sessions-and-policies) | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
+| [Recover a lost owner key with an N-of-M guardian quorum](account-abstraction/guide-social-recovery) | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
+| [Sign UserOperations with a cloud KMS or hardware wallet](account-abstraction/guide-external-signer) | [`Nethereum.AccountAbstraction`](account-abstraction/nethereum-accountabstraction) |
 | **MUD (Autonomous Worlds)** | |
 | [Understand MUD and generate C# code](mud-framework/guide-mud-quickstart) | [`Nethereum.Mud`](mud-framework/nethereum-mud) + [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
 | [Work with MUD table records and queries](mud-framework/guide-mud-tables) | [`Nethereum.Mud`](mud-framework/nethereum-mud) + [`Nethereum.Mud.Contracts`](mud-framework/nethereum-mud-contracts) |
@@ -77,9 +82,11 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Track finalized beacon headers](consensus-light-client/guide-light-client) | `Nethereum.Consensus.LightClient` + [`Nethereum.Signer.Bls.Herumi`](signing-and-key-management/nethereum-signer-bls-herumi) |
 | [Verify storage proofs and contract code](consensus-light-client/guide-verified-state) | `Nethereum.ChainStateVerification` |
 | Calculate Merkle proofs and state roots | [`Nethereum.Merkle`](consensus-and-cryptography/nethereum-merkle) + [`Nethereum.Merkle.Patricia`](consensus-and-cryptography/nethereum-merkle-patricia) |
-| **Infrastructure** | |
+| **Mainnet Follower** | |
+| [Run a mainnet follower](mainnet-follower/guide-mainnet-follower) | [`Nethereum.MainnetChain`](mainnet-follower/nethereum-mainnetchain) |
+| **AppChains (Preview)** | |
 | [Launch a sequencer and deploy contracts](application-chain/guide-appchain-quickstart) | [`Nethereum.AppChain.Server`](application-chain/nethereum-appchain-server) (Preview) |
-| [Configure RocksDB persistent storage](application-chain/guide-appchain-storage) | [`Nethereum.CoreChain.RocksDB`](devchain/nethereum-corechain-rocksdb) (Preview) |
+| [Configure RocksDB persistent storage](application-chain/guide-appchain-storage) | [`Nethereum.CoreChain.RocksDB`](mainnet-follower/nethereum-corechain-rocksdb) (Preview) |
 | [Sync follower nodes and verify state](application-chain/guide-appchain-sync) | [`Nethereum.AppChain.Sync`](application-chain/nethereum-appchain-sync) (Preview) |
 | Use System.Text.Json / AOT-friendly RPC | [`Nethereum.JsonRpc.SystemTextJsonRpcClient`](json-rpc-transport/nethereum-jsonrpc-systemtextjsonrpcclient) |
 | Stream real-time data via WebSocket subscriptions | [`Nethereum.JsonRpc.WebSocketStreamingClient`](json-rpc-transport/nethereum-jsonrpc-websocketstreamingclient) |
@@ -150,12 +157,25 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 |---|---|
 | [Nethereum.EVM](evm-simulator/nethereum-evm) | Full EVM simulator: all opcodes through Prague, tracing, debugging |
 
+### Mainnet Follower
+
+| Package | Description |
+|---|---|
+| [Nethereum.MainnetChain](mainnet-follower/nethereum-mainnetchain) | Hostable read-only mainnet follower + serving node |
+| [Nethereum.CoreChain](mainnet-follower/nethereum-corechain) | Chain-agnostic node engine (execution, follow loop, storage abstractions, state roots, proofs) |
+| [Nethereum.CoreChain.RocksDB](mainnet-follower/nethereum-corechain-rocksdb) | Persistent RocksDB backend (path-keyed state, node-history journal, as-of serving, rewind) |
+
+### DevP2P
+
+| Package | Description |
+|---|---|
+| [Nethereum.DevP2P](devp2p/nethereum-devp2p) | RLPx transport + discv4/discv5/DNS discovery + peering |
+| [Nethereum.DevP2P.Sync](devp2p/nethereum-devp2p-sync) | eth/68 + snap/1 sync engine (backfill, snap state, heal, serving handlers) |
+
 ### DevChain
 
 | Package | Description |
 |---|---|
-| [Nethereum.CoreChain](devchain/nethereum-corechain) | Full in-process node: RPC handlers, state management, block production, WebSocket subscriptions |
-| [Nethereum.CoreChain.RocksDB](devchain/nethereum-corechain-rocksdb) | RocksDB persistent storage |
 | [Nethereum.DevChain](devchain/nethereum-devchain) | Development chain: pre-funded accounts, auto-mine, SQLite, time manipulation |
 | [Nethereum.DevChain.Server](devchain/nethereum-devchain-server) | HTTP server for DevChain (MetaMask/Foundry/Hardhat compatible) |
 
@@ -176,7 +196,13 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.AccountAbstraction](account-abstraction/nethereum-accountabstraction) | UserOperation creation, encoding, gas estimation, validation |
 | [Nethereum.AccountAbstraction.Bundler](account-abstraction/nethereum-accountabstraction-bundler) | Full bundler: mempool, reputation, BLS aggregation, bundle submission |
 | [Nethereum.AccountAbstraction.Bundler.RpcServer](account-abstraction/nethereum-accountabstraction-bundler-rpcserver) | Bundler JSON-RPC server |
+| [Nethereum.AccountAbstraction.Bundler.InProcess](account-abstraction/nethereum-accountabstraction-bundler-inprocess) | Embedded bundler + in-process DevChain for zero-setup testing |
+| [Nethereum.AccountAbstraction.Bundler.RocksDB](account-abstraction/nethereum-accountabstraction-bundler-rocksdb) | RocksDB-backed persistent UserOperation mempool and reputation storage |
 | [Nethereum.AccountAbstraction.SimpleAccount](account-abstraction/nethereum-accountabstraction-simpleaccount) | SimpleAccount factory interaction |
+| [Nethereum.AccountAbstraction.WebAuthn](account-abstraction/nethereum-accountabstraction-webauthn) | WebAuthn/passkey ERC-7579 validator module and on-ramp extensions |
+| [Nethereum.WebAuthn](account-abstraction/nethereum-webauthn) | WebAuthn/passkey primitives: authenticator abstractions, P-256 signing service |
+| [Nethereum.WebAuthn.Blazor](account-abstraction/nethereum-webauthn-blazor) | Blazor WebAuthn authenticator over the browser `navigator.credentials` API |
+| [Nethereum.WebAuthn.Windows](account-abstraction/nethereum-webauthn-windows) | Windows Hello WebAuthn authenticator via native `webauthn.dll` |
 
 ### Data Processing & Storage
 

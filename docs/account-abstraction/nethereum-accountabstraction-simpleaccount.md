@@ -20,6 +20,16 @@ Nethereum.AccountAbstraction.SimpleAccount provides the canonical SimpleAccount 
 
 SimpleAccount validates UserOperations by recovering the ECDSA signature and comparing it against the account owner. It supports single and batch execution through the EntryPoint contract. This package is ideal for learning ERC-4337 concepts and as a starting point for custom account implementations.
 
+> **Where this fits.** SimpleAccount is the plain ERC-4337 reference/compliance account: no ERC-7579
+> validator, no modules - it exists to learn the basics of Account Abstraction and as the account
+> deployed by the bundler compliance test estate (`Nethereum.AccountAbstraction.ComplianceHarness`).
+> For real applications, the standard/primary path is the modular ERC-7579 `NethereumSmartAccount` in
+> **[Nethereum.AccountAbstraction](nethereum-accountabstraction)**, created and driven
+> through `IAAClient` - it adds validators, executors and session modules that SimpleAccount has no way
+> to support. `IAAClient` can still attach to an already-deployed SimpleAccount too, via the non-modular
+> `GetAccount(address, signingService)` overload; the examples below instead deploy and drive the
+> account directly through `SimpleAccountFactoryService`, without `IAAClient`.
+
 ### Key Features
 
 - **Factory Service**: Deploy SimpleAccount instances with deterministic addresses via CREATE2

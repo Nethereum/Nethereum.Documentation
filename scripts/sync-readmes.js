@@ -101,9 +101,16 @@ const PACKAGE_CATEGORY = {
   'Nethereum.EVM.Precompiles.Bls': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Kzg': 'evm-simulator',
 
-  // §5 DevChain (Core + Dev)
-  'Nethereum.CoreChain': 'devchain',
-  'Nethereum.CoreChain.RocksDB': 'devchain',
+  // §5 Mainnet Follower (the follower node + the engine it runs on)
+  'Nethereum.MainnetChain': 'mainnet-follower',
+  'Nethereum.CoreChain': 'mainnet-follower',
+  'Nethereum.CoreChain.RocksDB': 'mainnet-follower',
+
+  // §5 DevP2P (Ethereum peer-to-peer networking + sync stack)
+  'Nethereum.DevP2P': 'devp2p',
+  'Nethereum.DevP2P.Sync': 'devp2p',
+
+  // §5 DevChain (Dev)
   'Nethereum.DevChain': 'devchain',
   'Nethereum.DevChain.Server': 'devchain',
 
@@ -118,14 +125,20 @@ const PACKAGE_CATEGORY = {
   'Nethereum.AppChain.Policy': 'application-chain',
   'Nethereum.AppChain.Anchoring': 'application-chain',
   'Nethereum.Consensus.Clique': 'application-chain',
+  // AA-on-AppChain lives in the AppChain area (its own full section), not Account Abstraction
+  'Nethereum.AccountAbstraction.AppChain': 'application-chain',
 
   // §6 Account Abstraction
   'Nethereum.AccountAbstraction': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler': 'account-abstraction',
+  'Nethereum.AccountAbstraction.Bundler.InProcess': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler.RocksDB': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler.RpcServer': 'account-abstraction',
   'Nethereum.AccountAbstraction.SimpleAccount': 'account-abstraction',
-  'Nethereum.AccountAbstraction.AppChain': 'account-abstraction',
+  'Nethereum.AccountAbstraction.WebAuthn': 'account-abstraction',
+  'Nethereum.WebAuthn': 'account-abstraction',
+  'Nethereum.WebAuthn.Blazor': 'account-abstraction',
+  'Nethereum.WebAuthn.Windows': 'account-abstraction',
 
   // §7 Data & Indexing
   'Nethereum.BlockchainProcessing': 'data-and-indexing',

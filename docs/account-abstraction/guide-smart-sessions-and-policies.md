@@ -278,7 +278,7 @@ All three live under [Modular Accounts](guide-modular-accounts) and solve differ
 | Revocation | `SmartSession.removeSession(permissionId)` — instant, targeted | Uninstall that validator module | N/A — guardians are the recovery path, not routine access |
 | Use it for | Automation: bots, backends, recurring/scheduled operations, delegated portfolio management | A second full-control device or passkey (see [WebAuthn Passkeys](guide-webauthn-passkeys)) | Recovering access after losing every owner key |
 
-Reach for a session key whenever the caller shouldn't have full account control even temporarily — that's the entire point of attaching a policy. Reach for a second validator when the caller genuinely needs the same authority as the primary owner, just through a different credential. Social recovery isn't an access-control tool at all; it's a break-glass mechanism guardians use to restore access, covered under [Modular Accounts](guide-modular-accounts#social-recovery).
+Reach for a session key whenever the caller shouldn't have full account control even temporarily — that's the entire point of attaching a policy. Reach for a second validator when the caller genuinely needs the same authority as the primary owner, just through a different credential. Social recovery isn't an access-control tool at all; it's a break-glass mechanism guardians use to restore access, covered in [Social Recovery](guide-social-recovery).
 
 ## Gotchas
 

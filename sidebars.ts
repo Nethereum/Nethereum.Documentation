@@ -292,27 +292,39 @@ const sidebars: SidebarsConfig = {
     // ═══════════════════════════════
     {
       type: 'category',
-      label: 'Chain Infrastructure',
+      label: 'Mainnet Follower',
       items: [
-        'chain-infrastructure/overview',
+        'mainnet-follower/overview',
         {
           type: 'category',
           label: 'Guides',
           collapsed: false,
           items: [
-            'chain-infrastructure/guide-custom-chain-node',
-            'chain-infrastructure/guide-custom-storage',
-            'chain-infrastructure/guide-custom-rpc-handlers',
-            'chain-infrastructure/guide-forking',
+            'mainnet-follower/guide-mainnet-follower',
           ],
         },
         {
           type: 'category',
           label: 'Package Reference',
           items: [
-            'chain-infrastructure/nethereum-corechain',
-            'chain-infrastructure/nethereum-corechain-rocksdb',
-            'core-foundation/nethereum-merkle-patricia',
+            'mainnet-follower/nethereum-mainnetchain',
+            'mainnet-follower/nethereum-corechain',
+            'mainnet-follower/nethereum-corechain-rocksdb',
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'DevP2P',
+      items: [
+        'devp2p/overview',
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'devp2p/nethereum-devp2p',
+            'devp2p/nethereum-devp2p-sync',
           ],
         },
       ],
@@ -407,15 +419,39 @@ const sidebars: SidebarsConfig = {
         'account-abstraction/overview',
         {
           type: 'category',
-          label: 'Guides',
+          label: 'Essentials',
           collapsed: false,
           items: [
             'account-abstraction/guide-send-useroperation',
             'account-abstraction/guide-smart-contracts-with-aa',
             'account-abstraction/guide-smart-account-deployment',
-            'account-abstraction/guide-batching-and-paymasters',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Signer Axis',
+          items: [
+            'account-abstraction/guide-eip7702-smart-accounts',
+            'account-abstraction/guide-webauthn-passkeys',
+            'account-abstraction/guide-external-signer',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Modules & Policies',
+          items: [
             'account-abstraction/guide-modular-accounts',
+            'account-abstraction/guide-smart-sessions-and-policies',
+            'account-abstraction/guide-social-recovery',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced',
+          items: [
+            'account-abstraction/guide-batching-and-paymasters',
             'account-abstraction/guide-run-bundler',
+            'account-abstraction/guide-reference-demo',
           ],
         },
         {
@@ -425,7 +461,19 @@ const sidebars: SidebarsConfig = {
             'account-abstraction/nethereum-accountabstraction',
             'account-abstraction/nethereum-accountabstraction-bundler',
             'account-abstraction/nethereum-accountabstraction-bundler-rpcserver',
+            'account-abstraction/nethereum-accountabstraction-bundler-inprocess',
+            'account-abstraction/nethereum-accountabstraction-bundler-rocksdb',
             'account-abstraction/nethereum-accountabstraction-simpleaccount',
+            {
+              type: 'category',
+              label: 'WebAuthn / Passkeys',
+              items: [
+                'account-abstraction/nethereum-accountabstraction-webauthn',
+                'account-abstraction/nethereum-webauthn',
+                'account-abstraction/nethereum-webauthn-blazor',
+                'account-abstraction/nethereum-webauthn-windows',
+              ],
+            },
           ],
         },
       ],

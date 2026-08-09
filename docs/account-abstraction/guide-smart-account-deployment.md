@@ -246,6 +246,9 @@ Nethereum signs the EIP-712 `userOpHash` introduced in EntryPoint v0.8; v0.6/v0.
 
 ## Next Steps
 
-- [Send a UserOperation](guide-send-useroperation) — build and submit a UserOperation by hand once your account is deployed.
+- [EIP-7702 Smart Accounts](guide-eip7702-smart-accounts) — upgrade an existing, funded EOA into a modular account in place instead of deploying a new counterfactual address.
+- [WebAuthn Passkeys](guide-webauthn-passkeys) — own the account with a passkey instead of an `EthECKey`, using the same generic on-ramp.
+- [External Signers](guide-external-signer) — sign with a cloud KMS, HSM, or hardware wallet instead of an in-process key.
 - [Modular Accounts](guide-modular-accounts) — install ERC-7579 validators, executors, hooks, and session keys on a modular account.
+- [Send a UserOperation](guide-send-useroperation) — build and submit a UserOperation by hand once your account is deployed.
 - [Batching and Paymasters](guide-batching-and-paymasters) — combine multiple calls in one UserOperation and sponsor gas with paymasters.

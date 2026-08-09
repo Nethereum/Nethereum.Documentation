@@ -111,16 +111,13 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 ---
 
-## Chain Infrastructure
+## Mainnet Follower
 
 | I want to... | Packages |
 |---|---|
-| **[Build a custom chain node with block production](chain-infrastructure/guide-custom-chain-node)** | `Nethereum.CoreChain` |
-| **[Implement custom storage backends](chain-infrastructure/guide-custom-storage)** | `Nethereum.CoreChain` + `Nethereum.CoreChain.RocksDB` |
-| **[Add custom JSON-RPC handlers](chain-infrastructure/guide-custom-rpc-handlers)** | `Nethereum.CoreChain` |
-| **[Fork a live network for local testing](chain-infrastructure/guide-forking)** | `Nethereum.CoreChain` |
+| **[Run a mainnet follower (follow + verify Ethereum from .NET, serve JSON-RPC)](mainnet-follower/guide-mainnet-follower)** | `Nethereum.MainnetChain` |
 
-> See the [Chain Infrastructure](./chain-infrastructure/overview) section.
+> See the [Mainnet Follower](./mainnet-follower/overview) and [DevP2P](./devp2p/overview) sections.
 
 ---
 
@@ -162,9 +159,15 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **[Create and send a UserOperation](account-abstraction/guide-send-useroperation)** | `Nethereum.AccountAbstraction` |
 | **[Use smart contracts with Account Abstraction](account-abstraction/guide-smart-contracts-with-aa)** | `Nethereum.AccountAbstraction` |
 | **[Deploy a smart account](account-abstraction/guide-smart-account-deployment)** | `Nethereum.AccountAbstraction` |
-| **[Batch operations and use paymasters](account-abstraction/guide-batching-and-paymasters)** | `Nethereum.AccountAbstraction` |
+| **[Upgrade an existing, funded EOA into a smart account (EIP-7702)](account-abstraction/guide-eip7702-smart-accounts)** | `Nethereum.AccountAbstraction` |
+| **[Own a smart account with a passkey — no private key (WebAuthn)](account-abstraction/guide-webauthn-passkeys)** | `Nethereum.AccountAbstraction.WebAuthn` + `Nethereum.WebAuthn` |
+| **[Sign UserOperations with a cloud KMS or hardware wallet](account-abstraction/guide-external-signer)** | `Nethereum.AccountAbstraction` + external signer package (`Signer.AWSKeyManagement`, `Signer.AzureKeyVault`, `Signer.Ledger`, `Signer.Trezor`) |
 | **[Use ERC-7579 modular accounts (validators, hooks, session keys)](account-abstraction/guide-modular-accounts)** | `Nethereum.AccountAbstraction` |
+| **[Scope a disposable session key with spending-limit policies (SmartSessions)](account-abstraction/guide-smart-sessions-and-policies)** | `Nethereum.AccountAbstraction` |
+| **[Recover a lost owner key with an N-of-M guardian quorum](account-abstraction/guide-social-recovery)** | `Nethereum.AccountAbstraction` |
+| **[Batch operations and use paymasters](account-abstraction/guide-batching-and-paymasters)** | `Nethereum.AccountAbstraction` |
 | **[Run an ERC-4337 bundler](account-abstraction/guide-run-bundler)** | `Nethereum.AccountAbstraction.Bundler` + `Nethereum.AccountAbstraction.Bundler.RpcServer` |
+| **[Explore every AA capability in one reference demo](account-abstraction/guide-reference-demo)** | `Nethereum.AccountAbstraction.*` |
 
 > See the [Account Abstraction](./account-abstraction/overview) section.
 

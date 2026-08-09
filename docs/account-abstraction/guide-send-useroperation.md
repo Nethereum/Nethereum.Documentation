@@ -16,13 +16,13 @@ You don't need to build UserOperations by hand. Switch any existing contract ser
 ```csharp
 using Nethereum.AccountAbstraction;
 
-// Switch any existing contract service to AA — all calls become UserOperations
-erc20Service.ChangeContractHandlerToAA(accountAddress, privateKey, bundlerUrl, entryPointAddress);
-var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(
-    new TransferFunction { To = recipient, Value = amount });
+// Switch a built-in typed service to AA — every call becomes a UserOperation
+erc20Service.SwitchToAccountAbstraction(accountAddress, accountKey, bundlerService, entryPointAddress);
+
+var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(recipient, amount);
 ```
 
-That's it — gas estimation, signing, and bundler submission are all automatic. This guide shows what happens under the hood.
+That's it — gas estimation, signing, and bundler submission are all automatic. This guide shows what happens under the hood. `accountKey` is an `EthECKey`, and `bundlerService` is an `IAccountAbstractionBundlerService` (see Step 3 below) — there is no string-based shortcut that takes a raw bundler URL directly. See [Use AA with Contract Services](guide-smart-contracts-with-aa) for the full walkthrough of `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction`.
 
 :::
 
@@ -80,7 +80,8 @@ The `ExecuteFunction` describes what the smart account should do once the UserOp
 
 ```csharp
 using Nethereum.AccountAbstraction;
-using Nethereum.AccountAbstraction.SimpleAccount;
+using Nethereum.AccountAbstraction.EntryPoint;
+using Nethereum.AccountAbstraction.SimpleAccount.SimpleAccount.ContractDefinition;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Web3;
 using Nethereum.Signer;
@@ -112,23 +113,33 @@ var userOp = new UserOperation
     Sender = smartAccountAddress,
     CallData = executeFunction.GetCallData(),
     MaxFeePerGas = Web3.Convert.ToWei(30, Nethereum.Util.UnitConversion.EthUnit.Gwei),
-    MaxPriorityFeePerGas = Web3.Convert.ToWei(1, Nethereum.Util.UnitConversion.EthUnit.Gwei)
+    MaxPriorityFeePerGas = Web3.Convert.ToWei(1, Nethereum.Util.UnitConversion.EthUnit.Gwei),
+    // A structurally-valid dummy signature is required before estimation: strict bundlers run
+    // real ECDSA.recover during simulateValidation and reject a missing/malformed signature
+    // outright rather than just failing the signer comparison. Replace with the real signature
+    // from Step 4 before sending.
+    Signature = "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c".HexToByteArray()
 };
 ```
 
-If this is the first transaction for a new account, populate `InitCode` with the factory address and deployment calldata. See [Deploy a Smart Account](guide-smart-account-deployment) for details.
+If this is the first transaction for a new account, populate `InitCode` (a `byte[]`: the 20-byte factory address followed by the deployment calldata — e.g. `SimpleAccountFactoryService.GetCreateAccountInitCode(owner, salt)`). See [Deploy a Smart Account](guide-smart-account-deployment) for details.
 
 ### Step 3 — Estimate Gas via the Bundler
 
 Connect to the bundler and request gas estimates. The bundler simulates the UserOperation and returns the three gas fields:
 
 ```csharp
+using Nethereum.RPC;
+
 var bundlerUrl = "http://localhost:4337"; // your bundler endpoint
 var bundlerClient = new Nethereum.JsonRpc.Client.RpcClient(new Uri(bundlerUrl));
 var bundlerService = new AccountAbstractionBundlerService(bundlerClient);
 
+// The bundler RPC works with the wire-format UserOperation (hex-string fields), not the core
+// UserOperation (byte[] fields) built above — convert before sending, the same way
+// AAContractHandler does internally.
 var gasEstimate = await bundlerService.EstimateUserOperationGas
-    .SendRequestAsync(userOp, entryPointAddress);
+    .SendRequestAsync(UserOperationConverter.ToRpcFormat(userOp), entryPointAddress);
 
 Console.WriteLine($"CallGasLimit:         {gasEstimate.CallGasLimit}");
 Console.WriteLine($"VerificationGasLimit: {gasEstimate.VerificationGasLimit}");
@@ -174,28 +185,28 @@ The hash is not a transaction hash — it uniquely identifies the UserOperation 
 | Field | Type | Description |
 |-------|------|-------------|
 | `Sender` | `string` | The smart contract wallet address that will execute the call |
-| `Nonce` | `BigInteger` | Anti-replay value managed by the EntryPoint, not by your code |
-| `InitCode` | `string` | Factory address + calldata to deploy the wallet on first use. Set to `0x` if already deployed |
-| `CallData` | `string` | ABI-encoded call the smart account will execute (e.g., `execute(target, value, data)`) |
-| `CallGasLimit` | `BigInteger` | Gas allocated for the main execution phase |
-| `VerificationGasLimit` | `BigInteger` | Gas allocated for `validateUserOp` and paymaster verification |
-| `PreVerificationGas` | `BigInteger` | Extra gas to compensate the bundler for calldata and overhead |
-| `MaxFeePerGas` | `BigInteger` | EIP-1559 maximum fee per gas unit |
-| `MaxPriorityFeePerGas` | `BigInteger` | EIP-1559 priority tip per gas unit |
+| `Nonce` | `BigInteger?` | Anti-replay value managed by the EntryPoint, not by your code |
+| `InitCode` | `byte[]` | Factory address bytes ‖ deployment calldata bytes, to deploy the wallet on first use. Leave empty (`Array.Empty<byte>()`) if already deployed |
+| `CallData` | `byte[]` | ABI-encoded call the smart account will execute (e.g., `execute(target, value, data)`) |
+| `CallGasLimit` | `BigInteger?` | Gas allocated for the main execution phase |
+| `VerificationGasLimit` | `BigInteger?` | Gas allocated for `validateUserOp` and paymaster verification |
+| `PreVerificationGas` | `BigInteger?` | Extra gas to compensate the bundler for calldata and overhead |
+| `MaxFeePerGas` | `BigInteger?` | EIP-1559 maximum fee per gas unit |
+| `MaxPriorityFeePerGas` | `BigInteger?` | EIP-1559 priority tip per gas unit |
 
 ## EntryPoint Versions
 
-Nethereum supports multiple EntryPoint versions via `EntryPointAddresses`:
+`EntryPointAddresses` lists the known EntryPoint deployment addresses, but this library only supports **signing** for v0.8 and v0.9:
 
-| Constant | Version | Address |
-|----------|---------|---------|
-| `EntryPointAddresses.V06` | v0.6 | Original ERC-4337 EntryPoint |
-| `EntryPointAddresses.V07` | v0.7 | Updated with packed format |
-| `EntryPointAddresses.V08` | v0.8 | Incremental improvements |
-| `EntryPointAddresses.V09` | v0.9 | `0x433709009B8330FDa32311DF1C2AFA402eD8D009` |
-| `EntryPointAddresses.Latest` | v0.9 | Alias for V09 — recommended |
+| Constant | Version | Supported? |
+|----------|---------|------------|
+| `EntryPointAddresses.V06` | v0.6 | **No** — throws `NotSupportedException` |
+| `EntryPointAddresses.V07` | v0.7 | **No** — throws `NotSupportedException` |
+| `EntryPointAddresses.V08` | v0.8 | Yes |
+| `EntryPointAddresses.V09` | v0.9 | Yes — `0x433709009B8330FDa32311DF1C2AFA402eD8D009` |
+| `EntryPointAddresses.Latest` | v0.9 | Alias for `V09` — recommended |
 
-Always use `EntryPointAddresses.Latest` unless you have a specific reason to target an older version. Your smart account must be compatible with the EntryPoint version you choose.
+EntryPoint v0.6/v0.7 compute the userOpHash as `keccak256(abi.encode(...))`, while Nethereum's `EntryPointService`/`AAContractHandler` always sign the EIP-712 userOpHash introduced in v0.8. Passing `EntryPointAddresses.V06` or `V07` anywhere a signing operation happens — constructing an `AAContractHandler` via `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction`, or calling `EntryPointService.SignAndInitialiseUserOperationAsync` directly — throws a `NotSupportedException` up front rather than producing a signature that would fail on-chain with `AA24`. Always use `EntryPointAddresses.Latest` (or `V08` if your infrastructure hasn't upgraded yet).
 
 ## Check the Result
 
@@ -228,12 +239,12 @@ A `Success` value of `true` means the smart account executed the call without re
 
 **Unfunded smart account** — The smart account (or its paymaster) must have enough ETH to cover gas. If the account has no balance and no paymaster is configured, the bundler will reject the operation during simulation. Fund your smart account before sending operations.
 
-**Wrong EntryPoint address** — Your smart account is bound to a specific EntryPoint version at deployment time. Sending a UserOperation to a different EntryPoint will fail validation. Always verify that the EntryPoint address matches the one your account was deployed with.
+**Wrong EntryPoint address** — Your smart account is bound to a specific EntryPoint version at deployment time. Sending a UserOperation to a different EntryPoint will fail validation. Always verify that the EntryPoint address matches the one your account was deployed with, and use `EntryPointAddresses.V08`/`V09` — `V06`/`V07` throw `NotSupportedException` before a request is even sent (see EntryPoint Versions above).
 
 **Gas estimation before signing** — The gas limits are part of the signed hash. If you estimate gas after signing, the signature will be invalid. Always estimate first, then sign.
 
 ## Next Steps
 
-- [Use AA with Contract Services](guide-smart-contracts-with-aa) — the simpler approach using `ChangeContractHandlerToAA` for any contract interaction
+- [Use AA with Contract Services](guide-smart-contracts-with-aa) — the simpler approach using `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction` for any typed contract interaction
 - [Deploy a Smart Account](guide-smart-account-deployment) — create and deploy a SimpleAccount using a factory
 - [Batching and Paymasters](guide-batching-and-paymasters) — batch multiple calls in one UserOperation and sponsor gas with paymasters

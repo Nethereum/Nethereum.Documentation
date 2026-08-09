@@ -92,7 +92,7 @@ Changing the salt, the owner, or the validator produces a different address — 
 
 ## Any Signer: The Generic On-Ramp
 
-`CreateAccountAsync(EthECKey owner, ...)` is a convenience overload for the common ECDSA case — it wraps the key in `AccountSigningOfflineService`, builds an `EcdsaValidatorModule`, and encodes the validator's init data for you. The underlying on-ramp takes any `IAccountSigningService` paired with the `IErc7579ValidatorModule` that authenticates it, so the identical shape works for a hardware/KMS/HSM/MPC signer or WebAuthn — with zero changes to `IAAClient` itself:
+`CreateAccountAsync(EthECKey owner, ...)` is a convenience overload for the common ECDSA case — it wraps the key in `AccountSigningOfflineService`, builds an `EcdsaValidatorModule`, and encodes the validator's init data for you. The underlying on-ramp takes any `IAccountSigningService` paired with the `IErc7579ValidatorModule` that authenticates it, so the identical shape works for a KMS/HSM/MPC signer or WebAuthn — with zero changes to `IAAClient` itself (see [External Signer](guide-external-signer) for the KMS/HSM path and its hardware-wallet caveats):
 
 ```csharp
 using Nethereum.Accounts.AccountMessageSigning;

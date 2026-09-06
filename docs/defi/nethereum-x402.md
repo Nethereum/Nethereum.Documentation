@@ -85,6 +85,29 @@ If the requested amount exceeds `MaxAmount`, the client throws `X402PaymentExcee
 
 The client automatically produces the correct payload for the selected requirement's asset-transfer method: EIP-3009 by default, or a Permit2 payload when `extra.assetTransferMethod == "permit2"`.
 
+### Client Payment Policy (allow-list)
+
+The client auto-signs whatever a 402 response demands (up to `MaxAmount`). If you pay many servers — say an AI agent calling third-party APIs — a compromised or malicious server could return a 402 that redirects payment to **its own** wallet, swaps in a **different token**, or moves the payment to **another chain**, all under your amount cap. `Policy` is an allow-list that pins what the client is willing to pay; anything outside it is refused with `X402PaymentPolicyViolationException` **before anything is signed** — no authorization ever leaves the client.
+
+Each list is empty by default (**unrestricted**), so you opt into exactly the constraints you want:
+
+```csharp
+var options = new X402HttpClientOptions
+{
+    PreferredNetwork = "eip155:8453",
+    MaxAmount = "1000000"            // ≤ 1 USDC per call (atomic units)
+};
+
+// Only ever pay USDC, on Base, to my provider — refuse everything else:
+options.Policy.AllowedNetworks.Add("eip155:8453");
+options.Policy.AllowedAssets.Add("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"); // USDC on Base
+options.Policy.AllowedRecipients.Add("0xMyTrustedProvider");                     // optional
+
+var client = new X402HttpClient(httpClient, payerPrivateKey, options);
+```
+
+Leave `AllowedRecipients` empty when you don't know payees ahead of time (the common agent case) but still want to pin the network and asset. Address comparisons are checksum-insensitive; networks are CAIP-2 ids. The policy is enforced together with the `MaxAmount` cap — see [Security](#security).
+
 ### Manual Payment Flow
 
 For full control, construct the client with just the payer key and pass explicit `PaymentRequirements` per request:
@@ -214,7 +237,7 @@ if (verification.IsValid)
 }
 ```
 
-`VerifyPaymentAsync` binds the signed authorization to the route requirement (recipient must equal `PayTo`, value must cover `Amount`) before trusting it, then checks the signature, balance and time window.
+`VerifyPaymentAsync` binds the signed authorization to the route requirement (recipient must equal `PayTo`, value must equal `Amount`) before trusting it, then checks the signature, balance, nonce and time window. Signature verification falls back to ERC-1271 when the payer is a contract wallet. `SettlePaymentAsync` dry-runs the settlement (`eth_estimateGas`) before broadcasting. Each processor constructor also accepts an optional `ILogger` for the swallowed verify/settle exceptions. See [Security](#security) for details.
 
 The **ReceiveWithAuthorization** variant additionally requires the authorization's `To` to equal the receiver and settles via `receiveWithAuthorization` (only the designated receiver can submit).
 
@@ -246,7 +269,13 @@ options.Routes.Add(new RoutePaymentConfig("/api/premium-permit2", new PaymentReq
   declares `extra.assetTransferMethod == "permit2"` (no extra configuration).
 - **Facilitator** — `X402ExactPermit2Service` verifies the payment (binds spender = proxy, `witness.to` = `payTo`,
   exact amount and token, deadline/validAfter window, EIP-712 signer recovery, and the on-chain prerequisites:
-  proxy deployed, payer balance, Permit2 allowance) and settles via `x402ExactPermit2Proxy.settle`.
+  proxy deployed, payer balance, Permit2 allowance) and settles via `x402ExactPermit2Proxy.settle`. When a
+  settlement reverts, the Permit2 custom error is decoded — via the code-generated Permit2 error collection
+  (`Permit2Service.FindCustomError`) — into the specific reason (`InvalidNonce` → `invalid_exact_evm_nonce_already_used`,
+  `SignatureExpired` → `permit2_deadline_expired`, `AllowanceExpired`/`InsufficientAllowance` → `permit2_allowance_required`,
+  the signature errors → `invalid_permit2_signature`, `InvalidAmount` → `permit2_amount_mismatch`) instead of a
+  generic failure. Decoding happens at the pre-settle simulation, and for a mined revert a best-effort
+  transaction replay recovers the reason (subject to archive-state availability).
 - **Dispatch** — `X402ExactSchemeProcessor` routes to the permit2 processor when the payload carries a
   `permit2Authorization`, otherwise to the EIP-3009 processor. Register both with `AddX402ExactProcessor`.
 
@@ -312,6 +341,54 @@ Endpoints:
 - `POST /facilitator/verify` — Verify a payment
 - `POST /facilitator/settle` — Settle a payment on-chain
 - `GET /facilitator/supported` — List supported payment kinds
+
+## Security
+
+### Client payment allow-list
+
+`X402HttpClient` auto-signs whatever a 402 demands up to `MaxAmount`; `X402HttpClientOptions.Policy`
+adds a network/asset/recipient allow-list so a compromised server cannot redirect the payment, swap
+the asset, or switch chains. Refused before signing. See [Client Payment Policy](#client-payment-policy-allow-list).
+
+### Facilitator endpoint authentication is a hosting responsibility
+
+`AddX402FacilitatorControllers` exposes `/facilitator/verify`, `/facilitator/settle` and
+`/facilitator/supported` as open endpoints. The facilitator holds the key that pays gas and submits
+settlements, so the **host must protect these endpoints** — API keys, mTLS, a network ACL, or an
+allow-list of resource-server origins — as it would any privileged internal API. The library does
+not bake in an auth scheme by design; apply your standard ASP.NET Core authentication/authorization
+to the controllers, or place them behind a gateway.
+
+### Replay protection (serve-before-settle)
+
+The middleware serves the protected resource before settlement confirms on-chain, so the same signed
+payment must not drive the endpoint more than once. After verify and before running the endpoint,
+`X402Middleware` reserves the payment identity (payer + nonce) via `IPaymentReplayStore`; a replay is
+rejected with 402 / `invalid_exact_evm_nonce_already_used` before the endpoint runs. On by default
+(`X402Options.EnablePaymentReplayProtection`, with `PaymentReplayRetention`).
+
+The default `InMemoryPaymentReplayStore` is single-instance. For a horizontally-scaled deployment,
+register a distributed `IPaymentReplayStore` (e.g. Redis-backed) so reservations are shared:
+
+```csharp
+builder.Services.AddSingleton<IPaymentReplayStore, MyRedisPaymentReplayStore>();
+```
+
+### Pre-settle simulation
+
+Before broadcasting, the EIP-3009 and Permit2 facilitators `eth_estimateGas` the settlement call. A
+token that would revert the transfer for a reason verify cannot see (a paused or blocklisting token,
+a fee-on-transfer shortfall) is rejected with `invalid_exact_evm_transaction_simulation_failed`
+instead of the facilitator burning gas on a doomed transaction.
+
+### ERC-1271 smart-contract wallets
+
+When plain ECDSA recovery does not match the payer, the facilitators fall back to ERC-1271: if the
+payer address holds contract code, the wallet's `isValidSignature` is consulted. On the Permit2 path
+this settles end-to-end, because the canonical Permit2 contract performs the same ERC-1271 check
+on-chain. (Standard EIP-3009 tokens validate `transferWithAuthorization` with `ecrecover` only, so a
+contract-wallet payment on the raw EIP-3009 path is accepted at verify but needs an ERC-1271-aware
+token to settle.)
 
 ## Network Configuration
 
@@ -436,7 +513,8 @@ public class SettlementResponse
 | `invalid_exact_evm_signature` | EIP-712 signature verification failed |
 | `invalid_exact_evm_authorization_value` | Amount below the requirement |
 | `invalid_exact_evm_recipient_mismatch` | Recipient doesn't match `PayTo` |
-| `invalid_exact_evm_nonce_already_used` | Nonce already consumed |
+| `invalid_exact_evm_nonce_already_used` | Nonce already consumed (also returned for a rejected replay) |
+| `invalid_exact_evm_transaction_simulation_failed` | Settlement dry-run (`eth_estimateGas`) reverted |
 | `invalid_network` | Unsupported / unconfigured network |
 | `unsupported_payload_type` | Scheme not supported |
 | `invalid_payment_requirements` | Requirement missing/invalid (e.g. no `extra`) |

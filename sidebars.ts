@@ -301,6 +301,9 @@ const sidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             'mainnet-follower/guide-mainnet-follower',
+            'mainnet-follower/guide-custom-chain-node',
+            'mainnet-follower/guide-custom-storage',
+            'mainnet-follower/guide-custom-rpc-handlers',
           ],
         },
         {
@@ -308,8 +311,17 @@ const sidebars: SidebarsConfig = {
           label: 'Package Reference',
           items: [
             'mainnet-follower/nethereum-mainnetchain',
+            'mainnet-follower/nethereum-mainnetchain-server',
             'mainnet-follower/nethereum-corechain',
-            'mainnet-follower/nethereum-corechain-rocksdb',
+            {
+              type: 'category',
+              label: 'Storage',
+              items: [
+                'mainnet-follower/nethereum-corechain-rocksdb',
+                'mainnet-follower/nethereum-corechain-freezer',
+                'mainnet-follower/nethereum-freezer',
+              ],
+            },
           ],
         },
       ],

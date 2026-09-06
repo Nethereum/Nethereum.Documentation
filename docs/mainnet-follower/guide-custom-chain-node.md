@@ -122,4 +122,4 @@ The chain config controls the chain ID, and is passed to the block producer and 
 
 - [Custom Storage](guide-custom-storage) — implement your own storage backend or use RocksDB for persistence
 - [Custom RPC Handlers](guide-custom-rpc-handlers) — add custom JSON-RPC methods to your chain
-- [Forking](guide-forking) — fork state from live Ethereum networks for local testing
+- [Forking](../devchain/guide-forking-and-state) — fork state from live Ethereum networks for local testing

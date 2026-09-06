@@ -188,7 +188,7 @@ Merkle tree computation and proof generation.
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - Integrates policy enforcement in the server pipeline
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Chain state access
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Chain state access
 - **[Nethereum.Web3](../core-foundation/nethereum-web3)** - L1 contract queries
 
 ## Additional Resources

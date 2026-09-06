@@ -263,7 +263,7 @@ Block validation outcome.
 - **[Nethereum.AppChain.P2P.Server](nethereum-appchain-p2p-server)** - Uses Clique with DotNetty P2P networking
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Consensus interfaces and block production pipeline
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Consensus interfaces and block production pipeline
 - **[Nethereum.Signer](../signing-and-key-management/nethereum-signer)** - ECDSA cryptographic operations
 - **[Nethereum.Model](../core-foundation/nethereum-model)** - Block header data structures and encoding
 

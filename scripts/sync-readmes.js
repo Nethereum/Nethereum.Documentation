@@ -97,14 +97,18 @@ const PACKAGE_CATEGORY = {
 
   // §4 EVM Simulator
   'Nethereum.EVM': 'evm-simulator',
+  'Nethereum.EVM.Core': 'evm-simulator',
   'Nethereum.EVM.Contracts': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Bls': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Kzg': 'evm-simulator',
 
   // §5 Mainnet Follower (the follower node + the engine it runs on)
   'Nethereum.MainnetChain': 'mainnet-follower',
+  'Nethereum.MainnetChain.Server': 'mainnet-follower',
   'Nethereum.CoreChain': 'mainnet-follower',
   'Nethereum.CoreChain.RocksDB': 'mainnet-follower',
+  'Nethereum.CoreChain.Freezer': 'mainnet-follower',
+  'Nethereum.Freezer': 'mainnet-follower',
 
   // §5 DevP2P (Ethereum peer-to-peer networking + sync stack)
   'Nethereum.DevP2P': 'devp2p',

@@ -194,5 +194,5 @@ Subsequent runs will read cached state from disk instead of making remote RPC ca
 
 - [Debug & Trace](guide-debug-trace) — trace forked transactions at the opcode level
 - [Testing Patterns](guide-testing-patterns) — combine forking with snapshot/revert for isolated tests
-- For the underlying forking mechanism, see the [Chain Infrastructure forking guide](/docs/chain-infrastructure/guide-forking)
+- For the chain engine underneath DevChain, see the [Nethereum.CoreChain package](/docs/mainnet-follower/nethereum-corechain)
 - For the complete API, see the [Nethereum.DevChain package reference](nethereum-devchain)

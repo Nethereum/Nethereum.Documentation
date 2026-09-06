@@ -9,7 +9,7 @@ description: Local Ethereum dev chain — instant mining, Hardhat/Anvil compatib
 
 Nethereum DevChain is a local Ethereum development chain that runs inside your application. No Docker, no external processes — just add the NuGet package and start writing tests or building your app.
 
-Built on [Chain Infrastructure](/docs/chain-infrastructure/overview) (CoreChain), DevChain adds instant mining, SQLite storage, funded accounts, and full compatibility with Hardhat and Anvil development methods.
+Built on the [Nethereum.CoreChain](/docs/mainnet-follower/nethereum-corechain) engine, DevChain adds instant mining, SQLite storage, funded accounts, and full compatibility with Hardhat and Anvil development methods.
 
 ## Quick Start
 
@@ -103,6 +103,6 @@ This creates an Aspire-orchestrated environment with:
 
 ## Related
 
-- [Chain Infrastructure](/docs/chain-infrastructure/overview) — the shared blockchain engine underneath
+- [Nethereum.CoreChain](/docs/mainnet-follower/nethereum-corechain) — the chain engine underneath
 - [EVM Simulator](/docs/evm-simulator/overview) — the execution engine that powers DevChain
 - [AppChains (Preview)](/docs/application-chain/overview) — production satellite chains with sequencer and P2P

@@ -181,7 +181,7 @@ Key properties:
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - Main server uses DotNetty for Clique consensus
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - `IP2PTransport` interface and message types
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - `IP2PTransport` interface and message types
 
 ## Additional Resources
 

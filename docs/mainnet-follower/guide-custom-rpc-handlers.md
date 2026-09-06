@@ -126,5 +126,5 @@ For metrics and monitoring, use `InstrumentedRpcDispatcher` which tracks call co
 ## Next Steps
 
 - [Custom Chain Node](guide-custom-chain-node) — build a complete chain node that uses your custom handlers
-- [Forking](guide-forking) — fork state from live networks for your custom chain
+- [Forking](../devchain/guide-forking-and-state) — fork state from live networks for your custom chain
 - For the complete handler list, see the [Nethereum.CoreChain package reference](nethereum-corechain)

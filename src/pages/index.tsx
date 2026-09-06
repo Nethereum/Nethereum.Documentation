@@ -52,10 +52,16 @@ const sections: SectionItem[] = [
     link: '/docs/evm-simulator/overview',
   },
   {
-    title: 'Chain Infrastructure',
+    title: 'Mainnet Follower',
     icon: '⚙',
-    description: 'Shared blockchain engine — storage, block production, EVM, RPC routing',
-    link: '/docs/chain-infrastructure/overview',
+    description: 'Run your own Ethereum mainnet node in .NET',
+    link: '/docs/mainnet-follower/overview',
+  },
+  {
+    title: 'DevP2P',
+    icon: '🌐',
+    description: 'Ethereum peer-to-peer networking and sync in .NET',
+    link: '/docs/devp2p/overview',
   },
   {
     title: 'DevChain',
@@ -175,6 +181,12 @@ const taskGroups: TaskGroup[] = [
       {task: 'Spin up a dev environment with Aspire', packages: 'dotnet new nethereum-devchain', link: '/docs/aspire-templates/guide-devchain-template'},
       {task: 'Build a full-stack dApp (Blazor + Solidity)', packages: 'dotnet new nethereum-dapp', link: '/docs/aspire-templates/guide-dapp-template'},
       {task: 'Launch a production AppChain', packages: 'Nethereum.AppChain.Server', link: '/docs/application-chain/guide-appchain-quickstart'},
+    ],
+  },
+  {
+    category: 'Mainnet Follower',
+    tasks: [
+      {task: 'Run a mainnet follower', packages: 'Nethereum.MainnetChain', link: '/docs/mainnet-follower/guide-mainnet-follower'},
     ],
   },
   {

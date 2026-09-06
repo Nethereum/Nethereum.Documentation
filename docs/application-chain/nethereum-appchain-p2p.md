@@ -187,7 +187,7 @@ Key methods:
 - **[Nethereum.AppChain.P2P.DotNetty](nethereum-appchain-p2p-dotnetty)** - DotNetty transport wraps these security components
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Consensus and storage interfaces
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Consensus and storage interfaces
 - **[Nethereum.Signer](../signing-and-key-management/nethereum-signer)** - Cryptographic operations
 
 ## Additional Resources

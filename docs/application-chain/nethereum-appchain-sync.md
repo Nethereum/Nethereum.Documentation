@@ -276,7 +276,7 @@ Key properties:
 - **[Nethereum.AppChain.Sequencer](nethereum-appchain-sequencer)** - Sequencer coordinator uses sync for initial catch-up
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Transaction processor and state root calculation
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Transaction processor and state root calculation
 - **[Nethereum.AppChain](nethereum-appchain)** - Core chain abstraction
 
 ## Additional Resources

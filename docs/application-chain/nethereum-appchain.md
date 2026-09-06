@@ -247,7 +247,7 @@ Deploys the canonical CREATE2 factory during genesis.
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - HTTP JSON-RPC server
 
 ### Dependencies
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Storage interfaces and state root calculation
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Storage interfaces and state root calculation
 - **[Nethereum.Model](../core-foundation/nethereum-model)** - Block and transaction data structures
 
 ## Additional Resources

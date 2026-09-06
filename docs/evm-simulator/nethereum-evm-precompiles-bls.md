@@ -13,7 +13,7 @@ format: md
 # Nethereum.EVM.Precompiles.Bls
 
 EIP-2537 BLS12-381 precompile handlers for
-[`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core). Activated at
+[`Nethereum.EVM.Core`](nethereum-evm-core). Activated at
 the Prague hardfork.
 
 ## Overview
@@ -43,7 +43,7 @@ dotnet add package Nethereum.EVM.Precompiles.Bls
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
 - `Nethereum.Signer.Bls` — `IBls12381Operations` contract and managed backend.
 
 ## Usage
@@ -89,4 +89,4 @@ or `DefaultHardforkConfigs.Prague` before calling the extension.
   — the default backend bundle this layers on top of.
 - [`Nethereum.EVM.Precompiles.Kzg`](nethereum-evm-precompiles-kzg)
   — the sibling EIP-4844 KZG precompile.
-- [`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core) — `HardforkConfig` / `PrecompileRegistry` contracts.
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig` / `PrecompileRegistry` contracts.

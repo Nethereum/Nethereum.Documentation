@@ -13,7 +13,7 @@ format: md
 # Nethereum.EVM.Precompiles
 
 Default crypto backend bundle and pre-built mainnet hardfork registry
-for [`Nethereum.EVM.Core`](nethereum-evm-core).
+for [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core).
 
 ## Overview
 
@@ -54,7 +54,7 @@ dotnet add package Nethereum.EVM.Precompiles
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](nethereum-evm-core) — `PrecompileBackends`, `HardforkRegistry`, `HardforkConfig`, `PrecompileRegistry`.
+- [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core) — `PrecompileBackends`, `HardforkRegistry`, `HardforkConfig`, `PrecompileRegistry`.
 - [`Nethereum.Util`](nethereum-util) — Keccak, `EvmUInt256`.
 - [`Nethereum.Signer`](../signing-and-key-management/nethereum-signer) — ECDSA recover for the EcRecover backend.
 
@@ -118,7 +118,7 @@ var executor = new TransactionExecutor(prague);
 
 ## See Also
 
-- [`Nethereum.EVM.Core`](nethereum-evm-core) — hardfork
+- [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core) — hardfork
   registry machinery and `PrecompileBackends` contract.
 - [`Nethereum.EVM.Precompiles.Bls`](../evm-simulator/nethereum-evm-precompiles-bls)
   — EIP-2537 BLS12-381 precompiles.

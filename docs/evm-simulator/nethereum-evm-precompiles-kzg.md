@@ -13,7 +13,7 @@ format: md
 # Nethereum.EVM.Precompiles.Kzg
 
 EIP-4844 KZG point-evaluation precompile for
-[`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core). Activated at
+[`Nethereum.EVM.Core`](nethereum-evm-core). Activated at
 the Cancun hardfork.
 
 ## Overview
@@ -36,7 +36,7 @@ dotnet add package Nethereum.EVM.Precompiles.Kzg
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
 - The project ships `CkzgOperations` (wraps native C-KZG) as the
   default implementation of `IKzgOperations`.
 
@@ -115,4 +115,4 @@ bool valid = kzg.VerifyBlobKzgProof(blob, commitment, proof);
   — default backend bundle and registry singleton.
 - [`Nethereum.EVM.Precompiles.Bls`](nethereum-evm-precompiles-bls)
   — sibling EIP-2537 BLS12-381 precompiles.
-- [`Nethereum.EVM.Core`](../core-foundation/nethereum-evm-core) — `HardforkConfig` / `PrecompileRegistry` contracts.
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig` / `PrecompileRegistry` contracts.

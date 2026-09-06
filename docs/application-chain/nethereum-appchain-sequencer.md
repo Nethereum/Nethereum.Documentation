@@ -252,7 +252,7 @@ public class AppChainNode : ChainNodeBase
 
 ### Dependencies
 - **[Nethereum.AppChain](nethereum-appchain)** - Core chain abstraction
-- **[Nethereum.CoreChain](../devchain/nethereum-corechain)** - Block production and transaction processing
+- **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Block production and transaction processing
 
 ## Additional Resources
 

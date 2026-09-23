@@ -36,7 +36,8 @@ dotnet add package Nethereum.EVM.Precompiles.Kzg
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
+- [`Nethereum.EVM`](nethereum-evm) — `HardforkConfig`, `PrecompileRegistry`.
+- `Ckzg.Bindings` `1.0.2.828` — the native c-kzg-4844 bindings behind `CkzgOperations`.
 - The project ships `CkzgOperations` (wraps native C-KZG) as the
   default implementation of `IKzgOperations`.
 
@@ -60,7 +61,9 @@ Inject a custom operations implementation (test double, alternative
 backend, trimmed build, …):
 
 ```csharp
-using Nethereum.EVM.Precompiles.Kzg;
+using Nethereum.EVM;                   // HardforkConfig, WithKzgBackend
+using Nethereum.EVM.Precompiles;       // DefaultHardforkConfigs
+using Nethereum.EVM.Precompiles.Kzg;   // CkzgOperations
 
 IKzgOperations kzgOps = new CkzgOperations();      // or your own
 HardforkConfig cancun = DefaultHardforkConfigs.Cancun
@@ -73,6 +76,7 @@ Compose KZG on top of any base registry:
 
 ```csharp
 using Nethereum.EVM.Execution.Precompiles;
+using Nethereum.EVM.Precompiles.Kzg;  // PrecompileRegistry.WithKzgBackend
 
 var cancunBase = PrecompileRegistries.CancunBase(/* backends... */);
 var withKzg    = cancunBase.WithKzgBackend(kzgOps);

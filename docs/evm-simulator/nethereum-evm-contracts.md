@@ -46,7 +46,7 @@ Complete ERC20 token operation simulation with:
 
 ### ERC20ContractSimulator
 
-High-level simulator for ERC20 token contracts. Located in `ERC20/ERC20ContractSimulator.cs:19-197`.
+High-level simulator for ERC20 token contracts. Located in `ERC20/ERC20ContractSimulator.cs:19-209`.
 
 **Constructor:**
 ```csharp
@@ -54,7 +54,8 @@ public ERC20ContractSimulator(
     IWeb3 web3,
     BigInteger chainId,
     string contractAddress,
-    byte[] code = null
+    byte[] code = null,
+    ChainForkResolver forkResolver = null
 )
 ```
 
@@ -65,7 +66,7 @@ public ERC20ContractSimulator(
 
 ### TransferSimulationResult
 
-Result from `SimulateTransferAndBalanceStateAsync`. Located in `ERC20ContractSimulator.cs:35-47`.
+Result from `SimulateTransferAndBalanceStateAsync`. Located in `ERC20/ERC20ContractSimulator.cs:48-60`.
 
 **Properties:**
 - `BalanceSenderBefore` - Sender balance before transfer
@@ -153,7 +154,7 @@ var balance = await simulator.SimulateGetBalanceAsync(ownerAddress, stateService
 Console.WriteLine($"Balance of {ownerAddress}: {balance}");
 ```
 
-From method: `ERC20ContractSimulator.cs:117-133`
+From method: `ERC20/ERC20ContractSimulator.cs:130-146`
 
 ### Example 3: Discover Storage Slot for Balances
 
@@ -173,10 +174,9 @@ var simulator = new ERC20ContractSimulator(web3, chainId: 1, usdcAddress);
 var addressWithBalance = "0x0000000000000000000000000000000000000001";
 
 // Calculate the storage slot where balances are stored
-// Tests up to 100 slots by default
+// numberOfSlotsToTry defaults to 10,000
 var balanceSlot = await simulator.CalculateMappingBalanceSlotAsync(
-    addressWithBalance,
-    numberOfSlotsToTry: 100
+    addressWithBalance
 );
 
 Console.WriteLine($"Balance mapping is at storage slot: {balanceSlot}");
@@ -236,7 +236,7 @@ else
 }
 ```
 
-From method: `ERC20ContractSimulator.cs:96-115`
+From method: `ERC20/ERC20ContractSimulator.cs:109-128`
 
 ### Example 5: Validate Storage Layout
 
@@ -271,7 +271,7 @@ From test: `Erc20EVMContractSimulatorAndStorage.cs:72-80`
 
 ### Storage Slot Discovery Algorithm
 
-The `CalculateMappingBalanceSlotAsync` method discovers where balances are stored by: (Located in `ERC20ContractSimulator.cs:136-193`)
+The `CalculateMappingBalanceSlotAsync` method discovers where balances are stored by: (Located in `ERC20/ERC20ContractSimulator.cs:149-206`)
 
 1. **Execute balanceOf via EVM** - Simulates the `balanceOf(address)` call to get expected balance
 2. **Capture storage accesses** - Tracks all storage slots read during execution
@@ -292,7 +292,7 @@ var storageKey = StorageUtil.CalculateMappingAddressStorageKeyAsBigInteger(
 
 ### Transfer Simulation Flow
 
-The `SimulateTransferAndBalanceStateAsync` method: (Located in `ERC20ContractSimulator.cs:59-94`)
+The `SimulateTransferAndBalanceStateAsync` method: (Located in `ERC20/ERC20ContractSimulator.cs:72-107`)
 
 1. **Query initial balances** - Gets sender and receiver balances via RPC
 2. **Calculate storage slot** - Discovers balance mapping slot (if not known)
@@ -348,7 +348,7 @@ var slot = await simulator.CalculateMappingBalanceSlotAsync(
 );
 ```
 
-From method: `ERC20ContractSimulator.cs:136-143`
+From method: `ERC20/ERC20ContractSimulator.cs:149-206`
 
 ### Gas Estimation Comparison
 

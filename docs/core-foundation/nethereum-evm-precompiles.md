@@ -35,9 +35,9 @@ implementations behind Ethereum's precompiled contracts
 - **`DefaultHardforkConfigs`** — per-fork `HardforkConfig` accessors
   (Cancun / Prague / Osaka / …) wired with the default registry.
   Convenient for unit tests that target a single fork.
-- **`DefaultPrecompileRegistries`** — fork-scoped precompile registry
-  factories (`FrontierBase`, `ByzantiumBase`, `CancunBase`, etc.)
-  used internally by `MainnetHardforkRegistry.Build`.
+- **`DefaultPrecompileRegistries`** — standalone fork-scoped precompile
+  registry factories (`FrontierBase`, `ByzantiumBase`, `CancunBase`, etc.)
+  for hand-composing a registry for a single fork.
 
 Ship this package when you run an EVM on a standard .NET host. For
 zkVM guest builds (Zisk), use
@@ -55,8 +55,9 @@ dotnet add package Nethereum.EVM.Precompiles
 ### Dependencies
 
 - [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core) — `PrecompileBackends`, `HardforkRegistry`, `HardforkConfig`, `PrecompileRegistry`.
-- [`Nethereum.Util`](nethereum-util) — Keccak, `EvmUInt256`.
-- [`Nethereum.Signer`](../signing-and-key-management/nethereum-signer) — ECDSA recover for the EcRecover backend.
+- [`Nethereum.Signer`](../signing-and-key-management/nethereum-signer) — secp256k1 recover for the EcRecover backend and `BN128Curve` for the BN128 backend.
+
+(`Nethereum.Util` and BouncyCastle arrive transitively; they are not direct references.)
 
 For BLS12-381 (EIP-2537) and KZG (EIP-4844) add the satellite packages:
 - [`Nethereum.EVM.Precompiles.Bls`](../evm-simulator/nethereum-evm-precompiles-bls)
@@ -65,6 +66,7 @@ For BLS12-381 (EIP-2537) and KZG (EIP-4844) add the satellite packages:
 ## Quick Start
 
 ```csharp
+using Nethereum.EVM;                // HardforkName
 using Nethereum.EVM.Precompiles;
 
 // Ready-to-use mainnet registry with default crypto backends
@@ -80,16 +82,18 @@ var cancun = registry.Get(HardforkName.Cancun);
 |---------|-------------------|-------|
 | `DefaultEcRecoverBackend` | `0x01` | `Nethereum.Signer` secp256k1 recovery |
 | `DefaultSha256Backend` | `0x02` | `System.Security.Cryptography.SHA256` |
-| `DefaultRipemd160Backend` | `0x03` | RIPEMD-160 impl in `Nethereum.Util` |
+| `DefaultRipemd160Backend` | `0x03` | BouncyCastle `RipeMD160Digest` (in this package) |
 | `DefaultModExpBackend` | `0x05` | EIP-2565 modular exponentiation |
-| `DefaultBn128Backend` | `0x06`, `0x07`, `0x08` | BN128 add / mul / pairing (`Nethereum.Signer.Crypto.BN128`) |
+| `DefaultBn128Backend` | `0x06`, `0x07`, `0x08` | BN128 add / mul / pairing (`Nethereum.Signer.Crypto.BN128Curve`) |
 | `DefaultBlake2fBackend` | `0x09` | EIP-152 Blake2 F compression |
-| `DefaultP256VerifyBackend` | `0x0100` | EIP-7951 secp256r1 verification (`System.Security.Cryptography.ECDsa`) |
+| `DefaultP256VerifyBackend` | `0x0100` | EIP-7951 secp256r1 verification via BouncyCastle `ECDsaSigner` over NIST P-256 |
 
 Swap any backend by constructing your own `PrecompileBackends`:
 
 ```csharp
-using Nethereum.EVM.Execution.Precompiles;
+using Nethereum.EVM;                        // MainnetHardforkRegistry
+using Nethereum.EVM.Execution.Precompiles;  // PrecompileBackends
+using Nethereum.EVM.Precompiles.Backends;   // Default*Backend
 
 var customBackends = new PrecompileBackends(
     DefaultEcRecoverBackend.Instance,
@@ -106,7 +110,8 @@ var registry = MainnetHardforkRegistry.Build(customBackends);
 ## `DefaultHardforkConfigs` for Targeted Tests
 
 ```csharp
-using Nethereum.EVM.Precompiles;
+using Nethereum.EVM;                // TransactionExecutor
+using Nethereum.EVM.Precompiles;    // DefaultHardforkConfigs
 
 // Single-fork configs with default backends, handy for unit tests:
 var prague = DefaultHardforkConfigs.Prague;

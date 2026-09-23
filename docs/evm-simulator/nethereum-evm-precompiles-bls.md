@@ -43,8 +43,16 @@ dotnet add package Nethereum.EVM.Precompiles.Bls
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](nethereum-evm-core) — `HardforkConfig`, `PrecompileRegistry`.
-- `Nethereum.Signer.Bls` — `IBls12381Operations` contract and managed backend.
+- [`Nethereum.EVM`](nethereum-evm) — `HardforkConfig`, `PrecompileRegistry`.
+- `Nethereum.Signer.Bls` — the `IBls12381Operations` contract.
+
+A concrete backend is a separate package. `Nethereum.Signer.Bls.Herumi`
+provides `Bls12381Operations`, a native (Herumi MCL) implementation — add
+it to supply the backend at runtime:
+
+```bash
+dotnet add package Nethereum.Signer.Bls.Herumi
+```
 
 ## Usage
 
@@ -53,7 +61,8 @@ dotnet add package Nethereum.EVM.Precompiles.Bls
 ```csharp
 using Nethereum.EVM;
 using Nethereum.EVM.Precompiles;      // DefaultHardforkConfigs
-using Nethereum.Signer.Bls;           // IBls12381Operations, Bls12381Operations
+using Nethereum.Signer.Bls;           // IBls12381Operations
+using Nethereum.Signer.Bls.Herumi;    // Bls12381Operations (native Herumi MCL backend)
 
 IBls12381Operations blsOps = new Bls12381Operations();
 HardforkConfig prague = DefaultHardforkConfigs.Prague
@@ -70,6 +79,7 @@ Compose BLS on top of any `PrecompileRegistry` returned from
 
 ```csharp
 using Nethereum.EVM.Execution.Precompiles;
+using Nethereum.EVM.Precompiles.Bls;  // PrecompileRegistry.WithBlsBackend
 
 var baseRegistry   = PrecompileRegistries.PragueBase(/* backends... */);
 var withBls        = baseRegistry.WithBlsBackend(blsOps);

@@ -41,9 +41,10 @@ dotnet add package Nethereum.Consensus.Clique
 
 - **Nethereum.CoreChain** - Provides `IConsensusEngine`, `IBlockProductionStrategy`, `BlockProductionOptions`, and `ChainConfig`
 - **Nethereum.Signer** - ECDSA key management (`EthECKey`) and signature recovery for block signing
-- **Nethereum.Model** - `BlockHeader` and `BlockHeaderEncoder` for Clique-specific header encoding
 - **Nethereum.Hex** - Hex encoding utilities for address and hash conversions
 - **Microsoft.Extensions.Logging.Abstractions** - Optional structured logging
+
+`Nethereum.Model` types such as `BlockHeader` and `BlockHeaderEncoder` are used for Clique-specific header encoding, but the reference is transitive (pulled in via Nethereum.CoreChain and Nethereum.Signer), not a direct project reference.
 
 ## Key Concepts
 
@@ -73,8 +74,8 @@ Block headers encode consensus data in the `ExtraData` field:
 
 Signers vote to add or remove validators using the block header's `Coinbase` (vote target) and `Nonce` fields:
 
-- `0x0000000000000000` - Vote to authorize (add)
-- `0xFFFFFFFFFFFFFFFF` - Vote to revoke (remove)
+- `0xFFFFFFFFFFFFFFFF` - Vote to authorize (add)
+- `0x0000000000000000` - Vote to revoke (remove)
 
 When votes for a target reach majority (`totalSigners / 2 + 1`), the signer set updates automatically.
 
@@ -194,7 +195,7 @@ public class CliqueEngine : IConsensusEngine, IDisposable
     public bool IsInTurn(long blockNumber, string signerAddress);
     public BigInteger GetDifficulty(long blockNumber, string signerAddress);
     public bool CanProduceBlock(long blockNumber);
-    public Task<TimeSpan> GetSigningDelayAsync(long blockNumber, CancellationToken ct);
+    public Task<TimeSpan> GetSigningDelayAsync(long blockNumber, CancellationToken cancellationToken = default);
 
     // Block signing and validation
     public byte[] SignBlock(BlockHeader header);
@@ -215,10 +216,14 @@ Bridge between CoreChain block production and Clique consensus.
 ```csharp
 public class CliqueBlockProductionStrategy : IBlockProductionStrategy
 {
-    public CliqueBlockProductionStrategy(ChainConfig chainConfig, CliqueEngine engine, ILogger? logger = null);
+    public CliqueBlockProductionStrategy(
+        ChainConfig chainConfig,
+        CliqueEngine cliqueEngine,
+        ILogger<CliqueBlockProductionStrategy>? logger = null,
+        ICliqueProposalStore? proposalStore = null);
 
     public bool CanProduceBlock(long blockNumber);
-    public Task<TimeSpan> GetSigningDelayAsync(long blockNumber, CancellationToken ct);
+    public Task<TimeSpan> GetSigningDelayAsync(long blockNumber, CancellationToken cancellationToken = default);
     public BlockProductionOptions PrepareBlockOptions(long blockNumber, BlockHeader? parentHeader);
     public Task FinalizeBlockAsync(BlockHeader header, byte[] blockHash, BlockProductionResult result);
 
@@ -241,7 +246,7 @@ Key properties:
 
 ### CliqueSnapshot
 
-Immutable point-in-time consensus state.
+Point-in-time consensus state (mutable; `Clone()` produces an independent copy for thread safety).
 
 Key properties:
 - `Signers` - Ordered list of authorized signer addresses
@@ -260,12 +265,11 @@ Block validation outcome.
 
 ### Used By (Consumers)
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - Uses Clique for multi-validator AppChain consensus
-- **[Nethereum.AppChain.P2P.Server](nethereum-appchain-p2p-server)** - Uses Clique with DotNetty P2P networking
 
 ### Dependencies
 - **[Nethereum.CoreChain](../mainnet-follower/nethereum-corechain)** - Consensus interfaces and block production pipeline
 - **[Nethereum.Signer](../signing-and-key-management/nethereum-signer)** - ECDSA cryptographic operations
-- **[Nethereum.Model](../core-foundation/nethereum-model)** - Block header data structures and encoding
+- **[Nethereum.Model](../core-foundation/nethereum-model)** - Block header data structures and encoding (transitive, via CoreChain/Signer)
 
 ## Additional Resources
 

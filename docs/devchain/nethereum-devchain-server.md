@@ -2,7 +2,7 @@
 title: "Nethereum.DevChain.Server"
 sidebar_label: "Nethereum.DevChain.Server"
 sidebar_position: 100
-description: "A local Ethereum development node with JSON-RPC server. Similar to Hardhat Network or Anvil but built entirely in .NET. Supports EVM opcodes up to the Prague hardfork."
+description: "A local Ethereum development node with JSON-RPC server. Similar to Hardhat Network or Anvil but built entirely in .NET. Supports EVM opcodes up to the Amsterdam hardfork."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.DevChain.Server/README.md"
 format: md
 ---
@@ -12,14 +12,14 @@ format: md
 > **NuGet**: [`Nethereum.DevChain.Server`](https://www.nuget.org/packages/Nethereum.DevChain.Server/) | **Source**: [`src/Nethereum.DevChain.Server/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevChain.Server)
 # Nethereum.DevChain.Server
 
-A local Ethereum development node with JSON-RPC server. Similar to Hardhat Network or Anvil but built entirely in .NET. Supports EVM opcodes up to the Prague hardfork.
+A local Ethereum development node with JSON-RPC server. Similar to Hardhat Network or Anvil but built entirely in .NET. Supports EVM opcodes up to the Amsterdam hardfork.
 
 ## Overview
 
 - HTTP JSON-RPC server on configurable port
 - Pre-funded accounts from HD wallet (default mnemonic compatible with Hardhat/Anvil)
 - Instant transaction mining (auto-mine) or configurable block intervals
-- Full EVM execution up to Prague hardfork with Geth-compatible tracing
+- Full EVM execution up to Amsterdam hardfork with Geth-compatible tracing
 - SQLite storage by default with auto-cleanup on exit
 - State forking from live networks
 - Hardhat and Anvil-compatible RPC methods
@@ -89,6 +89,7 @@ CHAIN:
   -c, --chain-id <ID>         Chain ID (default: 31337)
   -b, --block-time <MS>       Block time in ms, 0 = auto-mine (default: 0)
       --gas-limit <GAS>       Block gas limit (default: 30000000)
+      --hardfork <NAME>       Hardfork to run (default: amsterdam)
 
 FORK:
   -f, --fork <URL>            Fork from a remote RPC endpoint
@@ -97,19 +98,24 @@ FORK:
 STORAGE:
       --persist [DIR]         Persist chain data to disk (default: ./chaindata)
       --in-memory             Use in-memory storage instead of SQLite
+      --rocksdb               Use RocksDB storage with path-based state, same as mainnet
+      --data-dir <DIR>        Data directory for --rocksdb (default: ./chaindata)
 ```
 
 Default storage is SQLite with auto-cleanup on exit. Use `--persist` to keep data between restarts.
+
+The block gas limit defaults to `30000000` (set in `appsettings.json`). If `BlockGasLimit` is left unset (no config value and no `--gas-limit`), it becomes fork-derived (~130,270,080 at the Amsterdam fork).
 
 ## Storage Modes
 
 | Mode | Flag | Blocks/TX/Receipts/Logs | State/Filters/Trie | Cleanup |
 |------|------|------------------------|---------------------|---------|
-| **SQLite** (default) | _(none)_ | SQLite (temp file) | In-Memory | Auto-delete on exit |
-| **SQLite persistent** | `--persist` | SQLite (./chaindata) | In-Memory | Kept between restarts |
-| **In-memory** | `--in-memory` | In-Memory | In-Memory | Lost on exit |
+| **SQLite** (default) | _(none)_ | SQLite (temp file) | SQLite-backed state + trie; filters in-memory | Auto-delete on exit |
+| **SQLite persistent** | `--persist` | SQLite (./chaindata) | SQLite-backed state + trie; filters in-memory | Kept between restarts |
+| **In-memory** | `--in-memory` | In-Memory | In-Memory (state, trie, filters) | Lost on exit |
+| **RocksDB** | `--rocksdb` | RocksDB (./chaindata or `--data-dir`) | Path-based state + trie, same as mainnet; filters in-memory | Kept between restarts |
 
-SQLite uses WAL journal mode for good read/write concurrency. State, filters, and trie nodes remain in-memory for fast snapshot/revert operations.
+SQLite uses WAL journal mode for good read/write concurrency. In SQLite and RocksDB modes, state and trie nodes are persisted to the backing store (not held in memory); snapshot/revert is diff-based through `HistoricalStateStore` rather than by retaining full state in memory. The filter registry (`eth_newFilter` etc.) is always in-memory.
 
 ## Startup Banner
 
@@ -120,10 +126,11 @@ SQLite uses WAL journal mode for good read/write concurrency. State, filters, an
 | |\  |  __/ |_| | | |  __/ | |  __/ |_| | | | | | |
 |_| \_|\___|\__|_| |_|\___|_|  \___|\__,_|_| |_| |_|
 
-              DevChain Server v6.0.1
+              DevChain Server v6.5.0
 
   RPC:        http://127.0.0.1:8545
   Chain ID:   31337
+  Hardfork:   amsterdam
   Gas Limit:  30,000,000
   Mining:     auto-mine (instant)
   Storage:    SQLite (auto-cleanup on exit)
@@ -357,7 +364,8 @@ console.log(`Gas: ${trace.gas}, Steps: ${trace.structLogs.length}`);
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/` | JSON-RPC endpoint (single or batch requests) |
-| GET | `/` | Health check: `{"status":"ok","version":"..."}` |
+| GET | `/` | Health check: `{"status":"ok","service":"Nethereum.DevChain"}` |
+| GET | `/eth/v1/beacon/blob_sidecars/{blockId}` | Beacon blob sidecars for a block (EIP-4844) |
 
 Max request body: 10MB. CORS enabled (any origin).
 
@@ -393,7 +401,7 @@ Each account is funded with 10,000 ETH by default. The mnemonic and derivation p
 ├──────────┴──────────────────────┴───────────────────────┤
 │               EVMSimulator (Nethereum.EVM)               │
 ├─────────────────────────────────────────────────────────┤
-│  SQLite (blocks/tx/receipts/logs)  │  InMemory (state)  │
+│  Backing store: SQLite (default) / In-Memory / RocksDB   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -414,7 +422,7 @@ Additionally, Nethereum DevChain provides:
 - **Native .NET integration** - embed directly in .NET applications and tests
 - **SQLite default storage** - bounded memory usage for long-running sessions
 - **Persistent storage** - keep chain state between restarts with `--persist`
-- **Prague hardfork support** - latest EVM opcode support
+- **Amsterdam hardfork support** - latest EVM opcode support
 
 ## Aspire Integration
 
@@ -444,7 +452,7 @@ builder.Configuration.GetSection("DevChain").Bind(config);
 builder.AddDevChainServer(config);
 
 var app = builder.Build();
-app.MapDevChainEndpoints();
+await app.MapDevChainEndpointsAsync();
 app.MapDefaultEndpoints();
 app.Run();
 ```
@@ -453,7 +461,7 @@ Install the Aspire template: `dotnet new install Nethereum.Aspire.TemplatePack`
 
 ## Embedding in .NET Applications
 
-Use `AddDevChainServer` and `MapDevChainEndpoints` directly in any ASP.NET Core application:
+Use `AddDevChainServer` and `MapDevChainEndpointsAsync` directly in any ASP.NET Core application:
 
 ```csharp
 using Nethereum.DevChain.Configuration;
@@ -462,7 +470,7 @@ using Nethereum.DevChain.Hosting;
 var config = new DevChainServerConfig { ChainId = 31337, Storage = "memory" };
 builder.AddDevChainServer(config);
 // ...
-app.MapDevChainEndpoints();
+await app.MapDevChainEndpointsAsync();
 ```
 
 `AddDevChainServer` registers `DevChainNode`, `RpcDispatcher`, `DevAccountManager`, CORS, storage providers, and `DevChainHostedService` as singletons.

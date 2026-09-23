@@ -2,7 +2,7 @@
 title: "Nethereum.DevChain"
 sidebar_label: "Nethereum.DevChain"
 sidebar_position: 100
-description: "Development blockchain with full EVM execution up to the Prague hardfork, automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development."
+description: "Development blockchain with full EVM execution through the Amsterdam hardfork (the newest fork the bundled registry runs; the base `DevChainConfig` default is Prague, and the DevChain server defaults "
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.DevChain/README.md"
 format: md
 ---
@@ -12,13 +12,13 @@ format: md
 > **NuGet**: [`Nethereum.DevChain`](https://www.nuget.org/packages/Nethereum.DevChain/) | **Source**: [`src/Nethereum.DevChain/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevChain)
 # Nethereum.DevChain
 
-Development blockchain with full EVM execution up to the Prague hardfork, automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development.
+Development blockchain with full EVM execution through the Amsterdam hardfork (the newest fork the bundled registry runs; the base `DevChainConfig` default is Prague, and the DevChain server defaults to Amsterdam), automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development.
 
 ## Overview
 
 Nethereum.DevChain provides a complete local blockchain environment:
 - **Instant Mining** - Transactions mined immediately or on a configurable interval
-- **Full EVM Execution** - EVM opcode support up to Prague via Nethereum.EVM
+- **Full EVM Execution** - EVM opcode support through Amsterdam (newest registry fork) via Nethereum.EVM
 - **SQLite Storage** - Default lightweight storage with auto-cleanup (no native dependencies)
 - **State Management** - Patricia trie-based state with snapshot/revert
 - **Extended RPC** - Development, debug, and Anvil-compatible APIs
@@ -34,9 +34,11 @@ dotnet add package Nethereum.DevChain
 ## Dependencies
 
 - Nethereum.CoreChain - Core blockchain infrastructure
+- Nethereum.Merkle.Binary - Binary Merkle trie and ZK-friendly hashing
 - Nethereum.RPC.Extensions - Extended RPC utilities
 - Nethereum.JsonRpc.RpcClient - JSON-RPC client
 - Nethereum.Web3 - Web3 and Accounts
+- Nethereum.ChainNode.Hosting - Shared node-composition and hosting layer
 - Microsoft.Data.Sqlite - SQLite storage provider
 - Microsoft.Extensions.Hosting.Abstractions - IHostedService support
 - Microsoft.AspNetCore.App (FrameworkReference) - ASP.NET Core web extensions
@@ -116,8 +118,17 @@ SQLite uses WAL journal mode for concurrent reads during block production. The d
 ```csharp
 public class DevChainConfig : ChainConfig
 {
-    public int ChainId { get; set; } = 1337;
-    public long BlockGasLimit { get; set; } = 30_000_000;
+    public BigInteger ChainId { get; set; } = 1337;   // inherited from ChainConfig
+
+    // Overridden in DevChainConfig: a computed BigInteger, not a fixed long.
+    // When left unset it sizes itself to the largest contract the newest fork this
+    // chain runs will deploy (~130,000,000 at Amsterdam), not a hard-coded 30M.
+    public override BigInteger BlockGasLimit
+    {
+        get => _blockGasLimit ?? BlockGasLimitLargeEnoughToDeployAt(NewestForkThisChainRuns);
+        set => _blockGasLimit = value;
+    }
+
     public bool AutoMine { get; set; } = true;
     public long BlockTime { get; set; } = 0;           // 0 = instant
     public int MaxTransactionsPerBlock { get; set; } = 100;
@@ -180,11 +191,11 @@ When running as an ASP.NET hosted service, blobs are also available via the beac
 ### Transaction Processing
 
 ```csharp
-// Send a signed transaction
-var txHash = await node.SendTransactionAsync(signedTransaction);
+// Send a signed transaction (returns a TransactionExecutionResult, not a hash)
+var result = await node.SendTransactionAsync(signedTransaction);
 
-// Get receipt
-var receipt = await node.GetTransactionReceiptAsync(txHash);
+// Get receipt (the hash is on result.TransactionHash)
+var receipt = await node.GetTransactionReceiptAsync(result.TransactionHash);
 
 // Raw byte sending (eth_sendRawTransaction) is available via the RPC layer
 ```
@@ -377,7 +388,7 @@ var config = new DevChainServerConfig { ChainId = 31337, Storage = "sqlite" };
 builder.AddDevChainServer(config); // Registers DI services, CORS, and hosted service
 
 var app = builder.Build();
-app.MapDevChainEndpoints(); // Maps JSON-RPC POST /, health GET /, and CORS middleware
+await app.MapDevChainEndpointsAsync(); // Maps JSON-RPC POST /, health GET /, and CORS middleware
 app.Run();
 ```
 

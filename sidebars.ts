@@ -333,6 +333,25 @@ const sidebars: SidebarsConfig = {
         'devp2p/overview',
         {
           type: 'category',
+          label: 'Peer Networking',
+          collapsed: false,
+          items: [
+            'devp2p/guide-connect-to-a-peer',
+            'devp2p/guide-peer-discovery',
+            'devp2p/guide-run-a-node',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Block & State Sync',
+          items: [
+            'devp2p/guide-full-sync',
+            'devp2p/guide-snap-sync',
+            'devp2p/guide-block-access-lists',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Package Reference',
           items: [
             'devp2p/nethereum-devp2p',

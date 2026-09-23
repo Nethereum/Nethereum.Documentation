@@ -38,7 +38,7 @@ dotnet add package Nethereum.DevP2P.Sync
 
 ### Dependencies
 
-**Nethereum packages (direct):** `Nethereum.DevP2P` (peer networking), `Nethereum.CoreChain` (stores, state, snap-sync state model), `Nethereum.Model`, `Nethereum.RLP`, `Nethereum.Util`, `Nethereum.Hex`, `Nethereum.Documentation` (doc-example tagging). Proof verification (`Nethereum.Merkle.Patricia`) and `Microsoft.Extensions.Logging.Abstractions` arrive transitively, not as direct references. Targets `net8.0`, `net9.0`, `net10.0`.
+**Nethereum packages (direct):** `Nethereum.DevP2P` (peer networking), `Nethereum.Model`, `Nethereum.CoreChain` (stores, state, snap-sync state model), `Nethereum.Util`, `Nethereum.Hex`, `Nethereum.RLP`. The `[NethereumDocExample]` / `DocSection` doc-tagging types used to trace README examples to source are supplied by `Nethereum.Util` (`Nethereum.Documentation.NethereumDocExampleAttribute`), not by a separate `Nethereum.Documentation` project reference. Proof verification (`Nethereum.Merkle.Patricia`) and `Microsoft.Extensions.Logging.Abstractions` arrive transitively, not as direct references. Targets `net8.0`, `net9.0`, `net10.0`.
 
 ## Architecture
 
@@ -87,7 +87,24 @@ Task<SnapBootstrapper.Result> RunAsync(
     SnapSyncOrchestratorOptions options = null, CancellationToken ct = default);
 ```
 
-Optional mode/tuning lives on `SnapSyncOrchestratorOptions` (`UseBackwardSkeleton`, `Metrics`, `RootRefreshIntervalMs`, `HeaderSweepOverride`, `BackfillOnly`, `Phase1First`, `HeaderFollow`).
+Optional mode/tuning lives on `SnapSyncOrchestratorOptions`:
+
+| Property | Type | Default |
+|---|---|---|
+| `UseBackwardSkeleton` | `bool` | `true` |
+| `Metrics` | `SnapSyncMetrics?` | `null` |
+| `RootRefreshIntervalMs` | `int` | `12_000` |
+| `PivotStaleDistanceBlocks` | `ulong` | `SnapSyncOrchestrator.PivotStaleDistanceBlocks` |
+| `HeaderSweepOverride` | `(ulong From, ulong To)?` | `null` |
+| `BackfillOnly` | `bool` | `false` |
+| `RunHistoryBackfill` | `bool` | `true` |
+| `Phase1First` | `bool` | `false` |
+| `AccountConcurrency` | `int?` | `null` |
+| `LargeContractConcurrency` | `int?` | `null` |
+| `EnableFlatReconcile` | `bool` | `false` |
+| `FinalizeVerify` | `bool` | `true` |
+| `HeaderFollow` | `HeaderFollowService?` | `null` |
+| `BalHealEnabled` | `bool` | `false` |
 
 **`SnapBootstrapper`** (static) — sequences the cold-start for a single pivot: skip if state is already committed, run the Phase-2 stream, heal on root mismatch, persist the pivot and completion sentinel. It also exposes pure, unit-tested decision helpers:
 
@@ -128,6 +145,7 @@ Task<HealResult> HealAsync(byte[] targetRoot,
 
 ```csharp
 Task<BackfillResult> BackfillAsync(ulong startBlock, ulong endBlock, CancellationToken ct);
+Task<BackfillResult> BackfillAsync(ulong startBlock, ulong endBlock, IBodyFillCursor cursor, CancellationToken ct);
 Task<BackfillResult> BackfillAsync(ulong startBlock, ulong endBlock, bool headersFromStore, CancellationToken ct);
 ```
 
@@ -162,7 +180,7 @@ Concrete infrastructure impls are also provided: `FetchRequestScheduler` (`IFetc
 | `RelayMempool` | Good-citizen relay tx pool: admits locally-submitted signed txs (via `MempoolAdmissionValidator`), holds them in the `ITxPool`, and announces hashes to peers. Leaf-only — never re-gossips remote txs. |
 | `MempoolAdmission` / `MempoolRejectReason` | Admission decision and its reject reasons for a submitted transaction. |
 | `Eth68PeerPool` / `Eth68PeerSession` | Broadcast peer registry for block/tx publishing (distinct from `IPeerPool`; used by `DevP2PBlockPublisher`). |
-| `Eip2124ForkIdCalculator` / `Eip2124ValidationResult` | EIP-2124 fork-ID compute (CRC32 over the fork schedule) and peer-compatibility validation (mirrors geth's stale/incompatible outcomes). |
+| `Eip2124ForkIdCalculator` / `Eip2124ValidationResult` | EIP-2124 fork-ID compute (CRC32 over the fork schedule) and peer-compatibility validation (mirrors geth's stale/incompatible outcomes). *Defined in Nethereum.EVM.Core.* |
 
 ### Fetch pipeline (Phase 1)
 
@@ -183,6 +201,30 @@ Concrete infrastructure impls are also provided: `FetchRequestScheduler` (`IFetc
 | `SchedulerSnapPeer` / `Eth68SnapPeer` (`ISnapPeer`) | Snap request transports — scheduler-backed and direct-eth/68-session-backed. |
 | `TrieSnapSyncSink` / `InMemorySnapSyncSink` (`ISnapSyncSink`) | Phase-2 sinks: durable Patricia-trie + bytecode writer, and an in-memory sink for tests. |
 | `SnapSyncMetrics` | Phase 2/3 progress counters (accounts/slots/bytecodes, rates). |
+
+## Snap-v2 BAL heal (`Snap/CatchUp`)
+
+When the pivot moves while Phase 2/3 is still in flight, the account/storage ranges already streamed can fall behind the blocks produced since the old pivot. The `Snap/CatchUp` types close that gap by fetching each intervening block's **Block Access List** (`snap/2`'s per-block account/storage/code/nonce/balance change set) from a peer, verifying it against the block header's BAL-hash commitment, and applying only the changes that land inside the frontier of state already fetched. This path is gated by `SnapSyncOrchestratorOptions.BalHealEnabled` (`SnapSyncOrchestratorOptions.cs:39`, default `false`).
+
+| Type | Role |
+|---|---|
+| `IBlockAccessListFetcher` / `BlockAccessListFetcher` | Fetches raw BAL entries for a set of `BalBlockRef`s from serviceable peers, retrying/redistributing across peers on refusal, hash mismatch, or a stateless response; throws `InvalidOperationException` when a block becomes unobtainable from every serviceable peer. `MaxHashesPerRequest` = 28, `ResponseByteBudget` = 2 MiB. |
+| `BlockAccessListVerifier` | `Verify(expectedBalHashes, rawEntries)` — Keccak-hashes each raw entry against its expected commitment and decodes it via `BlockAccessListRLPEncoder`, returning one `VerifiedBlockAccessList` per entry. |
+| `IBlockAccessListApplier` / `BlockAccessListApplier` | `ApplyAsync(blockAccessList, frontier, ct)` — applies a verified block's `AccountChanges` (balance/nonce/code/storage, last-writer-wins by `BlockAccessIndex`) into flat state (`ISnapFlatStateWriter`, `IStateStore` for code) and, when supplied, into the in-progress trie via `IHealedStateWriter`; deletes empty accounts. |
+| `ISnapTaskFrontier` / `SnapTaskFrontier` | `IsAccountFetched(accountHash)` / `IsStorageFetched(accountHash, slotHash)` — tells the applier whether a given account/slot already fell inside the Phase-2 range-task frontier, so BAL heal only patches state that was actually fetched. |
+| `VerifiedBlockAccessList` / `BlockAccessListStatus` | Verification outcome (`Verified` / `Unavailable` / `HashMismatch`) plus the decoded `IReadOnlyList<AccountChanges>` when `Verified`. |
+| `IBlockAccessListPeer` / `IBlockAccessListPeerSource` / `PeerPoolBlockAccessListPeerSource` | Peer abstraction (`Id`, `RequestBlockAccessListsAsync(blockHashes, responseBytes, ct)`) and its live source, which filters the peer pool to sessions where `SyncPeerSession.SupportsSnap2` is true. |
+| `BalBlockRef` | `(byte[] BlockHash, byte[] BlockAccessListHash)` — one block's identity for BAL fetch/verify. |
+| `IHealedStateWriter` / `IHealedStorageWriter` | Trie-side write surface for BAL heal: `GetHealedAccountAsync`, `WriteHealedAccountAsync`, `DeleteHealedAccountAsync`, `BeginHealedStorageAsync` (returns an `IHealedStorageWriter` with `WriteSlotAsync` / `DeleteSlotAsync` / `EndAsync` to compute the healed storage root). |
+
+```csharp
+// IBlockAccessListFetcher.FetchAsync — Snap/CatchUp/IBlockAccessListFetcher.cs:10
+Task<IReadOnlyList<IReadOnlyList<AccountChanges>>> FetchAsync(
+    IReadOnlyList<BalBlockRef> blocks, CancellationToken ct);
+
+// IBlockAccessListApplier.ApplyAsync — Snap/CatchUp/IBlockAccessListApplier.cs:10
+Task ApplyAsync(IReadOnlyList<AccountChanges> blockAccessList, ISnapTaskFrontier frontier, CancellationToken ct = default);
+```
 
 ## Usage examples
 

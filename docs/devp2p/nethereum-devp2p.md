@@ -22,7 +22,7 @@ Nethereum.DevP2P is the **transport and discovery** layer of a Nethereum node. I
 - **Node discovery** — UDP **discv4** (Kademlia, signed) and **discv5** (authenticated WHOAREYOU/HKDF sessions with TalkReq/TalkResp), plus **DNS ENR-tree** discovery and hardcoded bootnodes.
 - **Peering** — outbound dial scheduling with inbound/outbound ratio control, and layered inbound DoS hardening.
 
-This package advertises the `eth/68`, `eth/69`, `eth/70`, `eth/71`, and `snap/1` capabilities (plus `snap/2` when `DevP2PConfig.AdvertiseSnap2` is set) and computes their message-id offsets, but it **does not contain the eth/snap protocol handlers or message classes**. The sub-protocol serving/sync logic lives in **Nethereum.DevP2P.Sync** (e.g. `PatriciaSnapRequestHandler`, `Eth68ServerSession`, `SnapSyncClient`, `SyncPeerSession`, `IEthPeer`), and the wire-message models live in **Nethereum.Model** (`Nethereum.Model.P2P` / `.Snap`). Think of this package as the pipe; the protocols that flow through it are layered on top.
+This package advertises the `eth/68`, `eth/69`, `eth/70`, `eth/71`, and `snap/1` capabilities (plus `snap/2` when `DevP2PConfig.AdvertiseSnap2` is set) and computes their message-id offsets, but it **does not contain the eth/snap protocol handlers or message classes**. The sub-protocol serving/sync logic lives in **Nethereum.DevP2P.Sync** (e.g. `PatriciaSnapRequestHandler`, `Eth68ServerSession`, `SnapSyncClient`, `SyncPeerSession`, `IEthPeer`), and the wire-message models live in **Nethereum.Model** (`Nethereum.Model.P2P`, with the snap/1 and snap/2 messages nested under `Nethereum.Model.P2P.Snap`). Think of this package as the pipe; the protocols that flow through it are layered on top.
 
 ## Where do I start?
 
@@ -164,7 +164,7 @@ dotnet add package Nethereum.DevP2P
 
 ### Dependencies
 
-Nethereum.RLP, Nethereum.Signer, Nethereum.Util, Nethereum.Documentation (direct project references); IronSnappy and Microsoft.Extensions.Logging.Abstractions (packages). Uses `Nethereum.Model` (`.P2P`, `.Enr`) transitively. Targets net8.0/net9.0/net10.0.
+Nethereum.RLP, Nethereum.Signer, Nethereum.Util (direct project references). The `[NethereumDocExample]` / `DocSection` doc-tagging types used to trace README examples to source are supplied by `Nethereum.Util` (`Nethereum.Documentation.NethereumDocExampleAttribute`), not by a separate `Nethereum.Documentation` project reference. IronSnappy and Microsoft.Extensions.Logging.Abstractions are package references. Uses `Nethereum.Model` (`.P2P`, `.Enr`) transitively. Targets net8.0/net9.0/net10.0.
 
 ## RLPx transport
 

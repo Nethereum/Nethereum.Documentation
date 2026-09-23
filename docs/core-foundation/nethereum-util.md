@@ -485,7 +485,7 @@ using System.Numerics;
 
 // Hex
 var v = EvmUInt256.FromHex("0xdeadbeef");
-string hex = v.ToHexString();            // "00000000...deadbeef" (32-byte padded)
+string hex = v.ToHexString();            // "0xdeadbeef" (leading zero bytes stripped, not 32-byte padded)
 
 // Big-endian byte roundtrip
 byte[] be = v.ToBigEndian();             // always 32 bytes
@@ -638,7 +638,7 @@ public static class AddressExtensions
 {
     // Address validation
     public static bool IsValidEthereumAddressHexFormat(this string address);
-    public static bool IsChecksumAddress(this string address);
+    public static bool IsEthereumChecksumAddress(this string address);
 
     // Empty checks
     public static bool IsAnEmptyAddress(this string address);
@@ -650,7 +650,7 @@ public static class AddressExtensions
 
     // Conversion
     public static string ConvertToEthereumChecksumAddress(this string address);
-    public static string ConvertToValid20ByteAddress(this string address);
+    public static string ConvertToValid20ByteAddressLowerCase(this string address);
 }
 ```
 
@@ -659,7 +659,7 @@ public static class AddressExtensions
 High-precision decimal arithmetic for large value conversions.
 
 ```csharp
-public class BigDecimal
+public struct BigDecimal : IComparable, IComparable<BigDecimal>
 {
     public BigDecimal(BigInteger mantissa, int exponent);
 
@@ -774,8 +774,12 @@ public interface IHashProvider
 ```csharp
 public static class DateTimeHelper
 {
-    public static DateTime UnixTimeStampToDateTime(ulong unixTimeStamp);
-    public static ulong GetUnixTimeStampSeconds(DateTime dateTime);
+    // Extension methods on DateTime
+    public static long ToUnixTimestamp(this DateTime value);
+    public static long UnixTimestamp(this DateTime ignored);  // ignores the instance, returns DateTime.UtcNow as a Unix timestamp
+
+    // Static method
+    public static DateTime ParseUnixTimestamp(long timestamp);
 }
 ```
 
@@ -822,9 +826,9 @@ BigInteger hexResult = hasher.HashHex("0x1234", "0x5678");
 // Use specific Circom preset
 var hasherT1 = new PoseidonHasher(PoseidonParameterPreset.CircomT1);   // 1 input
 var hasherT2 = new PoseidonHasher(PoseidonParameterPreset.CircomT2);   // 2 inputs (Merkle nodes)
-var hasherT6 = new PoseidonHasher(PoseidonParameterPreset.CircomT6);   // up to 5 inputs
-var hasherT14 = new PoseidonHasher(PoseidonParameterPreset.CircomT14); // up to 13 inputs
-var hasherT16 = new PoseidonHasher(PoseidonParameterPreset.CircomT16); // up to 15 inputs
+var hasherT6 = new PoseidonHasher(PoseidonParameterPreset.CircomT6);   // 6 inputs
+var hasherT14 = new PoseidonHasher(PoseidonParameterPreset.CircomT14); // 14 inputs
+var hasherT16 = new PoseidonHasher(PoseidonParameterPreset.CircomT16); // 16 inputs
 ```
 
 Available presets: `CircomT1` (1 input), `CircomT2` (2 inputs), `CircomT3` (default, 3 inputs), `CircomT6` (6 inputs), `CircomT14` (14 inputs), `CircomT16` (16 inputs).

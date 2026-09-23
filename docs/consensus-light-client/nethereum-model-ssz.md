@@ -76,19 +76,20 @@ var root = SszTransactionEncoder.Current.HashTreeRootTransaction1559(tx);
 ```csharp
 using Nethereum.Model;
 using Nethereum.Model.SSZ;
-using System.Numerics;
+using System.Collections.Generic;
 
-var tx = new Transaction1559
-{
-    ChainId = 1,
-    Nonce = 42,
-    MaxPriorityFeePerGas = 1_500_000_000,
-    MaxFeePerGas = 30_000_000_000,
-    GasLimit = 21000,
-    ReceiveAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb".HexToByteArray(),
-    Value = BigInteger.Parse("1000000000000000000"),
-    Data = Array.Empty<byte>()
-};
+// Transaction1559 is immutable — construct via its positional constructor
+// (see tests/Nethereum.Model.SSZ.Tests/SszTransactionRoundTripTests.cs:16-25)
+var tx = new Transaction1559(
+    chainId: 1,
+    nonce: 42,
+    maxPriorityFeePerGas: 1_500_000_000,
+    maxFeePerGas: 30_000_000_000,
+    gasLimit: 21000,
+    receiverAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+    amount: 1000000000000000000,
+    data: "",
+    accessList: new List<AccessListItem>());
 
 // Encode payload
 var encoded = SszTransactionEncoder.Current.EncodeTransaction1559Payload(tx);
@@ -127,18 +128,23 @@ var fullTx = SszTransactionEncoder.Current.EncodeTransaction(
 ### Example 4: EIP-7702 Transaction
 
 ```csharp
-var tx7702 = new Transaction7702
-{
-    ChainId = 1,
-    Nonce = 1,
-    MaxPriorityFeePerGas = 1_000_000_000,
-    MaxFeePerGas = 20_000_000_000,
-    GasLimit = 100_000,
-    ReceiveAddress = targetAddress,
-    Value = BigInteger.Zero,
-    Data = callData,
-    AuthorisationList = new List<Authorisation7702Signed> { auth }
-};
+using Nethereum.Model;
+using Nethereum.Model.SSZ;
+using System.Collections.Generic;
+
+// targetAddress and callData are hex strings — Transaction7702.ReceiverAddress
+// and .Data are both `string`, not byte[]
+var tx7702 = new Transaction7702(
+    chainId: 1,
+    nonce: 1,
+    maxPriorityFeePerGas: 1_000_000_000,
+    maxFeePerGas: 20_000_000_000,
+    gasLimit: 100_000,
+    receiverAddress: targetAddress,
+    amount: 0,
+    data: callData,
+    accessList: new List<AccessListItem>(),
+    authorisationList: new List<Authorisation7702Signed> { auth });
 
 var encoded = SszTransactionEncoder.Current.EncodeTransaction7702Payload(tx7702);
 var decoded = SszTransactionEncoder.Current.DecodeTransaction7702Payload(encoded);

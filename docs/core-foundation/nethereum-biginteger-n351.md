@@ -179,7 +179,7 @@ var twoPointFiveEth = BigInteger.Multiply(25, BigInteger.Pow(10, 17));
 Console.WriteLine($"2.5 ETH in wei: {twoPointFiveEth}");
 
 // Convert wei back to ETH (with precision loss)
-var weiAmount = new BigInteger("1234567890123456789"); // ~1.23 ETH
+var weiAmount = BigInteger.Parse("1234567890123456789"); // ~1.23 ETH
 var ethAmount = weiAmount / oneEth;
 var weiRemainder = weiAmount % oneEth;
 

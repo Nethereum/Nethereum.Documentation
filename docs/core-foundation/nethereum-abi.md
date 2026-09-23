@@ -168,20 +168,23 @@ string encoded = functionCallEncoder.EncodeRequest(
 
 ### Example 2: Attribute-Based Function Encoding
 
-From test: `FunctionAttributeEncodingTests.cs:55`
+From test: `FunctionAttributeEncodingTests.cs:55-61` (`ShouldEncodeInt`, backed by `FunctionIntInput` at line 96)
+
+`EncodeRequest<T>(T functionInput, string sha3Signature)` takes the signature explicitly, so
+the input class only needs `[Parameter]` attributes — it does not need `[Function]` or a
+`FunctionMessage` base:
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 
-[Function("multiply")]
-public class MultiplyFunction : FunctionMessage
+public class MultiplyFunctionInput
 {
     [Parameter("uint256", "a", 1)]
     public int A { get; set; }
 }
 
-var input = new MultiplyFunction { A = 69 };
+var input = new MultiplyFunctionInput { A = 69 };
 var encoder = new FunctionCallEncoder();
 string encoded = encoder.EncodeRequest(input, "c6888fa1");
 
@@ -531,9 +534,10 @@ var rawTypedData = TypedDataRawJsonConversion.DeserialiseJsonToRawTypedData(type
 var signer = new Eip712TypedDataSigner();
 byte[] encodedTypedData = signer.EncodeTypedDataRaw(rawTypedData);
 
-// Sign directly from JSON
+// Sign directly from JSON — there is no SignTypedDataV4(TypedDataRaw, EthECKey) overload;
+// signing from a raw JSON payload goes through the string overload instead
 var key = new EthECKey("94e001d6adf3a3275d5dd45971c2a5f6637d3e9c51f9693f2e678f649e164fa5");
-string signature = signer.SignTypedDataV4(rawTypedData, key);
+string signature = signer.SignTypedDataV4(typedDataJson, key);
 ```
 
 ### Example 11: EIP-712 with Complex Nested Structures
@@ -703,12 +707,12 @@ used unchanged for both signing and the on-chain call.
 - `EncodeRequest<T>(T functionInput, string sha3Signature)` - Encode using attributes
 
 #### `FunctionCallDecoder`
-- `DecodeOutput(string output, params Parameter[] parameters)` - Decode function return values
+- `DecodeOutput(string output, params ParameterOutput[] outputParameters)` - Decode function return values
 - `DecodeFunctionOutput<T>(string output)` - Decode using attributes
 
 #### `EventTopicDecoder`
-- `DecodeTopics(object destination, string[] topics, string data)` - Decode event log into object
-- `DecodeTopics<T>(string[] topics, string data)` - Decode event log to typed object
+- `DecodeTopics<T>(T eventDTO, object[] topics, string data)` - Decode event log into an existing typed object instance
+- `DecodeTopics<T>(object[] topics, string data)` - Decode event log into a new typed object (`where T : new()`)
 
 #### `ABIJsonDeserialiser`
 - `DeserialiseContract(string abi)` - Parse contract ABI JSON
@@ -721,10 +725,10 @@ used unchanged for both signing and the on-chain call.
 - `EncodeAndHashTypedData(...)` - Encode and hash for signing
 - `EncodeTypedDataRaw(TypedDataRaw typedData)` - Low-level encoding
 
-#### `Eip712TypedDataSigner` (in Nethereum.Signer)
-- `SignTypedDataV4<T>(T message, TypedData<Domain> typedData, EthECKey key)` - Sign EIP-712 data
-- `RecoverFromSignatureV4<T>(T message, TypedData<Domain> typedData, string signature)` - Recover signer
-- `SignTypedDataV4(TypedDataRaw typedData, EthECKey key)` - Sign from raw typed data
+#### `Eip712TypedDataSigner` (in Nethereum.Signer.EIP712)
+- `SignTypedDataV4<T, TDomain>(T message, TypedData<TDomain> typedData, EthECKey key)` - Sign EIP-712 data
+- `RecoverFromSignatureV4<T, TDomain>(T message, TypedData<TDomain> typedData, string signature)` - Recover signer
+- `SignTypedDataV4(string json, EthECKey key)` - Sign directly from EIP-712 JSON
 
 ### Encoding Attributes
 
@@ -737,13 +741,13 @@ used unchanged for both signing and the on-chain call.
 ### EIP-712 Classes
 
 - `TypedData<TDomain>` - Typed data with domain separation
-- `Domain` - EIP-712 domain (name, version, chainId, verifyingContract, salt)
+- `Domain` - EIP-712 domain (name, version, chainId, verifyingContract); `DomainWithSalt` extends it with an optional `salt` field
 - `MemberDescription` - Type member definition (name, type)
 - `MemberDescriptionFactory` - Generate type descriptions from .NET types
 - `MemberValue` - Runtime value for encoding
 - `TypedDataRaw` - Raw typed data without generics
 
-### Example 14: Smart Contract Revert Error Handling
+### Example 15: Smart Contract Revert Error Handling
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;
@@ -771,7 +775,7 @@ catch (SmartContractRevertException ex)
 }
 ```
 
-### Example 15: Custom Solidity Error Decoding
+### Example 16: Custom Solidity Error Decoding
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;

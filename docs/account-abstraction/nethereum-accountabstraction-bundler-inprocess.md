@@ -80,6 +80,49 @@ var supportedEntryPoints = await bundler.SupportedEntryPoints.SendRequestAsync()
 // host.DisposeAsync() (or the `await using` above) disposes the DevChain node and its temp storage
 ```
 
+## API Reference
+
+```csharp
+public class InProcessBundlerHost : IDisposable, IAsyncDisposable
+{
+    public DevChainNode Node { get; }
+    public IWeb3 OperatorWeb3 { get; }
+    public BigInteger ChainId { get; }
+    public BundlerService BundlerService { get; }
+    public IAccountAbstractionBundlerService Bundler { get; }
+
+    public static Task<InProcessBundlerHost> StartAsync(
+        Web3Account operatorAccount,
+        BigInteger chainId,
+        IEnumerable<string> prefundedAddresses,
+        BigInteger prefundBalanceWei,
+        DevChainConfig config = null);
+
+    public IAccountAbstractionBundlerService StartBundler(
+        string entryPointAddress,
+        Web3Account bundlerAccount,
+        bool enableErc7562Validation = false,
+        Action<BundlerConfig> configureOverrides = null);
+
+    public static IAccountAbstractionBundlerService UseHostedUrl(string bundlerRpcUrl, BigInteger chainId);
+}
+```
+
+- **`Node`** is the underlying `DevChainNode` the host started - use it for anything beyond what
+  `OperatorWeb3` exposes (mining control, additional `Web3` instances for other accounts, direct node
+  shutdown independent of `Dispose`).
+- **`StartBundler`**'s two extra optional parameters go beyond the Quick Start's two required ones:
+  `enableErc7562Validation` turns on ERC-7562 full-validation-rule enforcement (off by default, even
+  though `SimulateValidation`/`StrictValidation` are already on), and `configureOverrides` is invoked
+  against the `BundlerConfig` the host builds internally *before* the bundler is constructed - use it to
+  tweak any other `BundlerConfig` field (mempool size, bundle gas, reputation) without hand-assembling
+  the whole config yourself.
+- **`UseHostedUrl(bundlerRpcUrl, chainId)`** is the counterpart for a bundler that is *not*
+  in-process: it builds an `IAccountAbstractionBundlerService` from a plain JSON-RPC URL (an
+  `Nethereum.AccountAbstraction.Bundler.RpcServer` instance, for example), so code written against
+  `IAccountAbstractionBundlerService` can switch between an in-process host and a hosted bundler by
+  changing only how the interface is obtained.
+
 ## Related Packages
 
 ### Dependencies

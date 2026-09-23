@@ -1,7 +1,7 @@
 ---
 title: Batching & Paymasters
 sidebar_label: Batching & Paymasters
-sidebar_position: 5
+sidebar_position: 11
 description: Execute multiple calls in a single UserOperation and sponsor gas fees with paymasters using Nethereum Account Abstraction.
 ---
 
@@ -224,6 +224,6 @@ var userOp = new UserOperation
 
 ## Next Steps
 
-- **[ERC-7579 Modular Accounts](guide-modular-accounts)** — add session keys and spending policies to your smart account for fine-grained access control.
 - **[Run a Bundler](guide-run-bundler)** — deploy your own Nethereum bundler for full control over UserOperation submission and gas pricing.
+- **[ERC-7579 Modular Accounts](guide-modular-accounts)** — add session keys and spending policies to your smart account for fine-grained access control.
 - **[Use AA with Contract Services](guide-smart-contracts-with-aa)** — the `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction` entry points every example on this page builds on.

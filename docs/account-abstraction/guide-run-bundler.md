@@ -1,7 +1,7 @@
 ---
 title: Run a Bundler
 sidebar_label: Run a Bundler
-sidebar_position: 7
+sidebar_position: 12
 description: Run Nethereum's full ERC-4337 bundler as a standalone JSON-RPC server for production, or embedded in-process for zero-setup testing.
 ---
 
@@ -248,7 +248,7 @@ Every property on `BundlerConfig`, with its default, verified against source:
 | `BlacklistedAddresses` | `HashSet<string>` | empty | Addresses permanently rejected |
 | `MaxVerificationGas` | `int` | `1,500,000` | Ceiling on a UserOperation's `verificationGasLimit` during structural validation |
 | `ChainId` | `BigInteger?` | `null` (auto-detected) | Override chain ID; auto-detected from the node if left null |
-| `Hardfork` | `string` | `"osaka"` | Hardfork used by EVM simulation (gas estimation, ERC-7562 validation) — track the chain's actual current fork |
+| `Hardfork` | `string` | unset (`null`) | Pins the hardfork EVM simulation runs under (gas estimation, ERC-7562 validation). Left unset, the bundler resolves the fork itself from the chain's own activation schedule at its current head — set this only to override that auto-detection |
 | `EnableBlsAggregation` | `bool` | `false` | Enable BLS signature aggregation for UserOperations |
 | `BlsAggregatorAddresses` | `string[]` | empty | Addresses of supported BLS aggregator contracts |
 
@@ -327,6 +327,7 @@ var result = await bundlerService.ExecuteBundleAsync();
 
 ## Next Steps
 
+- [The AA Reference Demo](guide-reference-demo) — tour the tabbed app that exercises this exact bundler, embedded and standalone, end to end.
 - [Send a UserOperation](guide-send-useroperation) — submit UserOperations to the bundler you just started
 - [Smart Contracts with AA](guide-smart-contracts-with-aa) — route typed contract calls through the bundler automatically
 - [Nethereum.AccountAbstraction.Bundler](nethereum-accountabstraction-bundler) — full package reference for the bundler engine API

@@ -1,7 +1,7 @@
 ---
 title: "Smart Sessions and Policies: Scoped, Revocable Session Keys"
 sidebar_label: "Smart Sessions & Policies"
-sidebar_position: 10
+sidebar_position: 9
 description: Grant a limited, revocable session key — one action, one spending limit, until you revoke it — instead of handing an agent or backend service full control of a smart account, using Nethereum's SmartSession policies (SudoPolicy, UniActionPolicy, ERC20SpendingLimitPolicy).
 ---
 
@@ -294,6 +294,7 @@ Reach for a session key whenever the caller shouldn't have full account control 
 
 ## Next Steps
 
+- [Social Recovery](guide-social-recovery) — the other Modules & Policies guide: an N-of-M guardian quorum for the break-glass case a session key can't help with.
 - [Modular Accounts (ERC-7579)](guide-modular-accounts) — installing `SmartSession` (and every other module type) for the first time, plus the basic ERC-20 spending-limit walkthrough this guide builds on.
 - [WebAuthn Passkeys](guide-webauthn-passkeys) — a passkey as a second full validator, the counterpart to the scoped session key covered here.
 - [Smart Account Deployment](guide-smart-account-deployment) — `IAAClient.GetAccount`/`CreateAccountAsync` and the generic on-ramp that every signer, including a session key, drives through.

@@ -69,6 +69,8 @@ dotnet add package Nethereum.AccountAbstraction.Bundler.RpcServer
 
 ```csharp
 using Nethereum.AccountAbstraction.Bundler.RpcServer;
+using Nethereum.AccountAbstraction.Bundler.RpcServer.Rpc.Handlers;
+using Nethereum.CoreChain.Rpc;
 
 // Register handlers in RPC registry
 var registry = new RpcHandlerRegistry();
@@ -85,6 +87,9 @@ registry.Register(new BundlerEthChainIdHandler(bundlerService));
 ### Example 1: Register All Bundler Handlers
 
 ```csharp
+using Nethereum.AccountAbstraction.Bundler.RpcServer.Rpc.Handlers;
+using Nethereum.CoreChain.Rpc;
+
 var bundlerService = new BundlerService(web3, bundlerConfig);
 var registry = new RpcHandlerRegistry();
 
@@ -119,7 +124,7 @@ Errors (ERC-7769): `-32500` (rejected by validation simulation, AAxx reason in m
 Handles `eth_estimateUserOperationGas` - estimates gas limits.
 
 Parameters: `[userOp (JSON object), entryPoint (address)]`
-Returns: `{ preVerificationGas, verificationGasLimit, callGasLimit, maxFeePerGas, maxPriorityFeePerGas }`
+Returns: `{ callGasLimit, verificationGasLimit, preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterVerificationGasLimit, paymasterPostOpGasLimit }`
 
 ### EthGetUserOperationReceiptHandler
 

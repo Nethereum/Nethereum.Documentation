@@ -1,7 +1,7 @@
 ---
 title: "External Signers: Own a Smart Account with a KMS, HSM, or Hardware Wallet"
 sidebar_label: "External Signers"
-sidebar_position: 12
+sidebar_position: 7
 description: Own an ERC-4337 smart account whose ECDSA key never lives in-process — a cloud KMS (AWS/Azure), an HSM, or a hardware wallet (Ledger/Trezor) signs every UserOperation instead of an in-memory EthECKey.
 ---
 
@@ -107,6 +107,7 @@ A real KMS or hardware device can't run inside a headless test suite, so the pas
 
 ## Next Steps
 
+- [Modular Accounts (ERC-7579)](guide-modular-accounts) — install validators, executors, and hooks on the same ECDSA-owned account an external signer controls.
 - [Smart Account Deployment](guide-smart-account-deployment#any-signer-the-generic-on-ramp) — the generic on-ramp this guide builds on, including the `EthECKey` convenience overload.
 - [WebAuthn Passkeys](guide-webauthn-passkeys) — the other non-raw-key signer axis, using a P-256 passkey instead of ECDSA.
 - [EIP-7702 Smart Accounts](guide-eip7702-smart-accounts) — upgrading an existing EOA in place; requires a raw `EthECKey`, not an external signer.

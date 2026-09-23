@@ -1,7 +1,7 @@
 ---
 title: "WebAuthn Passkeys: Own a Smart Account with No Private Key"
 sidebar_label: "WebAuthn Passkeys"
-sidebar_position: 9
+sidebar_position: 6
 description: Create an ERC-4337 smart account owned by a WebAuthn/passkey (P-256) credential and send UserOperations signed by the device — no ECDSA private key, no seed phrase, using Nethereum.AccountAbstraction.WebAuthn.
 ---
 
@@ -210,6 +210,7 @@ Console.WriteLine($"UserOp success: {receipt.UserOpSuccess}");
 
 ## Next Steps
 
+- [External Signers](guide-external-signer) — the other non-raw-key signer axis: a cloud KMS, HSM, or hardware wallet instead of a passkey.
 - [Modular Accounts (ERC-7579)](guide-modular-accounts) — the module install/uninstall mechanism `WebAuthnValidatorConfig` uses, and other validator/executor/hook types you can combine with a passkey.
 - [Smart Account Deployment](guide-smart-account-deployment) — the counterfactual CREATE2 on-ramp this guide builds on, including attaching to already-deployed accounts and non-modular `SimpleAccount`s.
 - [Smart Contracts with AA](guide-smart-contracts-with-aa) — everything you can do once a typed contract service is routed through `AAContractHandler`, whichever signer configured it.

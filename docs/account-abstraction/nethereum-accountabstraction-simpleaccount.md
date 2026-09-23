@@ -53,6 +53,7 @@ dotnet add package Nethereum.AccountAbstraction.SimpleAccount
 
 ```csharp
 using Nethereum.AccountAbstraction.SimpleAccount;
+using Nethereum.AccountAbstraction.SimpleAccount.SimpleAccountFactory;
 
 var factory = new SimpleAccountFactoryService(web3, factoryAddress);
 
@@ -71,6 +72,7 @@ byte[] initCode = factory.GetCreateAccountInitCode(
 
 ```csharp
 using Nethereum.AccountAbstraction.SimpleAccount;
+using Nethereum.AccountAbstraction.SimpleAccount.SimpleAccountFactory;
 using Nethereum.AccountAbstraction;
 
 var factory = new SimpleAccountFactoryService(web3, factoryAddress);

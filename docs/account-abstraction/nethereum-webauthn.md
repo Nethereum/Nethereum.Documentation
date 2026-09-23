@@ -142,6 +142,119 @@ normalized), so a platform adapter (Blazor, Windows) never re-implements this pa
 this module constructs identically - the on-chain validator hashes this exact byte sequence, so field
 order and quoting must stay stable across every authenticator that builds it itself.
 
+## Wire types: `WebAuthnAssertion` and `WebAuthnCredential`
+
+```csharp
+public class WebAuthnAssertion
+{
+    public byte[] CredentialId { get; set; }
+    public byte[] AuthenticatorData { get; set; }
+    public string ClientDataJSON { get; set; }
+    public byte[] R { get; set; }
+    public byte[] S { get; set; }
+}
+```
+
+`WebAuthnAssertion` is what `IWebAuthnAuthenticator.GetAssertionAsync` returns: the raw materials
+`WebAuthnValidatorFormat.EncodeUserOpSignature` (below) needs to build the on-chain signature - the
+authenticator data, the `clientDataJSON` the signature was made over, and the low-S-normalized
+`(R, S)` ECDSA signature.
+
+```csharp
+public class WebAuthnCredential
+{
+    public BigInteger PubKeyX { get; set; }
+    public BigInteger PubKeyY { get; set; }
+    public bool RequireUV { get; set; }
+
+    public WebAuthnCredential() { }
+    public WebAuthnCredential(BigInteger pubKeyX, BigInteger pubKeyY, bool requireUV);
+}
+```
+
+`WebAuthnCredential` is the already-registered, on-chain-shaped counterpart of `WebAuthnCreatedCredential`
+above - it drops `PlatformCredentialId` (nothing off-chain needs it once a credential is installed) and
+is what `WebAuthnValidatorFormat.EncodeInstallData` takes a list of.
+
+## On-chain wire format: `WebAuthnValidatorFormat`
+
+```csharp
+public static class WebAuthnValidatorFormat
+{
+    public static byte[] GenerateCredentialId(BigInteger pubKeyX, BigInteger pubKeyY);
+    public static byte[] EncodeInstallData(BigInteger threshold, IReadOnlyList<WebAuthnCredential> credentials);
+    public static byte[] EncodeUserOpSignature(IReadOnlyList<byte[]> credentialIds, bool usePrecompile, IReadOnlyList<WebAuthnAssertion> assertions);
+    public static byte[] EncodeUserOpSignature(byte[] credentialId, bool usePrecompile, WebAuthnAssertion assertion);
+}
+```
+
+This is the exact ABI wire format Rhinestone's `WebAuthnValidator` (core-modules) expects, mirroring
+`WebAuthnValidator.sol`'s `generateCredentialId`, `onInstall` and `_validateSignatureWithConfig`
+byte-for-byte: `GenerateCredentialId` is `keccak256(abi.encode(pubKeyX, pubKeyY))` (the same value
+exposed as `WebAuthnCreatedCredential.OnChainCredentialId`); `EncodeInstallData` ABI-encodes
+`(threshold, WebAuthnCredential[])` for `onInstall`, sorting the credentials ascending by their
+generated credential id since the validator reverts with `NotSorted` otherwise; and
+`EncodeUserOpSignature` ABI-encodes `(bytes32[] credentialIds, bool usePrecompile, WebAuthnAuth[] auth)`
+for the userOp/ERC-1271 signature, deriving each assertion's `challengeIndex`/`typeIndex` from its
+`clientDataJSON`. `credentialIds` and `assertions` must already be in the same ascending-by-credential-id
+order; the single-credential overload is the common case.
+
+## `Base64UrlEncoder`
+
+```csharp
+public static class Base64UrlEncoder
+{
+    public static string Encode(byte[] data);
+    public static byte[] Decode(string base64Url);
+}
+```
+
+RFC 4648 §5 base64url, unpadded, as used throughout the WebAuthn spec (`clientDataJSON.challenge`,
+credential ids, COSE keys).
+
+## `WebAuthnSignTypedDataV4` and `WebAuthnPersonalSign`
+
+`WebAuthnAccountSigningService`'s two properties are backed by two small adapter classes, usable
+directly wherever an `IEthSignTypedDataV4`/`IEthPersonalSign` is needed on its own:
+
+```csharp
+public class WebAuthnSignTypedDataV4 : IEthSignTypedDataV4
+{
+    public WebAuthnSignTypedDataV4(IWebAuthnAuthenticator authenticator, byte[] credentialId, string rpId, bool usePrecompile = false, byte[] platformCredentialId = null);
+}
+
+public class WebAuthnPersonalSign : IEthPersonalSign
+{
+    // Both overloads throw NotSupportedException: WebAuthn has no equivalent of EIP-191
+    // personal_sign over an arbitrary raw digest.
+}
+```
+
+`WebAuthnSignTypedDataV4.SendRequestAsync` keccak-hashes the EIP-712 pre-image
+(`Eip712TypedDataSigner.EncodeTypedData`) into the WebAuthn `challenge`, asks the authenticator for an
+assertion using `platformCredentialId` (defaulting to `credentialId` when omitted), and returns
+`WebAuthnValidatorFormat.EncodeUserOpSignature(credentialId, usePrecompile, assertion)` as a hex
+string.
+
+## `SoftwareWebAuthnAuthenticator`'s own members
+
+Beyond the two seams it implements, `SoftwareWebAuthnAuthenticator` exposes:
+
+```csharp
+public class SoftwareWebAuthnAuthenticator : IWebAuthnAuthenticator, IWebAuthnCredentialFactory
+{
+    public byte[] CredentialId { get; }
+
+    public SoftwareWebAuthnAuthenticator(byte[] credentialId = null, bool requireUV = false, string origin = "https://nethereum.local");
+
+    public (BigInteger X, BigInteger Y) GetPublicKey();
+}
+```
+
+`CredentialId` is the platform credential id this authenticator was constructed with (or a random
+`Guid`-derived one, if none was passed); `GetPublicKey()` exports the in-process P-256 key's public
+point directly, without going through `CreateCredentialAsync`.
+
 ## Installation
 
 ```bash

@@ -1,7 +1,7 @@
 ---
 title: "Social Recovery: N-of-M Guardian Quorum Account Recovery"
 sidebar_label: "Social Recovery"
-sidebar_position: 11
+sidebar_position: 10
 description: Recover a smart account after a lost owner key using an N-of-M guardian quorum — no single guardian can act alone — with Nethereum's SocialRecoveryConfig, SocialRecoveryValidatorModule, and MultiGuardianSigningService.
 ---
 
@@ -190,6 +190,7 @@ Reach for social recovery specifically when you want a way back into the account
 
 ## Next Steps
 
+- [Batching and Paymasters](guide-batching-and-paymasters) — combine multiple calls in one UserOperation and sponsor gas with paymasters, on a recovered account exactly like any other.
 - [Modular Accounts (ERC-7579)](guide-modular-accounts) — the module install mechanism this guide builds on, and the other validator/executor/hook types you can combine with social recovery.
 - [Smart Sessions and Policies](guide-smart-sessions-and-policies) — the session-key axis, for scoped delegated access rather than break-glass recovery.
 - [WebAuthn Passkeys](guide-webauthn-passkeys) — a passkey as a second full validator, one option for the "second validator" row in the decision table above.

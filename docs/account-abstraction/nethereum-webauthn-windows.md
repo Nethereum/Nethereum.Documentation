@@ -112,11 +112,52 @@ default (`ForegroundWindowHandleProvider`). To parent it to your app's own windo
 ```csharp
 public class MainWindowHandleProvider : IWindowHandleProvider
 {
+    private readonly IntPtr _mainWindowHandle;
+
+    public MainWindowHandleProvider(IntPtr mainWindowHandle)
+    {
+        _mainWindowHandle = mainWindowHandle;
+    }
+
     public IntPtr GetWindowHandle() => _mainWindowHandle;
 }
 
 services.AddSingleton(sp => new WindowsWebAuthnAuthenticator(sp.GetRequiredService<MainWindowHandleProvider>()));
 ```
+
+## Native buffer mapping: `WebAuthnNativeBufferMapping`
+
+```csharp
+public static class WebAuthnNativeBufferMapping
+{
+    public static string OriginFor(string rpId);
+    public static string BuildCreateClientDataJson(byte[] challenge, string origin);
+    public static string BuildGetClientDataJson(byte[] challenge, string origin);
+    public static WebAuthnCreatedCredential MapCreatedCredential(byte[] authenticatorData, byte[] credentialId, bool requireUserVerification);
+    public static WebAuthnAssertion MapAssertion(byte[] credentialId, byte[] authenticatorData, string clientDataJson, byte[] derSignature);
+}
+```
+
+`WindowsWebAuthnAuthenticator` calls into this static class rather than building `clientDataJSON` or
+mapping native buffers itself: `BuildCreateClientDataJson`/`BuildGetClientDataJson` build the
+`clientDataJSON` string (delegating to `Nethereum.WebAuthn.WebAuthnClientData`), and
+`MapCreatedCredential`/`MapAssertion` turn the native `webauthn.dll` output buffers into
+`WebAuthnCreatedCredential`/`WebAuthnAssertion` (delegating signature/COSE-key decoding to
+`Nethereum.WebAuthn.WebAuthnResponseParser`). `OriginFor(rpId)` derives `"https://" + rpId` as the
+origin for the clientDataJSON this package constructs itself, since `webauthn.dll` has no notion of a
+browser origin.
+
+## `WebAuthnNativeException`
+
+```csharp
+public class WebAuthnNativeException : Exception
+{
+    public WebAuthnNativeException(string message, int hresult);
+}
+```
+
+Thrown when a `webauthn.dll` call returns a failing `HRESULT`; the `HRESULT` is carried in the
+exception's `HResult` property.
 
 ## Notes
 
@@ -127,7 +168,7 @@ services.AddSingleton(sp => new WindowsWebAuthnAuthenticator(sp.GetRequiredServi
 - The live Windows Hello prompt (an actual OS UI, requiring an enrolled biometric/PIN) cannot run in a
   headless test suite; it is exercised manually in the Avalonia AA demo. The unit tests in
   `tests/Nethereum.WebAuthn.Windows.UnitTests` instead verify the clientDataJSON construction and the
-  native-buffer-to-`WebAuthnAssertion`/`WebAuthnCreatedCredential` mapping (`WindowsWebAuthnAuthenticator`'s
+  native-buffer-to-`WebAuthnAssertion`/`WebAuthnCreatedCredential` mapping (`WebAuthnNativeBufferMapping`'s
   public `Build*ClientDataJson`/`Map*` helpers) against real BCL-generated P-256 keys/signatures, plus
   the off-Windows software fallback registration.
 - `WindowsWebAuthnAuthenticator` only ever requests the *platform* authenticator (Windows Hello

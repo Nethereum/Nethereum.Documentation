@@ -1,7 +1,7 @@
 ---
 title: ERC-7579 Modular Accounts
 sidebar_label: Modular Accounts
-sidebar_position: 6
+sidebar_position: 8
 description: Install and manage ERC-7579 modules — validators, executors, hooks, and session keys — on smart accounts using Nethereum.
 ---
 
@@ -392,9 +392,9 @@ These are exactly what the `IModuleConfig`-based helpers above call into — rea
 
 ## Next Steps
 
-- [Smart Account Deployment](guide-smart-account-deployment) — counterfactual addresses, deploy-on-first-op, and the full `IAAClient.CreateAccountAsync` mechanics.
 - [Smart Sessions and Policies](guide-smart-sessions-and-policies) — the `SmartSession` module in depth: `SudoPolicy` vs `UniActionPolicy`, spending limits, and the full enable/use/revoke lifecycle.
 - [Social Recovery](guide-social-recovery) — the `SocialRecovery` module in depth: configuring an N-of-M guardian quorum and recovering a lost owner key.
+- [Smart Account Deployment](guide-smart-account-deployment) — counterfactual addresses, deploy-on-first-op, and the full `IAAClient.CreateAccountAsync` mechanics.
 - [Run a Bundler](guide-run-bundler) — set up and run a local ERC-4337 bundler for development.
 - [Send a UserOperation](guide-send-useroperation) — build and submit UserOperations manually for full control.
 - [Account Abstraction Package Reference](nethereum-accountabstraction) — full API reference for `Nethereum.AccountAbstraction`.

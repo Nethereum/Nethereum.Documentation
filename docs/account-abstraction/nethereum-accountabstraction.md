@@ -929,6 +929,271 @@ The condition is stated on the contracts themselves — see the `@dev` notes on 
 
 > **Security:** `ValueCapRule`/`ValueCapCombinator` enforce a **per-action** ceiling, not a cumulative budget — they keep no running total, so a batched userOp can move up to *N × cap*. For a cumulative/session spending limit, use a spending-limit-style rule that tracks a persistent `used` amount per account.
 
+## Session Keys
+
+`SessionKeys/` generates and tracks temporary signing keys scoped to an account, independent of any on-chain module.
+
+```csharp
+public class SessionKeyManager
+{
+    public SessionKeyManager(ISessionKeyStore? store = null);
+
+    public Task<GeneratedSessionKey> GenerateSessionKeyAsync(string accountAddress, int validDays = 30);
+    public Task<SessionKeyEntry?> GetSessionKeyAsync(string keyAddress);
+    public Task<SessionKeyEntry[]> GetSessionKeysForAccountAsync(string accountAddress);
+    public Task MarkRegisteredAsync(string keyAddress);
+    public Task RemoveSessionKeyAsync(string keyAddress);
+    public Task<SessionKeyEntry?> GetBestSessionKeyAsync(string accountAddress);
+}
+```
+
+`GenerateSessionKeyAsync` creates a new `EthECKey`, records it as an inactive `SessionKeyEntry` (valid from now until `validDays` later), and persists it through the store; `MarkRegisteredAsync` is what an application calls once it has actually installed/enabled that key on-chain, flipping `IsActive` to `true`. `GetBestSessionKeyAsync` returns the active key with the latest `ValidUntil` that is currently within its `ValidAfter`/`ValidUntil` window.
+
+```csharp
+public interface ISessionKeyStore
+{
+    Task SaveAsync(SessionKeyEntry entry);
+    Task<SessionKeyEntry?> LoadAsync(string keyAddress);
+    Task<SessionKeyEntry[]> LoadAllAsync();
+    Task DeleteAsync(string keyAddress);
+}
+
+public class InMemorySessionKeyStore : ISessionKeyStore { }
+```
+
+`InMemorySessionKeyStore` is the default backing store `SessionKeyManager` uses when none is supplied — process-lifetime only; a real application supplies its own `ISessionKeyStore` for durable storage.
+
+```csharp
+public class SessionKeyEntry
+{
+    public string Key { get; set; }
+    public string PrivateKey { get; set; }
+    public string AccountAddress { get; set; }
+    public ulong ValidAfter { get; set; }
+    public ulong ValidUntil { get; set; }
+    public bool IsActive { get; set; }
+    public DateTimeOffset RegisteredAt { get; set; }
+
+    public bool IsValidAt(ulong timestamp);
+    public bool IsValidNow();
+}
+```
+
+## Gas Estimation Internals
+
+`GasEstimation/` is the library the bundler-facing `Nethereum.AccountAbstraction.Bundler` package builds its own estimator on top of.
+
+```csharp
+public interface IEvmGasEstimator
+{
+    Task<EvmEstimationResult> EstimateGasAsync(string from, string to, byte[] data, BigInteger value, long gasLimit);
+}
+
+public class UserOperationGasEstimator
+{
+    public UserOperationGasEstimator(IWeb3 web3, string entryPointAddress, string bundlerAddress = null);
+    public UserOperationGasEstimator(IEvmGasEstimator evmEstimator, string entryPointAddress, string bundlerAddress = null);
+    public UserOperationGasEstimator(IWeb3 web3, IEvmGasEstimator evmEstimator, string entryPointAddress, string bundlerAddress = null);
+
+    public Task<UserOperationGasEstimateResult> EstimateGasAsync(UserOperation userOp);
+    public Task<BigInteger> EstimateCallGasAsync(UserOperation userOp);
+    public BigInteger CalculatePreVerificationGas(UserOperation userOp);
+    public static BigInteger CalculateCalldataCost(byte[] data);
+    public static PackedUserOperation PackUserOperationForGasEstimate(UserOperation userOp);
+}
+```
+
+`UserOperationGasEstimator` has two estimation backends behind the same result shape: an `IWeb3` node (`eth_estimateGas` round-trips) or an in-process `IEvmGasEstimator` — the third constructor accepts both and prefers the node path where each estimation step supports it. `EstimateGasAsync` first tries estimating verification gas via a real `handleOps` simulation (`TryEstimateViaHandleOpsAsync`); on failure it falls back to `EstimateVerificationGasLegacyAsync`, a heuristic based on whether the op deploys a new account (`HasInitCode`) and/or uses a paymaster (`HasPaymaster`).
+
+```csharp
+public class UserOperationGasEstimateResult
+{
+    public BigInteger PreVerificationGas { get; set; }
+    public BigInteger VerificationGasLimit { get; set; }
+    public BigInteger CallGasLimit { get; set; }
+    public BigInteger MaxFeePerGas { get; set; }
+    public BigInteger MaxPriorityFeePerGas { get; set; }
+    public BigInteger PaymasterVerificationGasLimit { get; set; }
+    public BigInteger PaymasterPostOpGasLimit { get; set; }
+}
+```
+
+`GasEstimationConstants` collects every magic number the estimator uses — calldata byte costs, overhead constants, and the paymaster/verification fallback values used when a real estimate isn't available:
+
+```csharp
+public static class GasEstimationConstants
+{
+    public const int ZERO_BYTE_GAS_COST = 4;
+    public const int NON_ZERO_BYTE_GAS_COST = 16;
+    public const int PRE_VERIFICATION_OVERHEAD_GAS = 50000;
+    public const int BASE_TRANSACTION_GAS = 21000;
+    public const int VERIFICATION_GAS_BUFFER = 100000;
+    public const int PAYMASTER_VALIDATION_GAS_BUFFER = 20000;
+    public const int MAX_VERIFICATION_GAS = 500000;
+    public const int DEFAULT_CALL_GAS_LIMIT = 100000;
+    public const int INNER_GAS_OVERHEAD = 10000;
+    public const int PER_USER_OP_WORD_GAS = 8;
+    public const int PER_USER_OP_OVERHEAD = 18300;
+    public const int SIGNATURE_SIZE = 65;
+    public const int ADDRESS_SIZE = 20;
+    public const int WORD_SIZE = 32;
+    public static readonly BigInteger FIXED_VERIFICATION_GAS_OVERHEAD = 21000;
+    public static readonly BigInteger ACCOUNT_DEPLOYMENT_BASE_GAS = 32000;
+    public static readonly BigInteger CREATE2_COST = ACCOUNT_DEPLOYMENT_BASE_GAS;
+    public const int HANDLE_OPS_FIXED_OVERHEAD = 30000;
+    public const int VERIFICATION_GAS_BUFFER_PERCENT = 20;
+    public const int CALL_GAS_BUFFER_PERCENT = 20;
+    public const long MAX_SIMULATION_GAS = 10_000_000;
+    public const int DEFAULT_VERIFICATION_GAS_FALLBACK = 150000;
+    public const int DEFAULT_PAYMASTER_VERIFICATION_GAS_FALLBACK = 100000;
+    public const int DEFAULT_PAYMASTER_POST_OP_GAS_FALLBACK = 50000;
+}
+```
+
+## Governance
+
+`Governance/` provides an EIP-712 multi-signature workflow for changing a smart account factory's configuration (registering/unregistering modules, updating the admin set) without a single key controlling it.
+
+```csharp
+public class FactoryGovernanceSigner
+{
+    public FactoryGovernanceSigner(BigInteger chainId, string verifyingContract);
+
+    public Domain GetDomain();
+    public TypedData<Domain> GetTypedDefinition<T>();
+    public string SignRegisterModule(RegisterModuleMessage message, string privateKey);
+    public string SignUnregisterModule(UnregisterModuleMessage message, string privateKey);
+    public string SignUpdateAdmins(UpdateAdminsMessage message, string privateKey);
+    public Task<string> SignRegisterModuleAsync(RegisterModuleMessage message, IWeb3 web3);
+    public Task<string> SignUnregisterModuleAsync(UnregisterModuleMessage message, IWeb3 web3);
+    public Task<string> SignUpdateAdminsAsync(UpdateAdminsMessage message, IWeb3 web3);
+    public byte[] GetMessageHash<T>(T message);
+    public bool VerifySignature<T>(T message, string signature, string expectedAddress);
+    public string RecoverSigner<T>(T message, string signature);
+}
+```
+
+The EIP-712 domain is fixed to `("SmartAccountFactoryGovernance", "1", chainId, verifyingContract)`. `RegisterModuleMessage`, `UnregisterModuleMessage` and `UpdateAdminsMessage` are the three `[Struct(...)]`-attributed typed-data payloads it signs.
+
+```csharp
+public class FactoryGovernanceMultiSig
+{
+    public FactoryGovernanceMultiSig(BigInteger chainId, string factoryAddress);
+
+    public string FactoryAddress { get; }
+    public BigInteger ChainId { get; }
+
+    public RegisterModuleProposal CreateRegisterModuleProposal(byte[] moduleId, string moduleAddress, BigInteger nonce, BigInteger deadline);
+    public UnregisterModuleProposal CreateUnregisterModuleProposal(byte[] moduleId, BigInteger nonce, BigInteger deadline);
+    public UpdateAdminsProposal CreateUpdateAdminsProposal(List<string> newAdmins, BigInteger newThreshold, BigInteger nonce, BigInteger deadline);
+    public string SignRegisterModule(RegisterModuleProposal proposal, string privateKey);
+    public string SignUnregisterModule(UnregisterModuleProposal proposal, string privateKey);
+    public string SignUpdateAdmins(UpdateAdminsProposal proposal, string privateKey);
+    public bool HasSufficientSignatures<T>(T proposal, int threshold) where T : IMultiSigProposal;
+    public List<string> GetUniqueSigners<T>(T proposal) where T : IMultiSigProposal;
+}
+```
+
+`FactoryGovernanceMultiSig` wraps a `FactoryGovernanceSigner` and adds the multi-sig bookkeeping: each `Create*Proposal` builds the typed-data message and its hash, `Sign*` appends a raw 65-byte signature to `proposal.Signatures`, and `GetUniqueSigners` recovers each signature's signer over the proposal's message hash (de-duplicating by address) so a caller can check `HasSufficientSignatures` against its own threshold.
+
+## Validation
+
+`Validation/` holds the local (off-chain) validation result shape and the ERC-4337 `validationData` packing rules — used by any bundler/mempool component that needs to evaluate a UserOperation's own validation outcome without a full EntryPoint simulation round-trip.
+
+```csharp
+public class UserOpValidationResult
+{
+    public bool IsValid { get; set; }
+    public string? Error { get; set; }
+    public UserOpValidationError ErrorCode { get; set; } = UserOpValidationError.None;
+    public BigInteger ValidationData { get; set; }
+    public BigInteger PaymasterValidationData { get; set; }
+    public ulong ValidAfter { get; set; }
+    public ulong ValidUntil { get; set; }
+    public string? Aggregator { get; set; }
+    public BigInteger PreVerificationGas { get; set; }
+    public BigInteger VerificationGasLimit { get; set; }
+    public BigInteger CallGasLimit { get; set; }
+
+    public static UserOpValidationResult Success();
+    public static UserOpValidationResult Failure(string error, UserOpValidationError code = UserOpValidationError.Unknown);
+}
+```
+
+```csharp
+public static class ValidationDataCodec
+{
+    public const uint SIG_VALIDATION_FAILED = 1;
+
+    public static BigInteger Pack(bool sigFailed, ulong validUntil, ulong validAfter, string? aggregator = null);
+    public static (bool SigFailed, ulong ValidUntil, ulong ValidAfter, string? Aggregator) Parse(BigInteger validationData);
+    public static bool IsValidNow(BigInteger validationData);
+    public static BigInteger Merge(BigInteger accountValidation, BigInteger paymasterValidation);
+}
+```
+
+`ValidationDataCodec` packs/unpacks the ERC-4337 `validationData` `uint256` (aggregator-or-sigFailed in the low 160 bits, `validUntil` in the next 48, `validAfter` in the 48 above that) and `Merge`s an account's and a paymaster's `validationData` into the single combined value the EntryPoint applies — `sigFailed` is OR'd, `validUntil` takes the tighter (non-zero, minimum) bound, and `validAfter` takes the looser (maximum) bound.
+
+```csharp
+public static class Erc7769ErrorCodes
+{
+    public const int ParseError = -32700;
+    public const int InvalidRequest = -32600;
+    public const int MethodNotFound = -32601;
+    public const int InvalidFields = -32602;
+    public const int InternalError = -32603;
+    public const int SimulateValidation = -32500;
+    public const int SimulatePaymasterValidation = -32501;
+    public const int OpcodeValidation = -32502;
+    public const int NotInTimeRange = -32503;
+    public const int Reputation = -32504;
+    public const int InsufficientStake = -32505;
+    public const int UnsupportedSignatureAggregator = -32506;
+    public const int InvalidSignature = -32507;
+    public const int PaymasterDepositTooLow = -32508;
+    public const int UserOperationReverted = -32521;
+}
+```
+
+## EntryPoint Simulations
+
+`EntryPointSimulations/` defines the ABI for `EntryPointSimulations.sol`'s `simulateValidation`/`simulateHandleOp` — the eth-infinitism helper contract a bundler calls (via `eth_call` against a state override) to run full ERC-4337 validation without submitting a real transaction.
+
+```csharp
+[Function("simulateValidation", typeof(SimulateValidationOutputDTO))]
+public class SimulateValidationFunction : FunctionMessage
+{
+    [Parameter("tuple", "userOp", 1)]
+    public virtual PackedUserOperation UserOp { get; set; }
+}
+
+public class ValidationResult
+{
+    public virtual ReturnInfo ReturnInfo { get; set; }
+    public virtual StakeInfo SenderInfo { get; set; }
+    public virtual StakeInfo FactoryInfo { get; set; }
+    public virtual StakeInfo PaymasterInfo { get; set; }
+    public virtual AggregatorStakeInfo AggregatorInfo { get; set; }
+}
+
+public class ReturnInfo
+{
+    public virtual BigInteger PreOpGas { get; set; }
+    public virtual BigInteger Prefund { get; set; }
+    public virtual BigInteger AccountValidationData { get; set; }
+    public virtual BigInteger PaymasterValidationData { get; set; }
+    public virtual byte[] PaymasterContext { get; set; }
+}
+
+public class StakeInfo
+{
+    public virtual BigInteger Stake { get; set; }
+    public virtual BigInteger UnstakeDelaySec { get; set; }
+}
+```
+
+`SimulateValidationFunction` (and the companion `SimulateHandleOpFunction`, which additionally executes the op against a `target`/`targetCallData`) are `FunctionMessage`s decoded into `ValidationResult` (respectively `ExecutionResult`) — `ValidationResult.SenderInfo`/`FactoryInfo`/`PaymasterInfo` are each a `StakeInfo` reporting that entity's on-chain stake and unstake delay, and `ReturnInfo` carries the packed `accountValidationData`/`paymasterValidationData` this package's own `ValidationDataCodec` (above) parses.
+
 ## Architecture Overview
 
 ```

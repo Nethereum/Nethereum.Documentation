@@ -266,6 +266,6 @@ Buffers are added after multipliers are applied. A multiplier of `1.2m` means 20
 
 ## Next Steps
 
-- [Batching and Paymasters](guide-batching-and-paymasters) — combine multiple calls in one UserOperation and sponsor gas with paymasters in depth.
 - [Deploy a Smart Account](guide-smart-account-deployment) — create and deploy SimpleAccount or custom smart accounts using a factory.
+- [Batching and Paymasters](guide-batching-and-paymasters) — combine multiple calls in one UserOperation and sponsor gas with paymasters in depth.
 - [Send a UserOperation Manually](guide-send-useroperation) — build and submit UserOperations by hand when you need full control over every field.

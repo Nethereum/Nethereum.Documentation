@@ -1,7 +1,7 @@
 ---
 title: "EIP-7702 Smart Accounts: Upgrade an EOA in Place"
 sidebar_label: "EIP-7702 Smart Accounts"
-sidebar_position: 8
+sidebar_position: 5
 description: Upgrade an existing, funded EOA into a modular ERC-7579 smart account in place — same address, one atomic UserOperation — using Nethereum's Account Abstraction EIP-7702 tier.
 ---
 
@@ -154,6 +154,7 @@ var receipt = await handler.SendRequestAndWaitForReceiptAsync(new CountFunction(
 
 ## Next Steps
 
+- [WebAuthn Passkeys](guide-webauthn-passkeys) — the other signer axis in this section: owning a smart account with a passkey instead of any ECDSA key at all.
 - [EIP-7702: EOA Code Delegation](../core-foundation/guide-eip7702) — the raw delegation primitive this tier builds on, including sponsored delegation and manual authorisation signing.
 - [Smart Account Deployment](guide-smart-account-deployment) — the counterfactual CREATE2 tier for accounts that don't need to preserve an existing address.
 - [Modular Accounts (ERC-7579)](guide-modular-accounts) — install additional validators, executors, and session keys once the EOA is a modular account.

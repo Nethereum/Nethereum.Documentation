@@ -593,7 +593,8 @@ public class TransactionExecutorGasEstimator : IEvmGasEstimator
     public TransactionExecutorGasEstimator(
         IStateReader nodeDataService,
         BigInteger chainId,
-        HardforkConfig hardforkConfig);
+        HardforkConfig hardforkConfig,
+        long blockGasLimit = 0);
 }
 ```
 
@@ -626,7 +627,9 @@ public class BundlerConfig
     public HashSet<string> BlacklistedAddresses { get; set; } = new();
     public int MaxVerificationGas { get; set; } = 1_500_000;
     public BigInteger? ChainId { get; set; }
-    public string Hardfork { get; set; } = "osaka";
+    public string Hardfork { get; set; }
+    public ChainForkSchedule ForkSchedule { get; set; }
+    public ChainForkSchedule ResolveForkSchedule(long chainId);
     public bool EnableBlsAggregation { get; set; } = false;
     public string[] BlsAggregatorAddresses { get; set; } = Array.Empty<string>();
 
@@ -638,7 +641,9 @@ public class BundlerConfig
 
 Two knobs deserve attention:
 
-- **`Hardfork`** (default `"osaka"`) is read in exactly one place: `UserOpValidator`'s constructor, and only when `EnableERC7562Validation` is `true`. It is parsed with `HardforkNames.Parse`, looked up in `DefaultMainnetHardforkRegistry`, and handed to the `ERC7562SimulationService` the validator builds. Nothing else reads it — `SimulationGasEstimator` takes `(IWeb3, BundlerConfig, ILogger?)` and never touches it, so **setting `Hardfork` has no effect on gas estimation** and no effect at all while `EnableERC7562Validation` is `false`. When you do turn 7562 validation on, track the chain's current fork: simulating under the wrong one changes opcode availability and the precompile set.
+- **Which fork ERC-7562 validation simulates under** is answered by the chain, not by the bundler. Leave `Hardfork` and `ForkSchedule` unset and `BundlerChainRules` resolves it: chain id from `ChainId` or `eth_chainId`, the fork from that chain's schedule at its head. `ForkSchedule` states a chain's schedule directly — this is what an AppChain or dev chain passes, and it is the only way a chain the registry has never heard of gets the right fork. `Hardfork` is the single-fork shorthand for the same thing, and `ResolveForkSchedule(chainId)` is where the two become one answer: `ForkSchedule` if set, otherwise `ChainForkSchedule.Running(chainId, Hardfork)`, otherwise nothing and the registry decides. A chain nobody has described falls back to Amsterdam, stated at the call site.
+
+  The resolution happens on first validation rather than in the constructor, because reading a chain's head is an RPC call. It is read only when `EnableERC7562Validation` is `true`; `SimulationGasEstimator` takes `(IWeb3, BundlerConfig, ILogger?)` and never touches it, so **none of these affect gas estimation** and none has any effect while `EnableERC7562Validation` is `false`.
 - **`UnsafeMode`** does **not** skip validation. Its only behavioural effect is to skip the **reputation** check on `SendUserOperationAsync`: the guard is `if (_reputationService != null && !_config.UnsafeMode) await CheckReputationAsync(userOp);`, and `_validator.ValidateAsync(...)` on the next line runs unconditionally either way. So `UnsafeMode = true` lets a banned or throttled sender/factory/paymaster through — and only that. To relax *validation* you want `SimulateValidation`, `StrictValidation` and `EnableERC7562Validation`, which are separate flags. Testing only.
 
 ### Aggregation

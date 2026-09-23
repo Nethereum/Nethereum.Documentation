@@ -98,7 +98,7 @@ var service = new SiweMessageService(
 | Method | Description |
 |---|---|
 | `BuildMessageToSign(SiweMessage)` | Assigns a new nonce, stores the session, and returns the canonical string for signing |
-| `IsValidMessage(SiweMessage, string)` | Full validation: signature + dates + session match + user registration |
+| `IsValidMessage(SiweMessage, string)` | Full validation: signature + dates + session match |
 | `IsMessageSignatureValid(SiweMessage, string)` | Validates signature only (EOA via `EthereumMessageSigner`, or ERC-1271/ERC-6492 for smart wallets) |
 | `HasMessageDateStartedAndNotExpired(SiweMessage)` | Checks `NotBefore` and `ExpirationTime` against current UTC time |
 | `IsMessageTheSameAsSessionStored(SiweMessage)` | Verifies the message matches the session stored under its nonce |

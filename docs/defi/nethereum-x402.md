@@ -206,9 +206,9 @@ The `IX402PaymentProcessor` interface defines three operations:
 ```csharp
 public interface IX402PaymentProcessor
 {
-    Task<VerificationResponse> VerifyPaymentAsync(PaymentPayload payload, PaymentRequirements requirements, CancellationToken ct = default);
-    Task<SettlementResponse> SettlePaymentAsync(PaymentPayload payload, PaymentRequirements requirements, CancellationToken ct = default);
-    Task<SupportedPaymentKindsResponse> GetSupportedAsync(CancellationToken ct = default);
+    Task<VerificationResponse> VerifyPaymentAsync(PaymentPayload paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default);
+    Task<SettlementResponse> SettlePaymentAsync(PaymentPayload paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default);
+    Task<SupportedPaymentKindsResponse> GetSupportedAsync(CancellationToken cancellationToken = default);
 }
 ```
 

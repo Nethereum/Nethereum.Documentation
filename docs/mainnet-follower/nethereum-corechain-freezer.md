@@ -345,12 +345,12 @@ public interface IChainView
 
 public sealed class FreezerChainView : IChainView
 {
-    public FreezerChainView(Freezer freezer, FreezerCodecSet codecs);
+    public FreezerChainView(IFrozenReadSource freezer, FreezerCodecSet codecs);
 }
 
 public sealed class FreezerHeadFinalitySource : IFinalitySource
 {
-    public FreezerHeadFinalitySource(Freezer freezer);
+    public FreezerHeadFinalitySource(IFrozenReadSource freezer);
 }
 ```
 
@@ -364,11 +364,14 @@ because the same receipts always produce the same rows.
 ```csharp
 public sealed class FilterMapsIndexer
 {
-    public FilterMapsIndexer(IFilterMapsStore store, IChainView chain, IFinalitySource finality, FilterMapsParams p);
+    public FilterMapsIndexer(IFilterMapsStore store, IChainView chain, IFinalitySource finality, FilterMapsParams p,
+        int renderDegreeOfParallelism = 1);
 
     public FilterMapsParams Params { get; }
     public long IndexedHeadBlock { get; }               // last indexed block; -1 when empty
     public bool RenderHead();                            // render one epoch; false if not enough finalized data
+    public int RenderChunk(                              // render every complete epoch spanned by one decoded receipts chunk
+        IReadOnlyList<(long BlockNumber, IReadOnlyList<ReceiptForStorage> Receipts)> chunk, long finalizedBlockBound);
     public bool RollbackTo(long newHead);               // un-render on finality regression
 }
 ```
@@ -453,7 +456,7 @@ public interface IHistoricalLogScan
   {
       public static IEnumerable<LogValueEntry> Enumerate(
           long fromBlock, long toBlock, long startLvIndex, long? precedingBlock,
-          IChainView chain, FilterMapsParams p);
+          IChainView chain, FilterMapsParams p, bool deferValueHashing = false);
   }
 
   public readonly struct LogValueEntry

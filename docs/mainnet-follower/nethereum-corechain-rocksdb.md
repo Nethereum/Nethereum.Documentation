@@ -131,9 +131,13 @@ public class RocksDbStorageOptions
     public bool UseFreezerHistory { get; set; } = false;
     public string FreezerHistoryDirectory { get; set; }
     public bool BackgroundFreezeIndexing { get; set; } = false;
+    public int FreezerBackgroundDegreeOfParallelism { get; set; } = 0;
     public FilterMapsParams? FilterMapsIndexParams { get; set; }
     public long? FreezerMaxFileSizeBytes { get; set; }
     public long FreezerCommitCadenceBlocks { get; set; } = 32_768;
+    public long FreezerBulkResidentCeilingBytes { get; set; } = BulkIndexIngestor.DefaultResidentCeilingBytes;
+    public int FreezerBulkSortDegreeOfParallelism { get; set; } = 0;
+    public bool SkipBootReconcile { get; set; } = false;
 
     public void Validate();
     public RocksDbStorageOptions Clone();
@@ -215,7 +219,7 @@ When path-keyed state, node history, and the key-major index are all on, the bun
 
 ## Freezer / ancient store
 
-`UseFreezerHistory` moves immutable history out of the LSM tree into `Nethereum.Freezer`'s geth-compatible append-only files under `FreezerHistoryDirectory`. After that, **a block lives in exactly one tier**: number `<` the freezer's item count is frozen; everything else is the mutable RocksDB "recent" band. The frozen by-hash and EIP-7745 filtermaps indexes live in their own narrow database (`FreezerHistorySubDir` = `"freezer-history"`, `CatalogueScope.FreezerHistory`, holding only `block_hash_index` / `tx_hash_index` / `log_filter_maps`), opened internally — independent of `SplitHistoryStore`'s history database.
+`UseFreezerHistory` moves immutable history out of the LSM tree into `Nethereum.Freezer`'s geth-compatible append-only files under `FreezerHistoryDirectory`. After that, **a block lives in exactly one tier**: number `<` the freezer's item count is frozen; everything else is the mutable RocksDB "recent" band. The frozen by-hash and EIP-7745 filtermaps indexes live in their own narrow database (`FreezerHistorySubDir` = `"freezer-history"`, `CatalogueScope.FreezerHistory`, holding only `block_hash_index` / `tx_hash_index` / `log_filter_maps` / `control`), opened internally — independent of `SplitHistoryStore`'s history database.
 
 `FreezerReadRouter` is the single source of truth for the routing decision. Its by-hash lookup consults two indexes, recent-first, so a block's hash resolves both before and after it is frozen:
 
@@ -276,13 +280,13 @@ public static class HistoryColumnFamilies
     public const string LogFilterMaps = "log_filter_maps";
     public const string ForkHeaders = "fork_headers";
     public const string Control = "control";
-    public enum HistoryCfProfile { Bulk, Control }
+    public enum HistoryCfProfile { Bulk, Control, LiveIndex, UniversalIndex }
     public static readonly IReadOnlyList<(string Name, HistoryCfProfile Profile)> Catalogue;
     public static readonly IReadOnlyList<(string Name, HistoryCfProfile Profile)> FreezerHistoryCatalogue;
 }
 ```
 
-  In split mode the hot window **write-throughs** to history and evicts on write (`evictOnWrite: true`), so history is always complete and the hot band only accelerates tip reads. (`FreezerHistoryCatalogue` is the narrow `block_hash_index`/`tx_hash_index`/`log_filter_maps` slice the freezer's own database opens.)
+  In split mode the hot window **write-throughs** to history and evicts on write (`evictOnWrite: true`), so history is always complete and the hot band only accelerates tip reads. (`FreezerHistoryCatalogue` is the narrow `block_hash_index`/`tx_hash_index`/`log_filter_maps`/`control` slice the freezer's own database opens.)
 
 - **`PromotionEnabled`** keeps a single database and instead *defers* the move: blocks are written only to the hot window, and `RocksDbPromotionService.PromoteDurableBlocks(durableHead)` copies them into the history CFs once they fall `MaxHistoryBlocks` behind the durable head, advancing a persisted promotion cursor. `ReconcilePromotionOnBoot(durableHead)` initialises that cursor if unset, promotes what is owed, and sweeps the hot band at or below it. In promotion mode the hot window's size is derived from `HistoricalStateOptions.MaxHistoryBlocks` (falling back to `HotWindowBlocks`), so the two windows cannot disagree; the bundle also exposes a `PromotionFloor(currentHead)` guard (`IPromotionFloorGuard`) so nothing reads below what has been promoted.
 

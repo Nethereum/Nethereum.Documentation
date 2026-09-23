@@ -10,6 +10,8 @@ format: md
 # Nethereum.CoreChain
 
 > **NuGet**: [`Nethereum.CoreChain`](https://www.nuget.org/packages/Nethereum.CoreChain/) | **Source**: [`src/Nethereum.CoreChain/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.CoreChain)
+# Nethereum.CoreChain
+
 Run an Ethereum node's brain in .NET. Give it a block and it tells you whether that block is valid and what state it produces; give it transactions and it seals a block from them; point it at a block source and it follows a chain to the tip, checkpointing and rewinding on its own. It is the same engine behind the mainnet follower (Nethereum.MainnetChain), AppChains and DevChain.
 
 ## What you can do with it
@@ -84,7 +86,7 @@ Swap `InMemoryChainStoreBundle.Open()` for `RocksDbChainStoreBundle.Open(dataDir
 
 The execution stack composes in three layers:
 
-- **`BlockExecutor`** — the canonical state-transition engine `π(σ,B)` (Yellow Paper §11). It executes a block (system calls → transactions → withdrawals → rewards → post-state root) and never persists chain bodies. Fork behaviour (EIP-4788 beacon root, EIP-2935 parent-hash history, DAO drain, EIP-7685 end-of-block requests, EIP-4895 withdrawals) is gated by the injected `IChainActivations`, so the same engine runs mainnet and AppChains. Its constructor takes `IStateStore`, `IBlockStore`, `IChainActivations`, a `Func<HardforkName, ChainConfig>`, a `Func<HardforkName, HardforkConfig>`, an `IIncrementalStateRootCalculator`, an `IRewardPolicy`, an `ITrieNodeStore`, and optionally `ILogger<BlockExecutor>` and `IBlockRootsProvider`.
+- **`BlockExecutor`** — the canonical state-transition engine `π(σ,B)` (Yellow Paper §11). It executes a block (system calls → transactions → withdrawals → rewards → post-state root) and never persists chain bodies. Fork behaviour (EIP-4788 beacon root, EIP-2935 parent-hash history, DAO drain, EIP-7685 end-of-block requests, EIP-4895 withdrawals) is gated by the injected `IChainActivations`, so the same engine runs mainnet and AppChains. Its constructor takes `IStateStore`, `IBlockStore`, `IChainActivations`, a `Func<HardforkName, ChainConfig>`, a `Func<HardforkName, HardforkConfig>`, an `IIncrementalStateRootCalculator`, an `IRewardPolicy`, an `ITrieNodeStore`, and optionally `ILogger<BlockExecutor>`, `IBlockRootsProvider` and `Func<BlockHeader,string>? authorResolver = null` (resolves a header to its block author, e.g. for Clique).
 - **`BlockImporter`** — wraps `BlockExecutor` for the follower: one execution per block, plus persistence (header, uncles, tx/receipt/log bodies), reverse-diff journal bracketing, and the node-history block bracket. Implements `Nethereum.CoreChain.Sync.IBlockExecutor`; its `RootMatches` result drives the follower.
 - **`FollowerChainNode`** — the follower-only `IChainNode`. Its constructor binds an `IChainStoreBundle`, an `IBlockSource`, an `executorFactory`, an `IValidationPolicy`, `FollowerOptions`, a `ChainConfig`, a `HardforkConfig`, a `TransactionProcessor` and an `ITransactionVerificationAndRecovery`, plus optional `IFollowerService`, `ICanonicalStateRootSource`, `IFilterStore`, `IStateReader`, `IBlobStore`, `IChainActivations`, hardfork-config factory and logger. `RunAsync(ct)` drives the loop; it serves latest and as-of proofs (`ProofService`, `ProofServiceAsOf`, `CanServeProofAsOf`). It is read-only — no mempool.
 
@@ -146,6 +148,7 @@ Task<BlockProductionResult> ProduceBlockAsync(
 
 public class BlockProductionOptions
 {
+    public Action<BlockHeader>? ApplyConsensusSeal { get; set; }
     public long Timestamp { get; set; }
     public string Coinbase { get; set; }
     public BigInteger BaseFee { get; set; }
@@ -171,7 +174,10 @@ public class BlockProductionResult
     public int FailedTransactions { get; set; }
     public byte[] WitnessBytes { get; set; }
     public byte[] PreStateRoot { get; set; }
+    public IReadOnlyList<byte[]> ExecutionRequests { get; set; }
+    public byte[]? BlockAccessListRlp { get; set; }
     public object? MessageBatchResult { get; set; }
+    public List<ISignedTransaction> IncludedTransactions { get; set; } = new();
 }
 ```
 
@@ -216,7 +222,15 @@ Task<BlockExecutionResult> ExecuteAsync(
 public enum BlockExecutionRole
 {
     Building,
-    Validating
+    Validating,
+    Simulating
+}
+
+public sealed class SimulateCallOptions
+{
+    public bool Validation { get; init; }
+    public bool TraceTransfers { get; init; }
+    public Dictionary<string, EvmUInt256> ExpectedNonces { get; init; } = new Dictionary<string, EvmUInt256>();
 }
 
 public sealed class BlockExecutionOptions
@@ -226,11 +240,12 @@ public sealed class BlockExecutionOptions
     public byte[]? ParentBeaconBlockRoot { get; init; }
     public int? TraceTxIndex { get; init; }
     public BlockExecutionRole Role { get; init; } = BlockExecutionRole.Building;
+    public SimulateCallOptions? SimulateCallOptions { get; init; }
     public List<AccountChanges>? DeclaredBlockAccessList { get; init; }
 }
 ```
 
-`Role` is the difference between sealing a block and judging one: `Validating` compares the executed result against what the header *declares*. `DeclaredBlockAccessList` carries the block access list as the block declares it (an Engine API payload, an eth/71 body) — EIP-7928's Engine API returns `INVALID` both when the list "is malformed" and when it "doesn't match", and recomputing hashes can only answer the second; only the declared list itself can answer the first.
+`Role` is the difference between sealing a block and judging one: `Validating` compares the executed result against what the header *declares*, and `Simulating` runs the block for `eth_simulateV1`-style speculative execution, with `SimulateCallOptions` (`Validation`, `TraceTransfers`, per-account `ExpectedNonces`) tuning that mode. `DeclaredBlockAccessList` carries the block access list as the block declares it (an Engine API payload, an eth/71 body) — EIP-7928's Engine API returns `INVALID` both when the list "is malformed" and when it "doesn't match", and recomputing hashes can only answer the second; only the declared list itself can answer the first.
 
 ## Block validity checks
 
@@ -246,11 +261,15 @@ public enum BlockValidityCheck
     GasCapacity,
     BlobGasCapacity,
     BlobGasUsed,
+    ExcessBlobGas,
+    BaseFee,
     BlockAccessListHash,
     BlockAccessListGasLimit,
     BlockAccessListMalformed,
     RequestsHash,
-    InvalidTransaction
+    InvalidTransaction,
+    GasLimitBound,
+    WithdrawalsRoot
 }
 
 public interface IBlockValidityChecks
@@ -262,11 +281,15 @@ public interface IBlockValidityChecks
     bool GasCapacityExceeded { get; }
     bool BlobGasCapacityExceeded { get; }
     bool BlobGasUsedMismatch { get; }
+    bool ExcessBlobGasMismatch { get; }
+    bool BaseFeeMismatch { get; }
     bool BlockAccessListHashMismatch { get; }
     bool BlockAccessListGasLimitExceeded { get; }
     bool BlockAccessListMalformed { get; }
     bool RequestsHashMismatch { get; }
     bool ContainsInvalidTransaction { get; }
+    bool GasLimitBoundViolated { get; }
+    bool WithdrawalsRootMismatch { get; }
 }
 ```
 
@@ -281,11 +304,15 @@ Each check has a stable wire identifier, returned by `check.Identifier()` and su
 | `GasCapacity` | `gasCapacity` | the block's gas exceeds its own gas limit |
 | `BlobGasCapacity` | `blobGasCapacity` | the block's blob gas exceeds the fork's blob capacity |
 | `BlobGasUsed` | `blobGasUsed` | the executed blob gas differs from the header's `blobGasUsed` |
+| `ExcessBlobGas` | `excessBlobGas` | the header's `excessBlobGas` differs from the value derived from the parent |
+| `BaseFee` | `baseFee` | the header's `baseFeePerGas` differs from the EIP-1559 value derived from the parent |
 | `BlockAccessListHash` | `blockAccessListHash` | the recomputed EIP-7928 BAL hash differs from the header's |
 | `BlockAccessListGasLimit` | `blockAccessListGasLimit` | the BAL's own gas accounting exceeds its limit |
 | `BlockAccessListMalformed` | `blockAccessListMalformed` | the *declared* BAL is not well-formed (EIP-7928 §Engine API's first verdict) |
 | `RequestsHash` | `requestsHash` | the header's EIP-7685 `requests_hash` is not the hash of the requests this block produced |
 | `InvalidTransaction` | `invalidTransaction` | a transaction in the block is not admissible at all |
+| `GasLimitBound` | `gasLimitBound` | the header's `gasLimit` moves outside the per-block adjustment bound from the parent |
+| `WithdrawalsRoot` | `withdrawalsRoot` | the withdrawals trie root differs from the header's |
 
 `Identifier()` throws `ArgumentOutOfRangeException` for a check with no registered identifier, so adding an enum member without a wire name fails loudly rather than silently.
 
@@ -309,10 +336,11 @@ Post-Merge forks introduce contracts the protocol itself calls at block boundari
 ```csharp
 public sealed class SystemContractPredeploy
 {
-    public SystemContractPredeploy(string address, string runtimeCodeHex, HardforkName activationFork);
+    public SystemContractPredeploy(string address, string runtimeCodeHex, HardforkName activationFork, string name = null);
     public string Address { get; }
     public byte[] RuntimeCode { get; }
     public HardforkName ActivationFork { get; }
+    public string Name { get; } // EIP-7910 eth_config canonical name, or null when eth_config names no such contract
     public const int Nonce = 1;
 }
 
@@ -385,6 +413,12 @@ public interface IChainStoreBundle : IAsyncDisposable, IDisposable
     Task ResetSnapBootstrapStateAsync(CancellationToken ct = default);
     string ResolveCheckpointSnapshotPath(ulong blockNumber);
     Task ExportDatabaseAsync(string outputPath, CancellationToken ct = default);
+
+    long FreezerHead { get; }
+    long ByHashIndexedHead { get; }
+    long LogIndexRenderedHead { get; }
+    long LogRenderProgressBlock { get; }
+
     IBundleBatch BeginBatch();
 }
 ```

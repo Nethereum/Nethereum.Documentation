@@ -66,6 +66,7 @@ Options are bound from `IConfiguration`. The extension method checks for a `"Blo
 |----------|------|---------|-------------|
 | `BlockchainUrl` | `string` | required | JSON-RPC endpoint URL |
 | `Name` | `string` | `null` | Optional chain name for logging |
+| `MinimumBlockNumber` | `ulong?` | `null` | Lowest block number of interest. Bound from configuration but not yet consumed by the processors (use `FromBlock` to set the start block) |
 | `MinimumBlockConfirmations` | `uint?` | `12` | Blocks behind chain head to wait before processing |
 | `FromBlock` | `BigInteger?` | `null` | Starting block if no progress exists |
 | `ToBlock` | `BigInteger?` | `null` | Stop at this block (null = continuous) |
@@ -75,8 +76,10 @@ Options are bound from `IConfiguration`. The extension method checks for a `"Blo
 | `RetryWeight` | `int` | `50` | Reduce batch size on retry failures |
 | `ProcessBlockTransactionsInParallel` | `bool` | `true` | Parallel transaction processing within a block |
 | `PostVm` | `bool` | `false` | Include VM stack traces |
-| `UseLocalEvmReplayForInternalTransactions` | `bool` | `false` | Source internal transactions via local EVM replay (`EvmReplayInternalTransactionSource`) instead of `debug_traceTransaction` — useful against RPC nodes that don't expose the `debug_` namespace |
-| `Hardfork` | `string` | `"osaka"` | Hardfork name to resolve when `UseLocalEvmReplayForInternalTransactions` is true. Parsed via `Nethereum.EVM.HardforkNames.Parse` and looked up in `DefaultMainnetHardforkRegistry` |
+| `UseLocalEvmReplayForInternalTransactions` | `bool` | `false` | Source internal transactions via local EVM replay (`EvmReplayInternalTransactionSource`) instead of `debug_traceTransaction` — useful against RPC nodes that don't expose the `debug_` namespace. **Not bound by `AddBlockchainProcessingOptions`** (see note below) |
+| `Hardfork` | `string` | `null` | Hardfork name used when `UseLocalEvmReplayForInternalTransactions` is true. When null or empty, the fork is resolved per block via `DefaultChainForkResolver.Default`; when set, it is parsed via `Nethereum.EVM.HardforkNames.Parse` and looked up in `DefaultMainnetHardforkRegistry`. **Not bound by `AddBlockchainProcessingOptions`** (see note below) |
+
+> **Note on DI binding:** The `AddBlockchainProcessingOptions(IConfiguration)` extension copies option values only through `UseBatchReceipts` (`BlockchainProcessorServiceCollectionExtensions.cs:20-31`). It does **not** copy `UseLocalEvmReplayForInternalTransactions` or `Hardfork` onto the registered options, so setting them through the standard DI path has no effect. `BlockchainProcessingOptions.Load(IConfiguration)` does read both from configuration, so populate the options object directly (e.g. via `Load`) when you need these two to take effect.
 
 ## Related Packages
 

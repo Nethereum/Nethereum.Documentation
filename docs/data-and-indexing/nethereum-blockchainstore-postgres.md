@@ -39,7 +39,6 @@ Targets `net8.0` and `net10.0`. Uses Npgsql.EntityFrameworkCore.PostgreSQL 8.x o
 ### Dependencies
 
 - **Nethereum.BlockchainStore.EFCore** - Base `BlockchainDbContextBase`, entity builders, and repository implementations
-- **Nethereum.Microsoft.Configuration.Utils** - `ConfigurationUtils.Build()` for appsettings-based connection string resolution
 - **Npgsql.EntityFrameworkCore.PostgreSQL** - PostgreSQL EF Core provider
 - **EFCore.NamingConventions** - `UseLowerCaseNamingConvention()` for snake_case table/column names
 - **Microsoft.EntityFrameworkCore.Design** - Design-time migration support (private asset)
@@ -74,15 +73,7 @@ dotnet ef database update \
   --context PostgresBlockchainDbContext
 ```
 
-The design-time factory (`PostgresBlockchainDesignTimeDbContextFactory`) reads the connection string from `appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "PostgresConnection": "Host=localhost;Database=nethereumdb;Username=postgres;Password=postgres"
-  }
-}
-```
+The design-time factory (`PostgresBlockchainDesignTimeDbContextFactory`) is used only by the `dotnet ef` tooling and returns a context with a hardcoded local connection string (`Host=localhost;Database=design;Username=postgres;Password=postgres`). It does not read `appsettings.json`. Point your tooling at a scratch design database, or edit the factory, when generating migrations.
 
 ### Programmatic Migration
 
@@ -128,10 +119,9 @@ await processor.ExecuteAsync(cancellationToken);
 
 ### Connection String Resolution
 
-`PostgresBlockchainDbContext` resolves the connection string in this order:
-1. Constructor parameter (explicit string)
-2. `ConnectionStrings:PostgresConnection` from `appsettings.json`
-3. `ConnectionStrings:BlockchainDbStorage` from `appsettings.json`
+The `PostgresBlockchainDbContext` constructor takes only an explicit connection string. The fallback resolution from configuration is performed by the static `PostgresBlockchainDbContextFactory.Create(IConfigurationRoot)` method, which resolves in this order:
+1. `ConnectionStrings:PostgresConnection` from `appsettings.json`
+2. `ConnectionStrings:BlockchainDbStorage` from `appsettings.json` (via `GetBlockchainStorageConnectionString()`)
 
 ## Database Schema
 
@@ -145,7 +135,7 @@ All table and column names use lowercase convention via `EFCore.NamingConvention
 | `transactions` | `Transaction` | `blocknumber` (bigint), `hash`, `addressfrom`, `addressto`, `transactionindex` (bigint), `timestamp` (bigint), `value`, `gas`, `gasprice`, `gasused`, `transactiontype` (bigint), `maxfeeperblobgas`, `blobgasused`, `blobgasprice` |
 | `transactionlogs` | `TransactionLog` | `transactionhash`, `logindex` (bigint), `blocknumber` (bigint), `address`, `eventhash`, `data` |
 | `contracts` | `Contract` | `address`, `name`, `abi`, `code`, `creator`, `transactionhash` |
-| `internaltransactions` | `InternalTransaction` | `transactionhash`, `index`, `blocknumber` (bigint), `from`, `to`, `value`, `type` |
+| `internaltransactions` | `InternalTransaction` | `transactionhash`, `traceindex`, `blocknumber` (bigint), `addressfrom`, `addressto`, `value`, `type` |
 | `blockprogress` | `BlockProgress` | `lastblockprocessed` |
 | `chainstates` | `ChainState` | `lastcanonicalblocknumber` (bigint, nullable), `finalizedblocknumber` (bigint, nullable), `chainid` |
 | `accountstates` | `AccountState` | `address`, `balance`, `nonce` (bigint), `lastupdatedblock` (bigint) |

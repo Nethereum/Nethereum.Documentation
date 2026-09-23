@@ -151,9 +151,9 @@ await builder.Build().RunAsync();
         <p>Connected: @context.User.Identity.Name</p>
         <button @onclick="Disconnect">Disconnect</button>
     </Authorized>
-    <NotAuthorizing>
+    <NotAuthorized>
         <button @onclick="Connect">Connect Wallet</button>
-    </NotAuthorizing>
+    </NotAuthorized>
 </AuthorizeView>
 
 @code {
@@ -268,6 +268,7 @@ public class MetamaskService
 
 ```csharp
 using Nethereum.Metamask;
+using Nethereum.Web3;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 
@@ -289,7 +290,7 @@ public class TransactionService
         {
             From = fromAddress,
             To = toAddress,
-            Value = new HexBigInteger(Web3.Web3.Convert.ToWei(etherAmount))
+            Value = new HexBigInteger(Web3.Convert.ToWei(etherAmount))
         };
 
         // This will prompt MetaMask for user confirmation

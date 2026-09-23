@@ -48,7 +48,7 @@ Install-Package Nethereum.MudBlazorComponents
 ## Dependencies
 
 **Package References:**
-- Microsoft.AspNetCore.Components.WebAssembly 9.*
+- Microsoft.AspNetCore.Components.WebAssembly 10.0.0
 - MudBlazor 8.*
 
 **Project References:**
@@ -59,7 +59,7 @@ Install-Package Nethereum.MudBlazorComponents
 - Nethereum.Web3 (Web3 API)
 
 **Target Framework:**
-- net9.0
+- net10.0
 
 ## Code Generator Configuration
 
@@ -516,7 +516,7 @@ While components are primarily used by the code generator, they can be used manu
 ### MUD Table Component
 
 ```razor
-<MudDevTableComponent TService="ItemsTableService"
+<MudDevTableComponent TTableService="ItemsTableService"
     ContractAddress="@ContractAddress"
     HostProvider="HostProvider" />
 ```

@@ -174,6 +174,7 @@ await selectionService.ClearSelectedEthereumHostProvider();
 
 ```csharp
 using Nethereum.UI;
+using Nethereum.Web3;
 
 var provider = new NethereumHostProvider();
 
@@ -229,7 +230,7 @@ var siweMessage = new SiweMessage
     Address = providerService.SelectedHost.SelectedAccount,
     Uri = "https://example.com/login",
     Version = "1",
-    ChainId = providerService.SelectedHost.SelectedNetworkChainId,
+    ChainId = providerService.SelectedHost.SelectedNetworkChainId.ToString(),
     Nonce = Guid.NewGuid().ToString(),
     IssuedAt = DateTime.UtcNow.ToString("o")
 };
@@ -352,6 +353,7 @@ else
 
 ```csharp
 using Nethereum.UI;
+using Nethereum.Web3;
 using System.Threading.Tasks;
 
 public class MyCustomWalletProvider : IEthereumHostProvider
@@ -588,7 +590,7 @@ if (provider.MultipleWalletsProvider)
 
 Nethereum.UI provides validation through two approaches:
 
-1. **FluentValidation** - Full framework support across all .NET versions
+1. **FluentValidation** - .NET Core 3.1+ only; the validators and rules (`EthereumRules`) are guarded by `#if NETCOREAPP3_1_OR_GREATER` and are absent on netstandard2.0 and net472
 2. **Data Annotations** - Available in .NET Core 3.1+ only (conditional compilation)
 
 Choose based on your target framework and preferences.

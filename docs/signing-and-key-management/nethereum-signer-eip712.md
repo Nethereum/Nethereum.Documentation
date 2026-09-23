@@ -75,35 +75,63 @@ The domain separator prevents signatures from being valid across different:
 
 ### TypedData Structure
 
+`TypedData<TDomain>` derives from `TypedDataRaw`, which is where `Types` and
+`Message` actually live:
+
 ```csharp
-public class TypedData<TDomain>
+public class TypedDataRaw
 {
-    public TDomain Domain { get; set; }                           // Domain separator
-    public Dictionary<string, MemberDescription[]> Types { get; set; }  // Type definitions
-    public string PrimaryType { get; set; }                       // Main message type
-    public object Message { get; set; }                           // Actual data
+    public IDictionary<string, MemberDescription[]> Types { get; set; }  // Type definitions
+    public string PrimaryType { get; set; }                              // Main message type
+    public MemberValue[] Message { get; set; }                           // Actual data, EIP-712-typed values
+    public MemberValue[] DomainRawValues { get; set; }
+}
+
+public class TypedData<TDomain> : TypedDataRaw
+{
+    public TDomain Domain { get; set; }                                  // Domain separator
 }
 ```
 
+`Message` is not populated by hand for the common case — pass your POCO and a
+`TypedData<TDomain>` schema straight to `SignTypedDataV4(message, typedData, key)`
+and it is converted to `MemberValue[]` for you.
+
 ## Quick Start
+
+**Every message type MUST carry `[Struct]` on the class and `[Parameter]` on
+each member (Solidity type, name, order).** These attributes are what the
+EIP-712 encoder uses to build the type schema — without them the schema is
+empty and the signature is silently wrong.
 
 ```csharp
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 
 // 1. Define your message type
-public class Mail
-{
-    public Person From { get; set; }
-    public Person To { get; set; }
-    public string Contents { get; set; }
-}
-
+[Struct("Person")]
 public class Person
 {
+    [Parameter("string", "name", 1)]
     public string Name { get; set; }
+
+    [Parameter("address", "wallet", 2)]
     public string Wallet { get; set; }
+}
+
+[Struct("Mail")]
+public class Mail
+{
+    [Parameter("tuple", "from", 1, "Person")]
+    public Person From { get; set; }
+
+    [Parameter("tuple", "to", 2, "Person")]
+    public Person To { get; set; }
+
+    [Parameter("string", "contents", 3)]
+    public string Contents { get; set; }
 }
 
 // 2. Create domain
@@ -115,18 +143,25 @@ var domain = new Domain
     VerifyingContract = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
 };
 
-// 3. Create typed data
+// 3. Build the schema from the attributes above and the message value
+var typedData = new TypedData<Domain>
+{
+    Domain = domain,
+    Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(Domain), typeof(Mail), typeof(Person)),
+    PrimaryType = nameof(Mail)
+};
+
 var mail = new Mail
 {
-    From = new Person { Name = "Alice", Wallet = "0x..." },
-    To = new Person { Name = "Bob", Wallet = "0x..." },
+    From = new Person { Name = "Alice", Wallet = "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826" },
+    To = new Person { Name = "Bob", Wallet = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB" },
     Contents = "Hello Bob!"
 };
 
 // 4. Sign
 var signer = new Eip712TypedDataSigner();
 var key = new EthECKey("YOUR_PRIVATE_KEY");
-string signature = signer.SignTypedData(mail, domain, "Mail", key);
+string signature = signer.SignTypedDataV4(mail, typedData, key);
 ```
 
 ## Usage Examples
@@ -136,8 +171,32 @@ string signature = signer.SignTypedData(mail, domain, "Mail", key);
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Signer;
-using System.Collections.Generic;
+using Nethereum.Util;
+
+[Struct("Person")]
+public class Person
+{
+    [Parameter("string", "name", 1)]
+    public string Name { get; set; }
+
+    [Parameter("address", "wallet", 2)]
+    public string Wallet { get; set; }
+}
+
+[Struct("Mail")]
+public class Mail
+{
+    [Parameter("tuple", "from", 1, "Person")]
+    public Person From { get; set; }
+
+    [Parameter("tuple", "to", 2, "Person")]
+    public Person To { get; set; }
+
+    [Parameter("string", "contents", 3)]
+    public string Contents { get; set; }
+}
 
 // Define domain
 var domain = new Domain
@@ -148,75 +207,30 @@ var domain = new Domain
     VerifyingContract = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
 };
 
-// Define type schema
+// Build the schema from the [Struct]/[Parameter] attributes on Mail and Person
 var typedData = new TypedData<Domain>
 {
     Domain = domain,
-    Types = new Dictionary<string, MemberDescription[]>
-    {
-        ["EIP712Domain"] = new[]
-        {
-            new MemberDescription { Name = "name", Type = "string" },
-            new MemberDescription { Name = "version", Type = "string" },
-            new MemberDescription { Name = "chainId", Type = "uint256" },
-            new MemberDescription { Name = "verifyingContract", Type = "address" }
-        },
-        ["Mail"] = new[]
-        {
-            new MemberDescription { Name = "from", Type = "Person" },
-            new MemberDescription { Name = "to", Type = "Person[]" },
-            new MemberDescription { Name = "contents", Type = "string" }
-        },
-        ["Person"] = new[]
-        {
-            new MemberDescription { Name = "name", Type = "string" },
-            new MemberDescription { Name = "wallets", Type = "address[]" }
-        }
-    },
-    PrimaryType = "Mail",
-    Message = new[]
-    {
-        new MemberValue
-        {
-            TypeName = "Person",
-            Value = new[]
-            {
-                new MemberValue { TypeName = "string", Value = "Cow" },
-                new MemberValue { TypeName = "address[]", Value = new List<string>
-                {
-                    "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
-                    "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
-                }}
-            }
-        },
-        new MemberValue
-        {
-            TypeName = "Person[]",
-            Value = new List<MemberValue[]>
-            {
-                new[]
-                {
-                    new MemberValue { TypeName = "string", Value = "Bob" },
-                    new MemberValue { TypeName = "address[]", Value = new List<string>
-                    {
-                        "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-                    }}
-                }
-            }
-        },
-        new MemberValue { TypeName = "string", Value = "Hello, Bob!" }
-    }
+    Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(Domain), typeof(Mail), typeof(Person)),
+    PrimaryType = nameof(Mail)
+};
+
+var mail = new Mail
+{
+    From = new Person { Name = "Cow", Wallet = "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826" },
+    To = new Person { Name = "Bob", Wallet = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB" },
+    Contents = "Hello, Bob!"
 };
 
 // Sign
 var signer = new Eip712TypedDataSigner();
 var key = new EthECKey("94e001d6adf3a3275d5dd45971c2a5f6637d3e9c51f9693f2e678f649e164fa5");
-string signature = signer.SignTypedDataV4(typedData, key);
+string signature = signer.SignTypedDataV4(mail, typedData, key);
 
 Console.WriteLine($"Signature: {signature}");
 
 // Verify
-string recoveredAddress = signer.RecoverFromSignatureV4(typedData, signature);
+string recoveredAddress = signer.RecoverFromSignatureV4(mail, typedData, signature);
 Console.WriteLine($"Signer: {recoveredAddress}");
 Console.WriteLine($"Match: {key.GetPublicAddress() == recoveredAddress}");
 ```
@@ -226,16 +240,29 @@ Console.WriteLine($"Match: {key.GetPublicAddress() == recoveredAddress}");
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Signer;
 using System.Numerics;
 
 // ERC-20 Permit allows approvals via signature (no gas cost)
+// [Struct]/[Parameter] attributes are required: SignTypedData uses them to
+// build the EIP-712 type schema, and a message without them signs the wrong hash.
+[Struct("Permit")]
 public class Permit
 {
+    [Parameter("address", "owner", 1)]
     public string Owner { get; set; }
+
+    [Parameter("address", "spender", 2)]
     public string Spender { get; set; }
+
+    [Parameter("uint256", "value", 3)]
     public BigInteger Value { get; set; }
+
+    [Parameter("uint256", "nonce", 4)]
     public BigInteger Nonce { get; set; }
+
+    [Parameter("uint256", "deadline", 5)]
     public BigInteger Deadline { get; set; }
 }
 
@@ -271,12 +298,19 @@ string signature = signer.SignTypedData(permit, domain, "Permit", key);
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using System.Numerics;
 
+[Struct("MetaTransaction")]
 public class MetaTransaction
 {
+    [Parameter("uint256", "nonce", 1)]
     public BigInteger Nonce { get; set; }
+
+    [Parameter("address", "from", 2)]
     public string From { get; set; }
+
+    [Parameter("bytes", "functionSignature", 3)]
     public string FunctionSignature { get; set; }
 }
 
@@ -308,17 +342,34 @@ string signature = signer.SignTypedData(metaTx, domain, "MetaTransaction", key);
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using System.Numerics;
 
+[Struct("Order")]
 public class Order
 {
+    [Parameter("address", "makerAddress", 1)]
     public string MakerAddress { get; set; }
+
+    [Parameter("address", "takerAddress", 2)]
     public string TakerAddress { get; set; }
+
+    [Parameter("address", "makerAssetAddress", 3)]
     public string MakerAssetAddress { get; set; }
+
+    [Parameter("address", "takerAssetAddress", 4)]
     public string TakerAssetAddress { get; set; }
+
+    [Parameter("uint256", "makerAssetAmount", 5)]
     public BigInteger MakerAssetAmount { get; set; }
+
+    [Parameter("uint256", "takerAssetAmount", 6)]
     public BigInteger TakerAssetAmount { get; set; }
+
+    [Parameter("uint256", "expirationTimeSeconds", 7)]
     public BigInteger ExpirationTimeSeconds { get; set; }
+
+    [Parameter("uint256", "salt", 8)]
     public BigInteger Salt { get; set; }
 }
 
@@ -354,13 +405,24 @@ string signature = signer.SignTypedData(order, domain, "Order", key);
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 
+[Struct("Vote")]
 public class Vote
 {
+    [Parameter("address", "from", 1)]
     public string From { get; set; }
+
+    [Parameter("string", "space", 2)]
     public string Space { get; set; }
+
+    [Parameter("uint64", "timestamp", 3)]
     public long Timestamp { get; set; }
+
+    [Parameter("string", "proposal", 4)]
     public string Proposal { get; set; }
+
+    [Parameter("uint32", "choice", 5)]
     public int Choice { get; set; } // 1 = For, 2 = Against, 3 = Abstain
 }
 
@@ -386,7 +448,7 @@ string signature = signer.SignTypedData(vote, domain, "Vote", key);
 // Vote is aggregated off-chain, no gas cost for voters
 ```
 
-### Example 6: Sign from JSON (Real Test Example)
+### Example 6: Sign from JSON
 
 ```csharp
 using Nethereum.Signer.EIP712;
@@ -450,13 +512,22 @@ Console.WriteLine($"Signer: {recoveredAddress}");
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using System.Numerics;
 
+[Struct("LazyMint")]
 public class LazyMint
 {
+    [Parameter("uint256", "tokenId", 1)]
     public BigInteger TokenId { get; set; }
+
+    [Parameter("string", "tokenURI", 2)]
     public string TokenURI { get; set; }
+
+    [Parameter("address", "creator", 3)]
     public string Creator { get; set; }
+
+    [Parameter("uint256", "royaltyBps", 4)]
     public BigInteger RoyaltyBps { get; set; } // Basis points (100 = 1%)
 }
 
@@ -490,12 +561,19 @@ string signature = signer.SignTypedData(lazyMint, domain, "LazyMint", key);
 ```csharp
 using Nethereum.Signer.EIP712;
 using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using System.Numerics;
 
+[Struct("SessionKey")]
 public class SessionKey
 {
+    [Parameter("address", "sessionPublicKey", 1)]
     public string SessionPublicKey { get; set; }
+
+    [Parameter("uint256", "expiresAt", 2)]
     public BigInteger ExpiresAt { get; set; }
+
+    [Parameter("address[]", "allowedContracts", 3)]
     public string[] AllowedContracts { get; set; }
 }
 
@@ -598,8 +676,10 @@ var signature = PermitSigner.SignPermitTransferFrom(
     key);
 ```
 
-`SignPermitBatch`, `SignPermitBatchTransferFrom`, `HashPermitSingle` and the recover helpers follow the
-same pattern. For the x402 witness variant (`permitWitnessTransferFrom`) see `Nethereum.X402`.
+`SignPermitBatch`, `SignPermitBatchTransferFrom` and `HashPermitSingle` follow the same pattern.
+`PermitSigner` only signs and hashes — it has no recover/verify methods; recover a Permit2 signature
+with `Eip712TypedDataSigner.RecoverFromSignatureV4` against the same typed data used to sign. For the
+x402 witness variant (`permitWitnessTransferFrom`) see `Nethereum.X402`.
 
 ## API Reference
 
@@ -610,28 +690,36 @@ Main class for EIP-712 signing operations.
 ```csharp
 public class Eip712TypedDataSigner
 {
-    // Sign typed data (generates schema automatically)
+    // Sign a flat message, auto-generating the schema from its [Parameter] attributes.
+    // For flat messages only - a message with reference-type (nested struct) fields
+    // needs the TypedData<TDomain> + SignTypedDataV4(message, typedData, key) overload below.
     public string SignTypedData<T, TDomain>(T data, TDomain domain, string primaryTypeName, EthECKey key);
 
-    // Sign pre-defined typed data
+    // Sign a pre-built TypedData<TDomain> (Message must already be populated)
     public string SignTypedData<TDomain>(TypedData<TDomain> typedData, EthECKey key);
 
-    // Sign for eth_signTypedData_v4 compatibility
+    // Sign for eth_signTypedData_v4 compatibility (identical hashing/signing to SignTypedData - only the encoding source differs)
     public string SignTypedDataV4<TDomain>(TypedData<TDomain> typedData, EthECKey key);
     public string SignTypedDataV4(string json, EthECKey key);
+    public string SignTypedDataV4<TDomain>(string json, EthECKey key, string messageKeySelector = "message");
     public string SignTypedDataV4<T, TDomain>(T message, TypedData<TDomain> typedData, EthECKey key);
 
     // Sign with external signer (hardware wallet, etc.)
-    public Task<string> SignTypedDataV4<TDomain>(TypedData<TDomain> typedData, IEthExternalSigner signer);
+    public Task<string> SignTypedDataV4<TDomain>(TypedData<TDomain> typedData, IEthExternalSigner ethExternalSigner);
 
     // Recover signer address from signature
+    public string RecoverFromSignatureV4<T, TDomain>(T message, TypedData<TDomain> typedData, string signature);
     public string RecoverFromSignatureV4<TDomain>(TypedData<TDomain> typedData, string signature);
-    public string RecoverFromSignatureV4(string json, string signature);
+    public string RecoverFromSignatureV4(string json, string signature, string messageKeySelector = "message");
     public string RecoverFromSignatureV4(byte[] encodedData, string signature);
+    public string RecoverFromSignatureHashV4(byte[] hash, string signature);
 
     // Encode typed data (for custom workflows)
     public byte[] EncodeTypedData<TDomain>(TypedData<TDomain> typedData);
+    public byte[] EncodeTypedDataRaw(TypedDataRaw typedData);
     public byte[] EncodeTypedData(string json);
+    public byte[] EncodeTypedData<TDomain>(string json, string messageKeySelector = "message");
+    public byte[] EncodeTypedData<T, TDomain>(T message, TypedData<TDomain> typedData);
 
     // Singleton instance
     public static Eip712TypedDataSigner Current { get; }
@@ -655,14 +743,15 @@ public class Eip712TypedDataSigner
 
 ### MetaMask Compatibility
 
-Always use `SignTypedDataV4` for MetaMask compatibility:
+Prefer `SignTypedDataV4` for parity with `eth_signTypedData_v4`. For the same
+`TypedData<TDomain>`, `SignTypedData` and `SignTypedDataV4` encode the message
+identically (`EncodeTypedData`) and produce the **same signature** — there is
+no behavioral difference between them for a `TypedData<TDomain>` overload.
+`SignTypedDataV4` is the name to reach for by convention, and it is the only
+one of the two with JSON and external-signer overloads:
 
 ```csharp
-// CORRECT - Works with MetaMask
 string signature = signer.SignTypedDataV4(typedData, key);
-
-// WRONG - Old format, not recommended
-string signature = signer.SignTypedData(typedData, key);
 ```
 
 ### Domain Separator is Critical

@@ -138,7 +138,7 @@ byte[] privateKeyBytes = key.GetPrivateKeyAsBytes();
 
 // Get public key
 byte[] publicKey = key.GetPubKey(); // Uncompressed (65 bytes with 0x04 prefix)
-byte[] publicKeyCompressed = key.GetPubKeyCompressed(); // Compressed (33 bytes)
+byte[] publicKeyCompressed = key.GetPubKey(true); // Compressed (33 bytes)
 
 // Get Ethereum address
 string address = key.GetPublicAddress();
@@ -253,21 +253,21 @@ Console.WriteLine($"Match: {key.GetPublicAddress() == recoveredAddress}");
 ```csharp
 using Nethereum.Signer;
 using Nethereum.Model;
-using Nethereum.RLP;
 using Nethereum.Hex.HexConvertors.Extensions;
-using System.Numerics;
 
 var privateKey = "0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7";
 
 // EIP-1559 transaction with maxFeePerGas and maxPriorityFeePerGas
-var chainId = new BigInteger(1); // Mainnet
-var nonce = new BigInteger(5);
-var maxPriorityFeePerGas = new BigInteger(2000000000); // 2 gwei
-var maxFeePerGas = new BigInteger(100000000000); // 100 gwei
-var gasLimit = new BigInteger(21000);
+// Transaction1559's numeric fields are EvmUInt256, which has implicit
+// conversions from long/ulong, so plain literals are enough here.
+long chainId = 1; // Mainnet
+long nonce = 5;
+long maxPriorityFeePerGas = 2000000000; // 2 gwei
+long maxFeePerGas = 100000000000; // 100 gwei
+long gasLimit = 21000;
 var to = "0x3535353535353535353535353535353535353535";
-var value = new BigInteger(1000000000000000000); // 1 ETH
-var data = "".HexToByteArray();
+long value = 1000000000000000000; // 1 ETH
+var data = ""; // Data is a hex string, not raw bytes
 
 var tx = new Transaction1559(
     chainId,
@@ -281,17 +281,18 @@ var tx = new Transaction1559(
     null // access list
 );
 
-// Sign
+// Sign (SignTransaction mutates tx and also returns the signed RLP hex)
 var signer = new Transaction1559Signer();
-signer.SignTransaction(privateKey.HexToByteArray(), tx);
+string signedTxHex = signer.SignTransaction(privateKey.HexToByteArray(), tx);
 
 // Transaction type 0x02 for EIP-1559
 byte[] signedTx = tx.GetRLPEncoded();
 Console.WriteLine($"Type: 0x{signedTx[0]:X2}"); // 0x02
 
-// Recover signer
-var recovered = new Transaction1559(signedTx);
-Console.WriteLine($"Signer: {recovered.Key.GetPublicAddress()}");
+// Recover signer: decode the RLP back into a Transaction1559 (there is no
+// Transaction1559(byte[]) constructor), then recover via the GetKey() extension.
+var recovered = Transaction1559Encoder.Current.Decode(signedTx);
+Console.WriteLine($"Signer: {recovered.GetKey().GetPublicAddress()}");
 ```
 
 ### Example 6: Hash and Sign Raw Messages
@@ -356,20 +357,20 @@ var randomKey = EthECKey.GenerateKey(); // Cryptographically secure random
 
 ```csharp
 using Nethereum.Signer;
-using Nethereum.Signer.Crypto;
-using Nethereum.Hex.HexConvertors.Extensions;
+using System.Text;
 
 var privateKey = "0x4646464646464646464646464646464646464646464646464646464646464646";
 var key = new EthECKey(privateKey);
-var message = "test message".HexToByteArray();
+var message = Encoding.UTF8.GetBytes("test message");
 
 // Sign message
 var signer = new MessageSigner();
 string signatureHex = signer.Sign(message, key);
-byte[] signatureBytes = signatureHex.HexToByteArray();
 
-// Parse signature
-var signature = new EthECDSASignature(signatureBytes);
+// Parse signature: MessageSigner.Sign returns r|s|v (65 raw bytes), NOT a
+// DER-encoded blob, so it must go through EthECDSASignatureFactory, not the
+// EthECDSASignature(byte[] derSig) constructor.
+var signature = EthECDSASignatureFactory.ExtractECDSASignature(signatureHex);
 
 // Verify with low-S enforcement (prevents signature malleability)
 bool isValid = key.VerifyAllowingOnlyLowS(message, signature);
@@ -434,8 +435,7 @@ public static EthECKey GenerateKey(byte[] seed);
 // Properties & Methods
 public string GetPrivateKey(); // Hex string with 0x prefix
 public byte[] GetPrivateKeyAsBytes();
-public byte[] GetPubKey(); // Uncompressed (65 bytes)
-public byte[] GetPubKeyCompressed(); // Compressed (33 bytes)
+public byte[] GetPubKey(bool compressed = false); // false = 65 bytes uncompressed, true = 33 bytes compressed
 public string GetPublicAddress(); // Ethereum address (0x...)
 
 // Signing & Verification
@@ -493,36 +493,39 @@ public class MessageSigner
 
 ### Transaction Signers
 
+Every transaction signer mutates the transaction in place (sets its `Signature`)
+**and** returns the signed transaction as an RLP-encoded hex string.
+
 ```csharp
 // Legacy transactions
 public class LegacyTransactionSigner
 {
-    public void SignTransaction(byte[] privateKey, LegacyTransaction transaction);
-    public void SignTransaction(byte[] privateKey, LegacyTransactionChainId transaction);
+    public string SignTransaction(byte[] privateKey, LegacyTransaction transaction);
+    public string SignTransaction(byte[] privateKey, LegacyTransactionChainId transaction);
 }
 
-// EIP-1559 transactions
-public class Transaction1559Signer
-{
-    public void SignTransaction(byte[] privateKey, Transaction1559 transaction);
-}
+// EIP-1559 / EIP-7702 / EIP-4844 transactions all share TypeTransactionSigner<T>
+public class Transaction1559Signer : TypeTransactionSigner<Transaction1559> { }
+public class Transaction7702Signer : TypeTransactionSigner<Transaction7702> { }
+public class Transaction4844Signer : TypeTransactionSigner<Transaction4844> { }
 
-// EIP-7702 transactions
-public class Transaction7702Signer
+public class TypeTransactionSigner<T> where T : SignedTypeTransaction
 {
-    public void SignTransaction(byte[] privateKey, Transaction7702 transaction);
-}
-
-// EIP-4844 blob transactions
-public class Transaction4844Signer
-{
-    public void SignTransaction(byte[] privateKey, Transaction4844 transaction);
+    public string SignTransaction(string privateKey, T transaction);
+    public string SignTransaction(byte[] privateKey, T transaction);
+    public string SignTransaction(EthECKey ecKey, T transaction);
 }
 
 // Authorization lists (EIP-7702)
 public class Authorisation7702Signer
 {
-    public void Sign(byte[] privateKey, Authorisation7702 authorisation);
+    public Authorisation7702Signed SignAuthorisation(string privateKey, Authorisation7702 authorisation);
+    public Authorisation7702Signed SignAuthorisation(byte[] privateKey, Authorisation7702 authorisation);
+    public Authorisation7702Signed SignAuthorisation(EthECKey ecKey, Authorisation7702 authorisation);
+
+    public List<Authorisation7702Signed> SignAuthorisations(string privateKey, List<Authorisation7702> authorisations);
+    public List<Authorisation7702Signed> SignAuthorisations(byte[] privateKey, List<Authorisation7702> authorisations);
+    public List<Authorisation7702Signed> SignAuthorisations(EthECKey ecKey, List<Authorisation7702> authorisations);
 }
 ```
 
@@ -535,16 +538,70 @@ public class EthECDSASignature
 {
     public byte[] R { get; }
     public byte[] S { get; }
-    public byte[] V { get; }
+    public byte[] V { get; set; }
 
     public EthECDSASignature(BigInteger r, BigInteger s, byte[] v);
     public EthECDSASignature(ECDSASignature signature);
-    public EthECDSASignature(byte[] derSig);
+    public EthECDSASignature(byte[] derSig); // Parses a DER-encoded signature, NOT r|s|v
 
     public bool IsLowS { get; }
+    public bool IsCanonical { get; }
     public byte[] ToDER();
     public static EthECDSASignature FromDER(byte[] sig);
     public static string CreateStringSignature(EthECDSASignature signature);
+}
+```
+
+To parse a raw `r|s|v` signature (the format returned by `MessageSigner.Sign` /
+`EthereumMessageSigner.EncodeUTF8AndSign`), use `EthECDSASignatureFactory`
+instead of the `byte[] derSig` constructor:
+
+```csharp
+public static class EthECDSASignatureFactory
+{
+    public static EthECDSASignature FromComponents(byte[] r, byte[] s);
+    public static EthECDSASignature FromComponents(byte[] r, byte[] s, byte v);
+    public static EthECDSASignature FromComponents(byte[] r, byte[] s, byte[] v);
+    public static EthECDSASignature FromComponents(byte[] rs);
+    public static EthECDSASignature FromSignature(ISignature signature);
+    public static EthECDSASignature ExtractECDSASignature(string signature); // "0x" + r + s + v hex string
+}
+```
+
+### IEthExternalSigner / EthExternalSignerBase
+
+External signer abstraction for hardware wallets and key vaults (Ledger, Trezor,
+Azure Key Vault, AWS KMS). Implementations derive from `EthExternalSignerBase`,
+which handles recovery-ID calculation and only requires the public key and the
+raw ECDSA signing step:
+
+```csharp
+public interface IEthExternalSigner
+{
+    bool CalculatesV { get; }
+    ExternalSignerTransactionFormat ExternalSignerTransactionFormat { get; }
+    Task<string> GetAddressAsync();
+    Task<EthECDSASignature> SignAsync(byte[] rawBytes);
+    Task<EthECDSASignature> SignEthereumMessageAsync(byte[] rawBytes);
+    Task<EthECDSASignature> SignAsync(byte[] rawBytes, BigInteger chainId);
+    Task SignAsync(LegacyTransaction transaction);
+    Task SignAsync(LegacyTransactionChainId transaction);
+    Task SignAsync(Transaction1559 transaction);
+    Task SignAsync(Transaction7702 transaction);
+    Task SignAsync(Transaction4844 transaction);
+    Task<string> SignTypedDataJsonAsync(string typedDataJson, string messageKeySelector = "message");
+
+    bool Supported1559 { get; }
+}
+
+public abstract class EthExternalSignerBase : IEthExternalSigner
+{
+    // Implementors provide these two:
+    protected abstract Task<byte[]> GetPublicKeyAsync();
+    protected abstract Task<ECDSASignature> SignExternallyAsync(byte[] bytes);
+
+    // Everything else (address derivation, recovery-ID calculation,
+    // per-transaction-type signing, typed-data signing) is provided.
 }
 ```
 

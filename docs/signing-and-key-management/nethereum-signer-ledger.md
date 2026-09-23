@@ -24,7 +24,7 @@ Nethereum.Signer.Ledger provides **external signing capability** for Ethereum tr
 - Contract deployment signing with data
 - Message signing (EIP-191)
 - Two derivation paths: `m/44'/60'/0'/0/x` (default) and `m/44'/60'/0'/x` (Ledger legacy)
-- USB HID communication (Windows, Linux, macOS)
+- USB HID communication via `NethereumLedgerManagerBrokerFactory.CreateWindowsHidUsb()` (Windows out of the box; Linux/macOS need a custom `Device.Net` transport, see Installation)
 - Direct integration with ExternalAccount and Web3
 
 **Use Cases:**
@@ -41,9 +41,8 @@ dotnet add package Nethereum.Signer.Ledger
 ```
 
 **Platform-Specific Notes:**
-- **Windows**: Works with USB HID out of the box
-- **Linux**: May require udev rules for USB device access
-- **macOS**: Works with USB HID out of the box
+- **Windows**: `NethereumLedgerManagerBrokerFactory.CreateWindowsHidUsb()` registers the Windows HID/WinUSB device factories and works out of the box.
+- **Linux/macOS**: This package only ships a Windows device factory (`NethereumLedgerManagerBrokerFactory.CreateWindowsHidUsb()`). There is no built-in Linux/macOS broker factory method; connect via `Ledger.Net`'s underlying `Device.Net` transports directly, or implement a custom `IDeviceFactory` (Nethereum.Signer.Trezor's `LibUsbDeviceFactoryProvider` shows the equivalent pattern for TREZOR).
 
 ## Dependencies
 
@@ -124,6 +123,7 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Hex.HexTypes;
+using Nethereum.JsonRpc.Client;
 using Ledger.Net;
 
 // Connect to Ledger
@@ -137,9 +137,10 @@ var externalAccount = new ExternalAccount(
 );
 await externalAccount.InitialiseAsync();
 
-// Initialize Web3 with RPC client
-var web3 = new Web3(externalAccount);
-web3.Client = new JsonRpc.Client.RpcClient(new Uri("https://mainnet.infura.io/v3/YOUR-PROJECT-ID"));
+// Initialize Web3 with RPC client (Web3.Client has a private setter, so the
+// client must be supplied through the constructor, not assigned afterwards)
+var rpcClient = new RpcClient(new Uri("https://mainnet.infura.io/v3/YOUR-PROJECT-ID"));
+var web3 = new Web3(externalAccount, rpcClient);
 
 // Create transaction
 var transactionInput = new TransactionInput
@@ -455,7 +456,7 @@ public class LedgerExternalSigner : EthExternalSignerBase
     public LedgerManager LedgerManager { get; }
     public byte[] CurrentPublicKey { get; set; }
     public override bool CalculatesV { get; protected set; } = false;
-    public override ExternalSignerTransactionFormat ExternalSignerTransactionFormat { get; } = ExternalSignerTransactionFormat.RLP;
+    public override ExternalSignerTransactionFormat ExternalSignerTransactionFormat { get; protected set; } = ExternalSignerTransactionFormat.RLP;
     public override bool Supported1559 { get; } = true;
 
     // Methods
@@ -465,7 +466,20 @@ public class LedgerExternalSigner : EthExternalSignerBase
     public override Task SignAsync(LegacyTransaction transaction);
     public override Task SignAsync(LegacyTransactionChainId transaction);
     public override Task SignAsync(Transaction1559 transaction);
+    public override Task SignAsync(Transaction7702 transaction); // throws NotImplementedException
+    public override Task SignAsync(Transaction4844 transaction); // throws NotImplementedException
 }
+```
+
+### Inherited from EthExternalSignerBase
+
+`LedgerExternalSigner` also exposes the following members inherited from its base class (`Nethereum.Signer.EthExternalSignerBase`), unchanged:
+
+```csharp
+public virtual Task<string> GetAddressAsync();
+public virtual Task<EthECDSASignature> SignEthereumMessageAsync(byte[] rawBytes);
+public virtual Task<EthECDSASignature> SignTypedDataAsync<TDomain>(TypedData<TDomain> typedData);
+public virtual Task<string> SignTypedDataJsonAsync(string typedDataJson, string messageKeySelector = "message");
 ```
 
 ### NethereumLedgerManagerBrokerFactory
@@ -521,8 +535,9 @@ Without these settings enabled, transactions may be rejected by the device.
 |------|-----------|-------|
 | Legacy | Yes | EIP-155 with chain ID |
 | EIP-1559 (Type 2) | Yes | MaxFeePerGas, MaxPriorityFeePerGas |
-| EIP-2930 (Type 1) | No | Not implemented |
-| EIP-7702 (Type 4) | No | Not implemented |
+| EIP-2930 (Type 1) | No | No `SignAsync(Transaction2930)` overload |
+| EIP-7702 (Type 4) | No | `SignAsync(Transaction7702)` throws `NotImplementedException` |
+| EIP-4844 (Type 3, blob) | No | `SignAsync(Transaction4844)` throws `NotImplementedException` |
 
 ### User Experience Considerations
 
@@ -554,7 +569,7 @@ try
     var signature = await externalAccount.TransactionManager
         .SignTransactionAsync(transactionInput);
 }
-catch (LedgerException ex)
+catch (ManagerException ex)
 {
     // Device not connected, app not open, or user rejected
     Console.WriteLine($"Ledger error: {ex.Message}");
@@ -598,7 +613,7 @@ var avalancheAccount = new ExternalAccount(ledgerSigner, chainId: 43114); // Ava
 
 ### Alternatives
 - **Nethereum.Signer.Trezor** - TREZOR hardware wallet integration
-- **Nethereum.HDWallet** - Software HD wallets
+- **Nethereum.HdWallet** - Software HD wallets
 
 ## Additional Resources
 

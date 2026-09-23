@@ -39,9 +39,9 @@ Solidity smart contracts for the Nethereum AppChain anchoring and messaging syst
 | `StarkBlobCommitmentVerifier.sol` | Validates STARK proof hash with EIP-4844 blob commitment reference. |
 | `CalldataStarkVerifier.sol` | Combined calldata + STARK hash verification. |
 | `PipelinePayloadVerifier.sol` | Validates multi-section encoded pipeline payloads (headers + proofs + DA reference). |
-| `MockProofVerifier.sol` | Always-true verifier for testing. |
+| `MockProofVerifier.sol` | Test verifier that validates proof format without cryptography — returns `false` on malformed input (requires a 256-byte proof, at least 6 public inputs, non-zero commitment, non-zero chain identity, and correct batch block ordering). Does not verify the elliptic-curve pairing. |
 | `ZiskVerifierAdapter.sol` | Adapter wrapping the ZisK zkVM SNARK verifier (`IZiskVerifier`) to the `IVerifier` interface. |
-| `IZiskVerifier.sol` | ZisK-specific verifier interface for Groth16 proofs. |
+| `IZiskVerifier.sol` | ZisK-specific SNARK verifier interface (`verifySnarkProof`), the zkVM's native verifier bridged to `IVerifier` by `ZiskVerifierAdapter`. |
 
 ## Proof System Registry
 
@@ -51,7 +51,7 @@ The `AppChainAnchor` contract maps proof system IDs to verifier contracts via `r
 |---|---|---|---|---|
 | 0 | NoProof | address(0) | false | Trust operator |
 | 1 | StarkHashOffChain | optional | false | Off-chain STARK verification |
-| 2 | SnarkOnChain | required | **true** | Full on-chain Groth16 verification |
+| 2 | SnarkOnChain | required | **true** | Full on-chain SNARK verification via `IVerifier.verify()` (pluggable verifier; shipped: `ZiskVerifierAdapter`) |
 
 The registry is extensible — additional proof systems can be registered by the authority. 7 C# submission strategies (DA × Proof mode combinations) map to these 3 on-chain proof system IDs.
 

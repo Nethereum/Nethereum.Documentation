@@ -246,7 +246,8 @@ var subscription = blockSubscription
     .Subscribe(block =>
     {
         Console.WriteLine($"Block #{block.Number.Value} at {DateTime.Now}");
-        Console.WriteLine($"Transactions: {block.TransactionCount()}");
+        // newHeads only delivers headers - Block has no Transactions/TransactionCount()
+        // (that extension only exists on BlockWithTransactions / BlockWithTransactionHashes)
         Console.WriteLine($"Gas Used: {block.GasUsed.Value}");
     });
 
@@ -312,6 +313,7 @@ using Nethereum.Contracts;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
+using Nethereum.Web3;
 using System.Reactive.Linq;
 
 var wsClient = new StreamingWebSocketClient("wss://mainnet.infura.io/ws/v3/YOUR-PROJECT-ID");
@@ -488,8 +490,9 @@ var subscription = logsSubscription
     .Where(log => log.Topics != null && log.Topics.Length == 4)
     .Where(log =>
     {
-        // Parse value from topic[3] (indexed uint256)
-        var value = new HexBigInteger(log.Topics[3]);
+        // Parse value from topic[3] (indexed uint256). Topics is object[], and HexBigInteger
+        // has no object constructor, so convert to string first.
+        var value = new HexBigInteger(log.Topics[3].ToString());
         return value.Value > 1000000000000000000; // > 1 token (18 decimals)
     })
     .Subscribe(log =>
@@ -715,10 +718,10 @@ public class EthGetBalanceObservableHandler : RpcStreamingResponseParamsObservab
 
 ### RpcStreamingSubscriptionObservableHandler<T>
 
-Base class for subscription-based observable handlers.
+Base class for subscription-based observable handlers. It is a **concrete** class (not `abstract`), and `SubscribeAsync(RpcRequest)` - inherited from `RpcStreamingSubscriptionHandler<T>` - is `protected`, not `public`; each derived subscription (e.g. `EthLogsObservableSubscription`) exposes its own public `SubscribeAsync(...)` overload that calls it:
 
 ```csharp
-public abstract class RpcStreamingSubscriptionObservableHandler<TSubscriptionDataResponse>
+public class RpcStreamingSubscriptionObservableHandler<TSubscriptionDataResponse> : RpcStreamingSubscriptionHandler<TSubscriptionDataResponse>
 {
     // Observables
     public IObservable<string> GetSubscribeResponseAsObservable();
@@ -726,7 +729,7 @@ public abstract class RpcStreamingSubscriptionObservableHandler<TSubscriptionDat
     public IObservable<bool> GetUnsubscribeResponseAsObservable();
 
     // Lifecycle
-    public Task SubscribeAsync(RpcRequest request);
+    protected Task SubscribeAsync(RpcRequest request); // inherited, protected
     public Task UnsubscribeAsync();
 
     // Internal Subjects
@@ -738,10 +741,10 @@ public abstract class RpcStreamingSubscriptionObservableHandler<TSubscriptionDat
 
 ### RpcStreamingResponseObservableHandler<T>
 
-Base class for polling-based observable handlers.
+Base class for polling-based observable handlers. Also a **concrete** class, not `abstract`:
 
 ```csharp
-public abstract class RpcStreamingResponseObservableHandler<TResponse>
+public class RpcStreamingResponseObservableHandler<TResponse> : RpcStreamingRequestResponseHandler<TResponse>
 {
     // Observable
     public IObservable<TResponse> GetResponseAsObservable();
@@ -860,5 +863,5 @@ See System.Reactive documentation for complete operator list.
 - **System.Reactive** - Reactive Extensions for .NET
 
 ### Alternative Approaches
-- **Nethereum.RPC.Reactive** - Event-based subscriptions without Rx.NET
+- **Nethereum.RPC.Reactive** - the **same** Rx.NET-based approach as this package (it depends on `System.Reactive` 4.1.3 and provides its own `EthNewBlockHeadersObservableSubscription`/`EthLogsObservableSubscription`/`EthNewPendingTransactionObservableSubscription` under `Nethereum.RPC.Reactive.Eth.Subscriptions`, reusable against any `IStreamingClient`). For **event-based** (non-Rx) subscriptions, use the plain handlers in `Nethereum.RPC.Eth.Subscriptions` (e.g. `EthNewBlockHeadersSubscription`), which expose C# `event`s instead of `IObservable`.
 - **Nethereum.Web3** - High-level Web3 client with built-in subscription support

@@ -78,8 +78,11 @@ using Nethereum.RPC.Extensions;
 
 var web3 = new Web3("http://127.0.0.1:8545"); // Anvil default port
 
-// Access Anvil service through extension method
-var anvil = new AnvilService(web3.Eth);
+// Access Anvil service through the web3.Eth.Anvil() extension method
+var anvil = web3.Eth.Anvil();
+
+// Equivalent to constructing it directly:
+// var anvil = new AnvilService(web3.Eth);
 
 // Impersonate account
 await anvil.ImpersonateAccount.SendRequestAsync("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
@@ -323,10 +326,10 @@ var hardhat = web3.Eth.Hardhat();
 var startBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
 Console.WriteLine($"Starting block: {startBlock.Value}");
 
-// Mine 10 blocks instantly
+// Mine 10 blocks instantly, 12 seconds apart
 await hardhat.Mine.SendRequestAsync(
-    numberOfBlocks: 10,
-    interval: 12 // 12 seconds between blocks
+    blocks: 10,
+    interval: new Nethereum.Hex.HexTypes.HexBigInteger(12)
 );
 
 var endBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
@@ -342,6 +345,7 @@ Console.WriteLine($"Mined {endBlock.Value - startBlock.Value} blocks");
 using Nethereum.Web3;
 using Nethereum.RPC.Extensions;
 using Nethereum.Hex.HexTypes;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Util;
 
 var web3 = new Web3("http://127.0.0.1:8545");
@@ -351,16 +355,17 @@ var hardhat = web3.Eth.Hardhat();
 var contractAddress = "0x1234...";
 
 // Storage slot 0: Usually the owner address in many contracts
-var storageSlot = "0x0000000000000000000000000000000000000000000000000000000000000000";
+var storageSlot = new HexBigInteger(0);
 
 // Set storage to your address (make yourself the owner!)
+// HardhatSetStorageAt left-pads the raw value bytes to 32 bytes for you
 var yourAddress = "0xYourAddress";
-var paddedAddress = "0x" + yourAddress.Substring(2).PadLeft(64, '0');
+var addressBytes = yourAddress.HexToByteArray();
 
 await hardhat.SetStorageAt.SendRequestAsync(
     contractAddress,
     storageSlot,
-    paddedAddress
+    addressBytes
 );
 
 // Now you're the owner and can call onlyOwner functions
@@ -451,22 +456,11 @@ await hardhat.Reset.SendRequestAsync();
 
 var newBlockNumber = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
 Console.WriteLine($"Block after reset: {newBlockNumber.Value}"); // Should be 0 or 1
-
-// Optionally fork from mainnet at specific block
-var forkConfig = new
-{
-    forking = new
-    {
-        jsonRpcUrl = "https://mainnet.infura.io/v3/YOUR-PROJECT-ID",
-        blockNumber = 18000000
-    }
-};
-
-await hardhat.Reset.SendRequestAsync(forkConfig);
-Console.WriteLine("Reset and forked from mainnet block 18000000");
 ```
 
-**Use Case:** Clean slate between test runs, fork mainnet for testing
+**Note:** `HardhatReset.SendRequestAsync` only accepts an optional `id` (`SendRequestAsync(object id = null)`) — there is no overload for a fork configuration object. To fork from mainnet at a specific block, configure `forking` in the Hardhat/Anvil node's own config (e.g. `hardhat.config.js`, or `anvil --fork-url ... --fork-block-number ...`) rather than through this method.
+
+**Use Case:** Clean slate between test runs
 
 ### Example 10: Complete Test Setup Workflow
 
@@ -566,9 +560,11 @@ var hardhat = web3.Eth.Hardhat();
 // Access EVM tools
 var evmTools = web3.Eth.DevToolsEvm();
 
-// Access Anvil service (create directly)
-var anvil = new AnvilService(web3.Eth);
+// Access Anvil service
+var anvil = web3.Eth.Anvil();
 ```
+
+*Source: `src/Nethereum.RPC.Extensions/HardhatExtensions.cs:7`, `EvmToolsExtensions.cs:7`, `AnvilExtensions.cs:5` — all extend `IEthApiService`*
 
 ## API Reference
 
@@ -600,15 +596,21 @@ Set the nonce of an account.
 
 #### SetStorageAt
 ```csharp
-Task SendRequestAsync(string address, string slot, string value, object id = null)
+Task SendRequestAsync(string address, HexBigInteger position, byte[] value, object id = null)
 ```
-Set a storage slot of a contract.
+Set a storage slot of a contract. `value` is left-padded to 32 bytes automatically.
+
+*Source: `src/Nethereum.RPC.Extensions/DevTools/Hardhat/HardhatSetStorageAt.cs:19-22`*
 
 #### Mine
 ```csharp
-Task SendRequestAsync(int? numberOfBlocks = null, int? interval = null, object id = null)
+Task SendRequestAsync(int blocks = 1, HexBigInteger interval = null, object id = null)
+// overload:
+Task SendRequestAsync(HexBigInteger blocks, HexBigInteger interval = null, object id = null)
 ```
-Mine one or more blocks.
+Mine one or more blocks. `interval` defaults to `1` second between block timestamps.
+
+*Source: `src/Nethereum.RPC.Extensions/DevTools/Hardhat/HardhatMine.cs:21-31`*
 
 #### IncreaseTimeAsync
 ```csharp
@@ -634,13 +636,15 @@ Restore blockchain state to a snapshot. Returns true if successful.
 
 #### IncreaseTime
 ```csharp
-Task<HexBigInteger> SendRequestAsync(uint seconds, object id = null)
+Task<int> SendRequestAsync(int seconds, object id = null)
 ```
 Increase the blockchain time by the specified number of seconds.
 
+*Source: `src/Nethereum.RPC.Extensions/DevTools/Evm/EvmIncreaseTime.cs:16-19`*
+
 #### Mine
 ```csharp
-Task SendRequestAsync(object id = null)
+Task<string> SendRequestAsync(object id = null)
 ```
 Mine a single block.
 

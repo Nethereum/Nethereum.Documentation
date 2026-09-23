@@ -59,7 +59,7 @@ dotnet add package Nethereum.JsonRpc.IpcClient
 
 ```csharp
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
 // Connect to Geth IPC endpoint (Windows)
 var client = new IpcClient(@"\\.\pipe\geth.ipc");
@@ -94,7 +94,7 @@ Console.WriteLine($"Chain ID: {chainId.Value}");
 
 ```csharp
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 using System.Runtime.InteropServices;
 
 // Platform-specific IPC path detection
@@ -129,17 +129,20 @@ Console.WriteLine($"Block: {blockNumber.Value}");
 
 ### Example 2: Custom Connection Timeout
 
+`ConnectionTimeout` is `static` on `ClientBase` (`ClientBase.cs:10`) - it applies to every client in the process and defaults to 20 seconds, not 120:
+
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
 using Nethereum.RPC.Eth;
 
 var client = new IpcClient(@"\\.\pipe\geth.ipc");
 
-// Default timeout is 120 seconds
-Console.WriteLine($"Default timeout: {client.ConnectionTimeout.TotalSeconds}s");
+// Default timeout is 20 seconds, shared process-wide
+Console.WriteLine($"Default timeout: {ClientBase.ConnectionTimeout.TotalSeconds}s");
 
-// Set custom timeout
-client.ConnectionTimeout = TimeSpan.FromSeconds(10);
+// Set custom timeout - affects ALL clients, not just this instance
+ClientBase.ConnectionTimeout = TimeSpan.FromSeconds(10);
 
 try
 {
@@ -212,12 +215,14 @@ Console.WriteLine($"Block: {blockNumber.Value}");
 ### Example 5: High-Frequency Request Pattern (MEV Bot)
 
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 using System.Diagnostics;
+using System.Numerics;
 
 var client = new UnixIpcClient("/home/user/.ethereum/geth.ipc");
-client.ConnectionTimeout = TimeSpan.FromSeconds(5);
+ClientBase.ConnectionTimeout = TimeSpan.FromSeconds(5); // static - applies process-wide
 
 // High-frequency block monitoring with minimal latency
 var ethBlockNumber = new EthBlockNumber(client);
@@ -244,13 +249,17 @@ while (true)
 
 ### Example 6: Connection Error Handling and Retry
 
+**Note:** Polly is **not** a dependency of `Nethereum.JsonRpc.IpcClient` - add `Polly` to your own project to use this pattern. `IpcPath` is `protected` on `IpcClientBase` (`IpcClientBase.cs:15`), so it is not readable from outside the client - track the path yourself if you need to log it.
+
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 using Polly;
 
-var client = new IpcClient(@"\\.\pipe\geth.ipc");
-client.ConnectionTimeout = TimeSpan.FromSeconds(10);
+var ipcPath = @"\\.\pipe\geth.ipc";
+var client = new IpcClient(ipcPath);
+ClientBase.ConnectionTimeout = TimeSpan.FromSeconds(10); // static - applies process-wide
 
 // Define retry policy for IPC connection failures
 var retryPolicy = Policy
@@ -284,7 +293,7 @@ catch (RpcClientTimeoutException ex)
 catch (RpcClientUnknownException ex)
 {
     Console.WriteLine($"IPC connection error: {ex.Message}");
-    Console.WriteLine($"IPC path: {client.IpcPath}");
+    Console.WriteLine($"IPC path: {ipcPath}");
 }
 ```
 
@@ -292,7 +301,8 @@ catch (RpcClientUnknownException ex)
 
 ```csharp
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
+using System.Runtime.InteropServices;
 
 // Erigon default IPC paths
 var client = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -337,9 +347,9 @@ Console.WriteLine($"Chain ID: {chainId.Value}");
 
 ```csharp
 using Nethereum.JsonRpc.IpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
-// IpcClient implements IDisposable - always dispose properly
+// IpcClient implements IDisposable (inherited from IpcClientBase) - always dispose properly
 using (var client = new UnixIpcClient("/home/user/.ethereum/geth.ipc"))
 {
     var ethBlockNumber = new EthBlockNumber(client);
@@ -372,8 +382,10 @@ finally
 
 ### IpcClient (Windows - Named Pipes)
 
+`IDisposable` is implemented by the base class, not declared again on `IpcClient` itself:
+
 ```csharp
-public class IpcClient : IpcClientBase, IDisposable
+public class IpcClient : IpcClientBase
 {
     public IpcClient(string ipcPath,
         JsonSerializerSettings jsonSerializerSettings = null,
@@ -389,7 +401,7 @@ public class IpcClient : IpcClientBase, IDisposable
 ### UnixIpcClient (Linux/macOS - Unix Domain Sockets)
 
 ```csharp
-public class UnixIpcClient : IpcClientBase, IDisposable
+public class UnixIpcClient : IpcClientBase
 {
     public UnixIpcClient(string ipcPath,
         JsonSerializerSettings jsonSerializerSettings = null,
@@ -402,15 +414,33 @@ public class UnixIpcClient : IpcClientBase, IDisposable
 - `jsonSerializerSettings`: Optional custom JSON settings
 - `log`: Optional logger instance
 
-### Properties
+### SimpleIpcClient
+
+A lighter-weight alternative that opens a new `NamedPipeClientStream` per request instead of holding a persistent connection open (`SimpleIpcClient.cs:16-20`):
 
 ```csharp
-public TimeSpan ConnectionTimeout { get; set; } // Default: 120 seconds
-public string IpcPath { get; }
-public int ForceCompleteReadTotalMiliseconds { get; set; } // Default: 2000
+public class SimpleIpcClient : ClientBase
+{
+    public SimpleIpcClient(string ipcPath,
+        JsonSerializerSettings jsonSerializerSettings = null,
+        ILogger log = null)
+
+    public JsonSerializerSettings JsonSerializerSettings { get; set; }
+}
 ```
 
-### Key Methods (Inherited from ClientBase)
+### Properties
+
+`ConnectionTimeout` is defined on `ClientBase` and is `static` (shared process-wide, `ClientBase.cs:10`). `IpcPath` is `protected readonly` on `IpcClientBase` (`IpcClientBase.cs:15`) - it is **not** accessible from outside the client. `ForceCompleteReadTotalMiliseconds` is also `static` (`IpcClientBase.cs:16`):
+
+```csharp
+public static TimeSpan ConnectionTimeout { get; set; } // Default: 20 seconds, shared by every ClientBase-derived client
+protected readonly string IpcPath;
+public static int ForceCompleteReadTotalMiliseconds { get; set; } // Default: 2000
+public JsonSerializerSettings JsonSerializerSettings { get; set; } // IpcClientBase.cs:26
+```
+
+### Key Methods (Inherited from ClientBase / IpcClientBase)
 
 ```csharp
 public override Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = null)
@@ -459,23 +489,9 @@ public void Dispose()
 - Each instance maintains its own IPC connection
 - Safe to use from single thread or with external synchronization
 
-### Batch Requests
+### Batch Requests Are NOT Supported
 
-IPC clients support batch requests via inherited `SendBatchRequestAsync`:
-
-```csharp
-var batch = new RpcRequestResponseBatch();
-batch.BatchItems.Add(new RpcRequestResponseBatchItem<string>(
-    new RpcRequestMessage(1, "eth_blockNumber")
-));
-batch.BatchItems.Add(new RpcRequestResponseBatchItem<string>(
-    new RpcRequestMessage(2, "eth_chainId")
-));
-
-var result = await client.SendBatchRequestAsync(batch);
-```
-
-However, **IPC is already very fast** - batching provides less benefit than with HTTP.
+`IpcClientBase.SendBatchRequestAsync` overrides the base implementation and throws `NotImplementedException` (`IpcClientBase.cs:96-99`); the batch-only `SendAsync(RpcRequestMessage[])` overload does the same. Do not call `SendBatchRequestAsync` on `IpcClient`/`UnixIpcClient`/`SimpleIpcClient` - send individual requests instead. This is not a significant loss: **IPC is already very fast**, so batching provides less benefit than it does over HTTP.
 
 ### Error Handling
 

@@ -16,20 +16,19 @@ Modern, lightweight, and AOT-friendly HTTP/HTTPS JSON-RPC client using System.Te
 
 ## Overview
 
-Nethereum.JsonRpc.SystemTextJsonRpcClient provides a **modern, high-performance HTTP/HTTPS transport implementation** for Ethereum node communication using **System.Text.Json** instead of Newtonsoft.Json. This package is optimized for **.NET 7.0+** and supports **AOT (Ahead-of-Time) compilation** through source generators, making it ideal for modern cloud-native applications, serverless functions, and performance-critical scenarios.
+Nethereum.JsonRpc.SystemTextJsonRpcClient provides a **modern, high-performance HTTP/HTTPS transport implementation** for Ethereum node communication using **System.Text.Json** instead of Newtonsoft.Json for the wire payloads. This package targets **net9.0 only** and supports **AOT (Ahead-of-Time) compilation** through source generators, making it ideal for modern cloud-native applications, serverless functions, and performance-critical scenarios.
 
 **Key Features:**
 - **System.Text.Json** serialization (faster, lower memory)
 - **AOT compilation** support (Native AOT, ReadyToRun)
-- **Source-generated JSON** serialization (zero reflection)
+- **Source-generated JSON** serialization (zero reflection) for a curated set of RPC DTOs
 - **Bearer token** authentication
 - **HTTP/2** and **HTTP/3** support
-- Lightweight and minimal dependencies
-- .NET 7.0+ only (modern runtime features)
+- **net9.0 only** - it is not multi-targeted like most other Nethereum packages
 - Production-ready connection management
 
 **Use Cases:**
-- Modern .NET 7.0+ applications
+- Modern .NET 9 applications
 - Cloud-native and serverless deployments
 - Native AOT applications (smaller, faster startup)
 - Performance-critical blockchain indexers
@@ -43,8 +42,8 @@ dotnet add package Nethereum.JsonRpc.SystemTextJsonRpcClient
 ```
 
 **Requirements:**
-- **.NET 7.0 or higher**
-- For older .NET versions, use `Nethereum.JsonRpc.RpcClient` (Newtonsoft.Json)
+- **net9.0** - this is the only target framework the package ships (`Nethereum.JsonRpc.SystemTextJsonRpcClient.csproj`: `<TargetFrameworks>net9.0</TargetFrameworks>`)
+- For other .NET versions, use `Nethereum.JsonRpc.RpcClient` (Newtonsoft.Json, targets `net451;net461;netstandard2.0;net6.0;net8.0;net9.0;net10.0`)
 
 ## Dependencies
 
@@ -54,8 +53,9 @@ dotnet add package Nethereum.JsonRpc.SystemTextJsonRpcClient
 - **Nethereum.RPC** - RPC DTOs and services
 
 **External:**
-- **System.Text.Json** (built-in to .NET 7.0+)
+- **System.Text.Json** (built-in to .NET 9)
 - **Microsoft.Extensions.Logging.Abstractions** - Logging support
+- **Newtonsoft.Json** (`[11.0.2,14)`) - a **real transitive dependency**, pulled in by `Nethereum.JsonRpc.Client`/`Nethereum.RPC`; it is not "minimal dependencies" in the sense of avoiding Newtonsoft.Json entirely, only the RPC *wire payloads* in this package avoid it
 
 ## Quick Start
 
@@ -77,7 +77,7 @@ Console.WriteLine($"Balance: {balance}");
 
 ```csharp
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
 // RpcClient - full constructor (uses default NethereumRpcJsonContext for AOT)
 var client = new RpcClient("http://localhost:8545");
@@ -115,7 +115,7 @@ Console.WriteLine($"Gas Price: {gasPrice.Value} wei");
 
 ```csharp
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
 // Create client
 var client = new RpcClient("https://api.example.com/rpc");
@@ -194,7 +194,9 @@ Console.WriteLine($"Chain ID: {chainId.Value}");
 ### Example 5: Custom HttpMessageHandler for HTTP/2 and Connection Pooling
 
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
+using Nethereum.RPC.Eth.Blocks;
 using System.Net.Http;
 
 // Create custom SocketsHttpHandler with HTTP/2
@@ -216,7 +218,7 @@ var client = new RpcClient(
     context: NethereumRpcJsonContext.Default
 );
 
-client.ConnectionTimeout = TimeSpan.FromSeconds(30);
+ClientBase.ConnectionTimeout = TimeSpan.FromSeconds(30); // static on ClientBase - `client.ConnectionTimeout = ...` does not compile (CS0176)
 
 var ethBlockNumber = new EthBlockNumber(client);
 var blockNumber = await ethBlockNumber.SendRequestAsync();
@@ -282,7 +284,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
 public class BlockNumberFunction
 {
@@ -321,7 +323,7 @@ public class BlockNumberFunction
 **Program.cs:**
 ```csharp
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
-using Nethereum.RPC.Eth;
+using Nethereum.RPC.Eth.Blocks;
 
 var client = new RpcClient("http://localhost:8545");
 
@@ -457,10 +459,46 @@ public override Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, st
 protected override Task<RpcResponseMessage[]> SendAsync(RpcRequestMessage[] requests)
 ```
 
-### Properties
+### SimpleRpcClient
+
+A lighter alternative to `RpcClient` for callers that already own an `HttpClient` (`SimpleRpcClient.cs:15-57`):
 
 ```csharp
-public TimeSpan ConnectionTimeout { get; set; } // Default: 120 seconds
+public class SimpleRpcClient : ClientBase
+{
+    // Full constructor
+    public SimpleRpcClient(
+        Uri baseUrl,
+        HttpClient httpClient,
+        JsonSerializerOptions serializerOptions = null,
+        JsonSerializerContext context = null)
+
+    // Simple constructor (uses NethereumRpcJsonContext.Default, creates its own HttpClient)
+    public SimpleRpcClient(string url)
+}
+```
+
+### RpcHttpHandlerFactory
+
+Builds the default `SocketsHttpHandler` used by `RpcClient` when no `HttpMessageHandler` is supplied (`RpcHttpHandlerFactory.cs`):
+
+```csharp
+public static class RpcHttpHandlerFactory
+{
+    public static int MaxConnectionsPerServer { get; set; } = 20;
+    public static TimeSpan ConnectionLifetime { get; set; } = TimeSpan.FromMinutes(10);
+    public static TimeSpan IdleTimeout { get; set; } = TimeSpan.FromMinutes(5);
+
+    public static SocketsHttpHandler Create();
+}
+```
+
+### Properties
+
+`ConnectionTimeout` is inherited from `ClientBase` and is `static` - shared process-wide across every `ClientBase`-derived client, including this one:
+
+```csharp
+public static TimeSpan ConnectionTimeout { get; set; } // Default: 20 seconds
 public RequestInterceptor? OverridingRequestInterceptor { get; set; }
 ```
 
@@ -470,28 +508,25 @@ public RequestInterceptor? OverridingRequestInterceptor { get; set; }
 
 | Feature | SystemTextJsonRpcClient | RpcClient (Newtonsoft) |
 |---------|------------------------|------------------------|
-| **Target Framework** | .NET 7.0+ | .NET Standard 2.0+ |
-| **Serialization** | System.Text.Json | Newtonsoft.Json |
+| **Target Framework** | net9.0 only | net451;net461;netstandard2.0;net6.0;net8.0;net9.0;net10.0 |
+| **RPC payload serialization** | System.Text.Json | Newtonsoft.Json |
 | **AOT Support** | Yes (source generators) | No |
-| **Performance** | ~30% faster | Baseline |
-| **Memory Usage** | ~40% lower | Baseline |
-| **Binary Size (AOT)** | 10-15 MB | N/A |
-| **Startup Time (AOT)** | <50ms | N/A |
 | **Authentication** | Bearer, Basic | Basic only |
+
+**Note:** No benchmark numbers are published for this comparison - verify performance/memory claims yourself for your workload before relying on them.
 
 ### When to Use This Package
 
 **Use SystemTextJsonRpcClient when:**
-- Building .NET 7.0+ applications
+- Building .NET 9 applications
 - Using Native AOT compilation
-- Performance is critical (high throughput)
 - Cloud-native/serverless (Azure Functions, AWS Lambda)
 - Need Bearer token authentication
-- Want minimal memory footprint
+- Want source-generated (reflection-free) serialization for the curated RPC DTO set
 
 **Use RpcClient (Newtonsoft.Json) when:**
-- Need .NET Standard 2.0 / .NET Framework support
-- Using older .NET versions (.NET Core 2.1, .NET 5, etc.)
+- Need .NET Standard 2.0 / .NET Framework support, or any target other than net9.0
+- Using older or LTS .NET versions
 - Legacy codebases with Newtonsoft.Json
 - Need Unity support
 
@@ -511,12 +546,15 @@ public RequestInterceptor? OverridingRequestInterceptor { get; set; }
 
 ### JsonSourceGenerator Support
 
-The `NethereumRpcJsonContext` provides AOT-compatible serialization for:
-- All standard Ethereum RPC types (Block, Transaction, Receipt)
+`NethereumRpcJsonContext` (`NethereumRpcJsonContext.cs`) is a **curated** `JsonSerializerContext` - it does not cover every type in `Nethereum.RPC.Eth.DTOs`, only the types the attributes list explicitly, including:
+- Block, BlockWithTransactions, BlockWithTransactionHashes, Transaction, TransactionInput, TransactionReceipt
 - HexBigInteger, HexUTF8String
-- Filter inputs/outputs
-- State proofs and access lists
-- All Nethereum.RPC.Eth.DTOs types
+- FilterLog, CallInput, NewFilterInput, NewSubscriptionInput
+- EthSimulateInput/Result types, AccountAccess/AccessList (BAL) types, AccountProof/StorageProof
+- Engine API types (ExecutionPayloadV1-V4, ForkchoiceStateV1, PayloadAttributesV1-V4, etc.)
+- TxPool DTOs (TxPoolContentResponse, PendingTransactionInfo, etc.)
+
+If you need a type this context does not cover, pass your own `JsonSerializerContext`/`JsonSerializerOptions` via the `RpcClient`/`SimpleRpcClient` constructors, or fall back to reflection-based `System.Text.Json` (not AOT-safe).
 
 ### Thread Safety
 
@@ -533,26 +571,6 @@ Same exceptions as `Nethereum.JsonRpc.RpcClient`:
 | **RpcClientTimeoutException** | Request exceeded ConnectionTimeout |
 | **RpcClientUnknownException** | Network/HTTP errors |
 | **RpcResponseException** | JSON-RPC error from node |
-
-## Performance Comparison
-
-### Benchmark Results (1000 eth_blockNumber calls)
-
-| Client | Time | Memory | GC Collections |
-|--------|------|--------|----------------|
-| **SystemTextJsonRpcClient** | 847ms | 12 MB | Gen0: 5 |
-| RpcClient (Newtonsoft) | 1,124ms | 21 MB | Gen0: 12 |
-
-**Improvement:** ~30% faster, ~40% less memory
-
-### AOT vs JIT Startup Time
-
-| Deployment | Startup Time | Binary Size |
-|------------|--------------|-------------|
-| **Native AOT** | 42ms | 12 MB |
-| JIT (.NET 9) | 520ms | 65 MB |
-
-**Improvement:** ~12x faster startup, ~5x smaller binary
 
 ## Related Packages
 

@@ -1,11 +1,13 @@
 ---
-title: Mainnet Follower
+title: Mainnet Follower (Preview)
 sidebar_label: Overview
 sidebar_position: 1
 description: Run your own Ethereum mainnet node in .NET — sync, validate, and serve mainnet, and use it as your own data source.
 ---
 
-# Mainnet Follower
+# Mainnet Follower (Preview)
+
+> **PREVIEW** — The mainnet follower packages are in preview. APIs may change between releases.
 
 The Nethereum mainnet follower is a node that syncs Ethereum from the peer-to-peer network, validates every block, and serves the result over JSON-RPC, all in .NET. Running your own follower gives you a verified, self-hosted view of mainnet: your own data source, without a third-party provider's rate limits or trust assumptions.
 

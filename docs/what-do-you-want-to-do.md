@@ -111,7 +111,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 
 ---
 
-## Mainnet Follower
+## Mainnet Follower (Preview)
 
 | I want to... | Packages |
 |---|---|
@@ -311,8 +311,8 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **[Launch a sequencer and deploy contracts](application-chain/guide-appchain-quickstart)** | `Nethereum.AppChain.Server` |
 | **[Use AppChainBuilder for embedded/testing](application-chain/guide-appchain-quickstart)** | `Nethereum.AppChain.Sequencer` |
 | **[Configure RocksDB persistent storage](application-chain/guide-appchain-storage)** | `Nethereum.CoreChain.RocksDB` |
-| **[Sync follower nodes and verify state](application-chain/guide-appchain-sync)** | `Nethereum.AppChain.Sync` |
-| **Configure P2P networking between nodes** | `Nethereum.AppChain.P2P` |
+| **[Sync follower nodes and verify state](application-chain/guide-appchain-sync)** | `Nethereum.DevP2P.Sync` |
+| **Configure P2P networking between nodes** | `Nethereum.DevP2P` |
 | **Anchor AppChain state to L1** | `Nethereum.AppChain.Anchoring` |
 
 > See the [AppChains](./application-chain/overview) section.

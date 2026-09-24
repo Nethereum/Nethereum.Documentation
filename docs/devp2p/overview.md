@@ -1,11 +1,13 @@
 ---
-title: DevP2P
+title: DevP2P (Preview)
 sidebar_label: Overview
 sidebar_position: 1
 description: Ethereum peer-to-peer networking in .NET — the RLPx transport, node discovery, and the block and state sync engine.
 ---
 
-# DevP2P
+# DevP2P (Preview)
+
+> **PREVIEW** — The DevP2P networking and sync packages are in preview. APIs may change between releases.
 
 DevP2P is Ethereum's peer-to-peer networking stack, implemented in .NET. It provides the encrypted RLPx transport and the node discovery that Ethereum nodes use to find and connect to each other, together with the sync engine that downloads blocks and state over those connections.
 

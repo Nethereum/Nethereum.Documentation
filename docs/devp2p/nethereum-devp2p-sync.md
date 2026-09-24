@@ -2,7 +2,7 @@
 title: "Nethereum.DevP2P.Sync"
 sidebar_label: "Nethereum.DevP2P.Sync"
 sidebar_position: 100
-description: "The block and state sync engine for a Nethereum node syncing Ethereum over `eth/68`–`eth/71` and `snap/1`."
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.DevP2P.Sync/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.DevP2P.Sync`](https://www.nuget.org/packages/Nethereum.DevP2P.Sync/) | **Source**: [`src/Nethereum.DevP2P.Sync/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevP2P.Sync)
 # Nethereum.DevP2P.Sync
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 The block and state sync engine for a Nethereum node syncing Ethereum over `eth/68`–`eth/71` and `snap/1`.
 

@@ -2,7 +2,7 @@
 title: "Nethereum.MainnetChain"
 sidebar_label: "Nethereum.MainnetChain"
 sidebar_position: 100
-description: "A read-only Ethereum mainnet follower and serving node, hostable from a CLI, .NET host, or tests."
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.MainnetChain/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.MainnetChain`](https://www.nuget.org/packages/Nethereum.MainnetChain/) | **Source**: [`src/Nethereum.MainnetChain/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.MainnetChain)
 # Nethereum.MainnetChain
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 A read-only Ethereum mainnet follower and serving node, hostable from a CLI, .NET host, or tests.
 

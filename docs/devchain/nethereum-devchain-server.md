@@ -196,6 +196,7 @@ Create `appsettings.json` in the working directory:
 | `eth_gasPrice` | Gas price |
 | `eth_maxPriorityFeePerGas` | Priority fee |
 | `eth_feeHistory` | Fee history |
+| `eth_blobBaseFee` | Current blob base fee |
 | `eth_getBalance` | Account balance |
 | `eth_getCode` | Contract code |
 | `eth_getStorageAt` | Storage value |
@@ -203,6 +204,7 @@ Create `appsettings.json` in the working directory:
 | `eth_getBlockByNumber` | Block by number |
 | `eth_getBlockByHash` | Block by hash |
 | `eth_getBlockReceipts` | All receipts in block |
+| `eth_getBlockAccessList` | Block-level access list |
 | `eth_getTransactionByHash` | Transaction by hash |
 | `eth_getTransactionReceipt` | Transaction receipt |
 | `eth_sendRawTransaction` | Submit transaction |
@@ -217,6 +219,8 @@ Create `appsettings.json` in the working directory:
 | `eth_mining` | Mining status |
 | `eth_getBlockTransactionCountByHash` | Transaction count in block by hash |
 | `eth_getBlockTransactionCountByNumber` | Transaction count in block by number |
+| `eth_getUncleCountByBlockHash` | Uncle count in block by hash |
+| `eth_getUncleCountByBlockNumber` | Uncle count in block by number |
 | `eth_getTransactionByBlockHashAndIndex` | Transaction by block hash and index |
 | `eth_getTransactionByBlockNumberAndIndex` | Transaction by block number and index |
 | `eth_newFilter` | Create log filter |
@@ -224,6 +228,17 @@ Create `appsettings.json` in the working directory:
 | `eth_getFilterChanges` | Poll filter for changes |
 | `eth_getFilterLogs` | Get all logs for filter |
 | `eth_uninstallFilter` | Remove a filter |
+| `eth_simulateV1` | Simulate calls over blocks with state overrides |
+| `eth_config` | Active fork configuration |
+| `eth_capabilities` | Data-availability capabilities (blocks, logs, receipts, state, tx) |
+
+### Transaction Pool
+
+| Method | Description |
+|--------|-------------|
+| `txpool_status` | Pending/queued transaction counts |
+| `txpool_content` | Pending/queued transactions |
+| `txpool_contentFrom` | Pending/queued transactions for an address |
 
 ### Development
 
@@ -252,6 +267,13 @@ Create `appsettings.json` in the working directory:
 |--------|-------------|
 | `debug_traceTransaction` | Trace mined transaction |
 | `debug_traceCall` | Trace call without mining |
+| `debug_traceBlockByNumber` | Trace all transactions in a block by number |
+| `debug_traceBlockByHash` | Trace all transactions in a block by hash |
+| `debug_getRawHeader` | RLP-encoded block header |
+| `debug_getRawBlock` | RLP-encoded block |
+| `debug_getRawReceipts` | RLP-encoded receipts for a block |
+| `debug_getRawTransaction` | RLP-encoded transaction |
+| `debug_setHead` | Set the canonical chain head to a block number |
 
 ### Anvil Aliases
 

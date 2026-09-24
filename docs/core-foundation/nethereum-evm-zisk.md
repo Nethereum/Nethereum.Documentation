@@ -2,7 +2,7 @@
 title: "Nethereum.EVM.Zisk"
 sidebar_label: "Nethereum.EVM.Zisk"
 sidebar_position: 100
-description: "Bridge between [`Nethereum.EVM.Core`](../Nethereum.EVM.Core/README.md)"
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.EVM.Zisk/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.EVM.Zisk`](https://www.nuget.org/packages/Nethereum.EVM.Zisk/) | **Source**: [`src/Nethereum.EVM.Zisk/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.EVM.Zisk)
 # Nethereum.EVM.Zisk
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 Bridge between [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core)
 and the [Zisk zkVM](https://0xpolygonhermez.github.io/zisk/). Compiled

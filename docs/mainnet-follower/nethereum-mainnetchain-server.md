@@ -2,7 +2,7 @@
 title: "Nethereum.MainnetChain.Server"
 sidebar_label: "Nethereum.MainnetChain.Server"
 sidebar_position: 100
-description: "A read-only Ethereum mainnet follower with a JSON-RPC server, built in .NET. It syncs and validates blocks from the devp2p network, keeps a local state database, and serves that state over JSON-RPC — "
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.MainnetChain.Server/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.MainnetChain.Server`](https://www.nuget.org/packages/Nethereum.MainnetChain.Server/) | **Source**: [`src/Nethereum.MainnetChain.Server/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.MainnetChain.Server)
 # Nethereum.MainnetChain.Server
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 A read-only Ethereum mainnet follower with a JSON-RPC server, built in .NET. It syncs and validates blocks from the devp2p network, keeps a local state database, and serves that state over JSON-RPC — and, optionally, to other devp2p peers. It follows and serves the chain; it does not propose or mine.
 

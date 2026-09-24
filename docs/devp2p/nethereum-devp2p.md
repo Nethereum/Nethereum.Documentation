@@ -2,7 +2,7 @@
 title: "Nethereum.DevP2P"
 sidebar_label: "Nethereum.DevP2P"
 sidebar_position: 100
-description: "Ethereum peer-to-peer transport and node discovery: RLPx framing + handshake, discovery (discv4, discv5, DNS ENR trees), and peer dial scheduling."
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.DevP2P/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.DevP2P`](https://www.nuget.org/packages/Nethereum.DevP2P/) | **Source**: [`src/Nethereum.DevP2P/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevP2P)
 # Nethereum.DevP2P
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 Ethereum peer-to-peer transport and node discovery: RLPx framing + handshake, discovery (discv4, discv5, DNS ENR trees), and peer dial scheduling.
 

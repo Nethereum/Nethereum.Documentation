@@ -2,7 +2,7 @@
 title: "Nethereum.Zisk.Core"
 sidebar_label: "Nethereum.Zisk.Core"
 sidebar_position: 100
-description: "Managed runtime bindings for the [Zisk zkVM](https://0xpolygonhermez.github.io/zisk/)."
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Zisk.Core/README.md"
 format: md
 ---
@@ -11,6 +11,8 @@ format: md
 
 > **NuGet**: [`Nethereum.Zisk.Core`](https://www.nuget.org/packages/Nethereum.Zisk.Core/) | **Source**: [`src/Nethereum.Zisk.Core/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Zisk.Core)
 # Nethereum.Zisk.Core
+
+> **PREVIEW** — This package is in preview. APIs may change between releases.
 
 Managed runtime bindings for the [Zisk zkVM](https://0xpolygonhermez.github.io/zisk/).
 Used by guest binaries compiled to RISC-V that execute inside a

@@ -2,7 +2,7 @@
 title: "Nethereum.ChainNode.Hosting"
 sidebar_label: "Nethereum.ChainNode.Hosting"
 sidebar_position: 100
-description: "`Nethereum.ChainNode.Hosting` is the shared node-composition layer used by every Nethereum-hosted"
+description: "> PREVIEW — This package is in preview. APIs may change between releases."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.ChainNode.Hosting/README.md"
 format: md
 ---
@@ -10,6 +10,8 @@ format: md
 # Nethereum.ChainNode.Hosting
 
 > **NuGet**: [`Nethereum.ChainNode.Hosting`](https://www.nuget.org/packages/Nethereum.ChainNode.Hosting/) | **Source**: [`src/Nethereum.ChainNode.Hosting/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.ChainNode.Hosting)
+> **PREVIEW** — This package is in preview. APIs may change between releases.
+
 `Nethereum.ChainNode.Hosting` is the shared node-composition layer used by every Nethereum-hosted
 chain — the mainnet follower (`Nethereum.MainnetChain`), the AppChain server
 (`Nethereum.AppChain.Server.Core`), and the single-process DevChain (`Nethereum.DevChain`). It wires

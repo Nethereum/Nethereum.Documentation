@@ -909,16 +909,6 @@ const sidebars: SidebarsConfig = {
             'application-chain/nethereum-appchain-sequencer',
             {
               type: 'category',
-              label: 'Networking',
-              items: [
-                'application-chain/nethereum-appchain-sync',
-                'application-chain/nethereum-appchain-p2p',
-                'application-chain/nethereum-appchain-p2p-dotnetty',
-                'application-chain/nethereum-appchain-p2p-server',
-              ],
-            },
-            {
-              type: 'category',
               label: 'Governance & Anchoring',
               items: [
                 'application-chain/nethereum-appchain-policy',

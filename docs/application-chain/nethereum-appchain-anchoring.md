@@ -227,7 +227,7 @@ if requiresProof: IVerifier.verify(proof, publicInputs)
 |---|---|---|---|
 | 0 (NoProof) | address(0) | false | Nothing |
 | 1 (StarkHashOffChain) | StarkBlobCommitmentVerifier | false | Hash format |
-| 2 (SnarkOnChain) | PlonkVerifier (generated) | true | Cryptographic proof |
+| 2 (SnarkOnChain) | a deployment-supplied `IVerifier` (e.g. `ZiskVerifierAdapter`) | true | Cryptographic proof |
 
 Additional format verifiers for DA: `CalldataFormatVerifier`, `PipelinePayloadVerifier`, `CalldataStarkVerifier`.
 

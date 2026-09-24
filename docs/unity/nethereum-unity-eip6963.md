@@ -54,12 +54,12 @@ https://github.com/Nethereum/Nethereum.Unity.git
 
 ## Dependencies
 
-**Package References:**
-- Nethereum.EIP6963WalletInterop (core EIP-6963 abstraction)
-- Nethereum.Unity (Unity coroutine infrastructure)
-- Nethereum.JsonRpc.Client
-- Nethereum.RPC
-- UnityEngine
+**Direct References:**
+- Nethereum.EIP6963WalletInterop (core EIP-6963 abstraction) - ProjectReference
+- Nethereum.Unity (Unity coroutine infrastructure) - ProjectReference
+- UnityEngine (Reference)
+
+`Nethereum.JsonRpc.Client`, `Nethereum.RPC` and `Nethereum.Web3` are pulled in transitively through the references above.
 
 **JavaScript File:**
 - `NethereumEIP6963.jslib` - Browser JavaScript interop library for EIP-6963
@@ -447,8 +447,8 @@ public class WalletSelectionUI : MonoBehaviour
             var buttonText = button.GetComponentInChildren<Text>();
             buttonText.text = wallet.Name;
 
-            // Load wallet icon (data URI)
-            var icon = await LoadWalletIconAsync(wallet.Uuid);
+            // Load wallet icon (data URI) - already provided on the wallet info
+            var icon = LoadWalletIcon(wallet.Icon);
             if (icon != null)
             {
                 var buttonImage = button.GetComponent<Image>();
@@ -462,11 +462,9 @@ public class WalletSelectionUI : MonoBehaviour
         }
     }
 
-    async System.Threading.Tasks.Task<Texture2D> LoadWalletIconAsync(string walletUuid)
+    Texture2D LoadWalletIcon(string iconDataUri)
     {
-        // Icon is returned as data URI (e.g., "data:image/png;base64,...")
-        var iconDataUri = await walletProvider.GetWalletIconAsync(walletUuid);
-
+        // EIP6963WalletInfo.Icon is a data URI (e.g., "data:image/png;base64,...")
         // Parse data URI and convert to Texture2D
         // (Implementation depends on data URI format - PNG, SVG, etc.)
         return ConvertDataUriToTexture(iconDataUri);
@@ -526,7 +524,10 @@ async void SendTransaction()
 
     try
     {
-        string txHash = await walletProvider.SendTransactionAsync(transactionInput);
+        // Get the wallet-backed Web3 and send via the transaction manager;
+        // the browser wallet signs the transaction.
+        var web3 = await walletProvider.GetWeb3Async();
+        string txHash = await web3.Eth.TransactionManager.SendTransactionAsync(transactionInput);
         Debug.Log($"Transaction hash: {txHash}");
     }
     catch (System.Exception ex)
@@ -633,8 +634,8 @@ public class MultiWalletDApp : MonoBehaviour
             Debug.Log($"✓ Connected to {walletName}");
             Debug.Log($"  Account: {connectedAccount}");
 
-            // Get current chain
-            var chainId = await walletProvider.GetProviderChainIdAsync();
+            // Get current chain (exposed as a property, updated via NetworkChanged)
+            long chainId = walletProvider.SelectedNetworkChainId;
             Debug.Log($"  Chain ID: {chainId}");
 
         }
@@ -655,7 +656,9 @@ public class MultiWalletDApp : MonoBehaviour
 
         try
         {
-            var txHash = await walletProvider.SendTransactionAsync(transactionInput);
+            // Send through the wallet-backed Web3; the browser wallet signs it.
+            var web3 = await walletProvider.GetWeb3Async();
+            var txHash = await web3.Eth.TransactionManager.SendTransactionAsync(transactionInput);
             Debug.Log($"Transaction sent: {txHash}");
         }
         catch (System.Exception ex)

@@ -194,7 +194,8 @@ cargo build --release
 
 ## C API
 
-The library exports a single function (`include/graph_witness.h`):
+The library exports the witness-calculation entry point plus a `gw_free`
+helper for releasing buffers it allocates (`include/graph_witness.h`):
 
 ```c
 typedef struct {
@@ -210,6 +211,9 @@ int gw_calc_witness(
     size_t *wtns_len,                // OUT: witness length
     const gw_status_t *status        // OUT: error status
 );
+
+// Frees a buffer returned via wtns_data or gw_status_t.error_msg.
+void gw_free(void *ptr);
 ```
 
 ## Credits

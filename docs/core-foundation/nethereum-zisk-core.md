@@ -47,7 +47,8 @@ C# onto Zisk's execution environment:
 - **`ZiskKeccakHashProvider`** / **`ZiskSha256HashProvider`** — `IHashProvider`
   wrappers over the native keccak and sha256 accelerators.
 - **`ZiskPoseidonHashProvider`** — `IHashProvider` wrapping the Poseidon2
-  CSR (0x812) for Goldilocks-field binary trie state roots.
+  accelerator (the native `poseidon2_c` entry point) for Goldilocks-field
+  binary trie state roots.
   Width=16, rate=12, capacity=4, XOR-based sponge, 32-byte digest.
 - **`Ripemd160`** — managed implementation used as a fallback when the
   Zisk P/Invoke isn't available.
@@ -61,15 +62,31 @@ EVM-on-Zisk bridge.
 
 ### Dependencies
 
-None beyond `System.Runtime.InteropServices`. The runtime stays AOT-
-and trim-safe — no LINQ, no reflection, no `BinaryFormatter`.
+- A project reference to `Nethereum.Util` — the hash providers
+  (`ZiskKeccakHashProvider`, `ZiskSha256HashProvider`,
+  `ZiskPoseidonHashProvider`) implement its `IHashProvider` interface
+  (`Nethereum.Util.HashProviders`).
+- `System.Runtime.InteropServices` (BCL) for the `[DllImport]`
+  accelerator bindings.
+
+The Zisk.Core code itself uses no LINQ, reflection, or `BinaryFormatter`,
+keeping the guest side AOT- and trim-friendly.
 
 ## Build Pipeline
 
-The guest binary is built via `bflat` (RISC-V C# compiler) with a
-Zisk-compatible link script. See `scripts/build-evm-zisk.sh` and
-`scripts/Dockerfile.zisk-evm` in the Nethereum repo root for the
-reference build.
+The guest binary is built with `bflat`/NativeAOT cross-compiled to
+RISC-V (via the `nethereum/bflat-riscv64` Docker image) and linked
+against `libziskos.a`. The build orchestration lives in
+[`zisk/`](../../zisk/README.md) at the repo root:
+
+```bash
+bash zisk/scripts/setup-host.sh   # first-time setup (image + Zisk host tools)
+bash zisk/scripts/build.sh        # source mode
+bash zisk/scripts/build.sh --dll  # DLL mode
+```
+
+See [`zisk/README.md`](../../zisk/README.md) for the full build,
+proving, and verification flow.
 
 ## See Also
 

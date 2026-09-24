@@ -40,20 +40,24 @@ dotnet add package Nethereum.AccountAbstraction.AppChain
 
 - **Nethereum.AccountAbstraction** - Core ERC-4337 types and services
 - **Nethereum.AccountAbstraction.Bundler** - Bundler configuration
-- **Nethereum.Web3** - Web3 instance for contract interaction
-- **Nethereum.Contracts** - Contract service base classes
+- **Nethereum.AppChain** - AppChain host and DevP2P stack
+
+Nethereum.Web3 and Nethereum.Contracts are pulled in transitively.
 
 ## Quick Start
 
 ```csharp
-using Nethereum.AccountAbstraction.AppChain;
+using Nethereum.AccountAbstraction.AppChain.Configuration;
+using Nethereum.AccountAbstraction.AppChain.Deployment;
+using Nethereum.AccountAbstraction.AppChain.Services;
+using Nethereum.Web3;
 
 // Deploy all AA infrastructure
 var deployer = new AADeployer(web3);
 var deployment = await deployer.DeployAsync(new AppChainConfig
 {
     Owner = ownerAddress,
-    InitialPaymasterDeposit = Web3.Convert.ToWei(10)
+    InitialPaymasterDeposit = 10 // ETH; AADeployer converts to wei internally
 });
 
 // Use the high-level service
@@ -62,8 +66,9 @@ var aaService = new AppChainAccountAdminService(web3, deployment);
 // Invite a user
 await aaService.InviteUserAsync(userAddress);
 
-// Create an account for the user
-var accountAddress = await aaService.GetAccountAddressAsync(salt: 0, initData);
+// Predict the account address for the user's config (stable before deployment)
+var accountConfig = new AppChainAccountConfig { Owner = userAddress, Salt = 0 };
+var accountAddress = await aaService.GetAccountAddressForConfigAsync(accountConfig);
 ```
 
 ## Usage Examples
@@ -71,14 +76,17 @@ var accountAddress = await aaService.GetAccountAddressAsync(salt: 0, initData);
 ### Example 1: Full Deployment
 
 ```csharp
-using Nethereum.AccountAbstraction.AppChain;
+using Nethereum.AccountAbstraction.AppChain.Configuration;
+using Nethereum.AccountAbstraction.AppChain.Deployment;
+using Nethereum.AccountAbstraction.AppChain.Services;
+using Nethereum.Web3;
 
 var deployer = new AADeployer(web3);
 var deployment = await deployer.DeployAsync(new AppChainConfig
 {
     Owner = ownerAddress,
     Admins = new[] { admin1, admin2 },
-    InitialPaymasterDeposit = Web3.Convert.ToWei(100)
+    InitialPaymasterDeposit = 100 // ETH; AADeployer converts to wei internally
 });
 
 Console.WriteLine($"EntryPoint: {deployment.EntryPointAddress}");
@@ -137,8 +145,8 @@ High-level AppChain Account Abstraction API.
 public class AppChainAccountAdminService
 {
     // User management
-    public Task InviteUserAsync(string userAddress);
-    public Task BanUserAsync(string userAddress, string reason);
+    public Task<string> InviteUserAsync(string userAddress);
+    public Task<string> BanUserAsync(string userAddress, string reason);
     public Task<bool> IsInvitedAsync(string userAddress);
     public Task<bool> IsActiveAsync(string userAddress);
 
@@ -180,6 +188,7 @@ Properties: `EntryPointAddress`, `AccountFactoryAddress`, `AccountRegistryAddres
 ### Dependencies
 - **[Nethereum.AccountAbstraction](../account-abstraction/nethereum-accountabstraction)** - Core ERC-4337 framework
 - **[Nethereum.AccountAbstraction.Bundler](../account-abstraction/nethereum-accountabstraction-bundler)** - Bundler configuration
+- **[Nethereum.AppChain](nethereum-appchain)** - AppChain host and DevP2P stack
 
 ### See Also
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - AppChain server that hosts the bundler

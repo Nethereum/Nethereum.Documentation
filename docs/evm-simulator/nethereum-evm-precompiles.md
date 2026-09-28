@@ -13,7 +13,7 @@ format: md
 # Nethereum.EVM.Precompiles
 
 Default crypto backend bundle and pre-built mainnet hardfork registry
-for [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core).
+for [`Nethereum.EVM.Core`](nethereum-evm-core).
 
 ## Overview
 
@@ -41,7 +41,7 @@ implementations behind Ethereum's precompiled contracts
 
 Ship this package when you run an EVM on a standard .NET host. For
 zkVM guest builds (Zisk), use
-[`Nethereum.EVM.Zisk`](nethereum-evm-zisk)'s
+[`Nethereum.EVM.Zisk`](../zk-proofs/nethereum-evm-zisk)'s
 `ZiskPrecompileBackends` instead — same `PrecompileBackends` POCO
 shape, but every crypto call routes through witness-backed ZiskCrypto
 P/Invokes.
@@ -54,14 +54,14 @@ dotnet add package Nethereum.EVM.Precompiles
 
 ### Dependencies
 
-- [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core) — `PrecompileBackends`, `HardforkRegistry`, `HardforkConfig`, `PrecompileRegistry`.
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — `PrecompileBackends`, `HardforkRegistry`, `HardforkConfig`, `PrecompileRegistry`.
 - [`Nethereum.Signer`](../signing-and-key-management/nethereum-signer) — secp256k1 recover for the EcRecover backend and `BN128Curve` for the BN128 backend.
 
 (`Nethereum.Util` and BouncyCastle arrive transitively; they are not direct references.)
 
 For BLS12-381 (EIP-2537) and KZG (EIP-4844) add the satellite packages:
-- [`Nethereum.EVM.Precompiles.Bls`](../evm-simulator/nethereum-evm-precompiles-bls)
-- [`Nethereum.EVM.Precompiles.Kzg`](../evm-simulator/nethereum-evm-precompiles-kzg)
+- [`Nethereum.EVM.Precompiles.Bls`](nethereum-evm-precompiles-bls)
+- [`Nethereum.EVM.Precompiles.Kzg`](nethereum-evm-precompiles-kzg)
 
 ## Quick Start
 
@@ -123,11 +123,11 @@ var executor = new TransactionExecutor(prague);
 
 ## See Also
 
-- [`Nethereum.EVM.Core`](../evm-simulator/nethereum-evm-core) — hardfork
+- [`Nethereum.EVM.Core`](nethereum-evm-core) — hardfork
   registry machinery and `PrecompileBackends` contract.
-- [`Nethereum.EVM.Precompiles.Bls`](../evm-simulator/nethereum-evm-precompiles-bls)
+- [`Nethereum.EVM.Precompiles.Bls`](nethereum-evm-precompiles-bls)
   — EIP-2537 BLS12-381 precompiles.
-- [`Nethereum.EVM.Precompiles.Kzg`](../evm-simulator/nethereum-evm-precompiles-kzg)
+- [`Nethereum.EVM.Precompiles.Kzg`](nethereum-evm-precompiles-kzg)
   — EIP-4844 KZG point-evaluation precompile.
-- [`Nethereum.EVM.Zisk`](nethereum-evm-zisk) — Zisk
+- [`Nethereum.EVM.Zisk`](../zk-proofs/nethereum-evm-zisk) — Zisk
   zkVM-backed alternative to these defaults.

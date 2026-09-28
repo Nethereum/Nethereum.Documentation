@@ -13,11 +13,13 @@ An AppChain is a lightweight, domain-specific chain that extends Ethereum. This 
 
 :::tip The Simple Way
 ```bash
-# Launch a sequencer
-nethereum-appchain --chain-id 420420 --genesis-owner-key $KEY --sequencer-key $KEY
+# Launch a sequencer, serving eth/snap over DevP2P so followers can sync from it
+nethereum-appchain --chain-id 420420 --genesis-owner-key $KEY --sequencer-key $KEY \
+  --enable-devp2p-serve --devp2p-serve-port 30403
 
-# Launch a follower
-nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sync-peers http://sequencer:8546
+# Launch a follower — dial the sequencer's enode, not its JSON-RPC port
+nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sequencer-address $SEQ_ADDR \
+  --follow-peer enode://<sequencer-id>@<host>:30403
 ```
 That's it. Full EVM, JSON-RPC, WebSocket subscriptions — standard Ethereum interface.
 :::
@@ -45,10 +47,11 @@ nethereum-appchain \
   --name "MyAppChain" \
   --genesis-owner-key 0xYOUR_PRIVATE_KEY \
   --sequencer-key 0xYOUR_PRIVATE_KEY \
-  --block-time 1000
+  --block-time 1000 \
+  --enable-devp2p-serve
 ```
 
-This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces blocks every 1000ms. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options.
+This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces blocks every 1000ms. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options. `--enable-devp2p-serve` makes the sequencer advertise `eth`/`snap` over DevP2P so followers have a peer to dial — see [Launch a Follower](#launch-a-follower) below.
 
 Key CLI options for the sequencer:
 
@@ -63,6 +66,8 @@ Key CLI options for the sequencer:
 | `--db-path` | `./appchain-data` | RocksDB data directory |
 | `--in-memory` | `false` | Use in-memory storage (no persistence) |
 | `--deploy-mud-world` | `true` | Deploy MUD World contracts at genesis |
+| `--enable-devp2p-serve` | `false` | Serve `eth`/`snap` over DevP2P so followers can sync from this node |
+| `--devp2p-serve-port` | `30403` | DevP2P listen port for served followers |
 
 ## Launch a Follower
 
@@ -75,11 +80,10 @@ nethereum-appchain \
   --name "MyAppChain" \
   --genesis-owner-address 0xOWNER_ADDRESS \
   --sequencer-address 0xSEQUENCER_ADDRESS \
-  --sync-peers http://sequencer:8546 \
-  --sync-poll-interval 100
+  --follow-peer enode://<sequencer-node-id>@<host>:30403
 ```
 
-The follower connects to the sequencer's JSON-RPC endpoint, polls for new blocks, and re-executes transactions to validate state roots. It serves the same JSON-RPC interface as the sequencer but doesn't produce blocks. See the [Syncing guide](guide-appchain-sync) for multi-peer failover and batch sync.
+The sequencer must be launched with `--enable-devp2p-serve` so it advertises `eth`/`snap` over DevP2P for followers to dial. The follower connects over RLPx to the sequencer's `--follow-peer` enode (not its JSON-RPC port), snap-syncs the state at the pivot, re-executes blocks to validate state roots, and then follows the chain head live. It serves the same JSON-RPC interface as the sequencer but doesn't produce blocks. See the [Syncing guide](guide-appchain-sync) for how the DevP2P sync stack drives this.
 
 Note the follower uses `--genesis-owner-address` (not `--genesis-owner-key`) because it doesn't need the private key — it just needs to know the address to reconstruct the same genesis state.
 

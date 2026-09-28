@@ -11,7 +11,7 @@ Nethereum is the .NET integration platform for Ethereum and EVM-compatible block
 
 ## What Can You Build?
 
-Nethereum includes **130+ packages** covering the full Ethereum development stack:
+Nethereum includes **134 packages** covering the full Ethereum development stack:
 
 - **Smart contract interaction** — deploy, call, and listen to events for ERC-20, ERC-721, ERC-1155, ENS, and any custom contract
 - **Code generation** — generate typed C# services from Solidity ABI
@@ -64,7 +64,7 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 |---|---|
 | **[Getting Started](/docs/getting-started/installation)** | Install, create a project, send your first transaction |
 | **[What Do You Want to Do?](/docs/what-do-you-want-to-do)** | 44 use cases mapped to guides and packages |
-| **[Architecture Map](/docs/architecture)** | How 130+ packages are layered and relate to each other |
+| **[Architecture Map](/docs/architecture)** | How 134 packages are layered and relate to each other |
 | **[Component Catalog](/docs/component-catalog)** | Every package with descriptions, READMEs, and links |
 
 ### Documentation Sections

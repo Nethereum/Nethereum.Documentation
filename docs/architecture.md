@@ -213,15 +213,14 @@ graph TD
 
 ```mermaid
 graph TD
-    Sync["Nethereum.AppChain.Sync"] --> AppChain["Nethereum.AppChain"]
-    P2PServer["Nethereum.AppChain.P2P.Server"] --> P2P["Nethereum.AppChain.P2P"]
-    P2PDotNetty["Nethereum.AppChain.P2P.DotNetty"] --> P2P
-    P2P --> AppChain
+    DevP2PSync["Nethereum.DevP2P.Sync"] --> AppChain["Nethereum.AppChain"]
 
     Policy["Nethereum.AppChain.Policy"] --> AppChain
     Anchoring["Nethereum.AppChain.Anchoring"] --> AppChain
     Clique["Nethereum.Consensus.Clique"] --> AppChain
 ```
+
+Followers sync over the shared `Nethereum.DevP2P.Sync` stack — there is no separate AppChain sync or P2P package; see the [Syncing guide](application-chain/guide-appchain-sync).
 
 ---
 
@@ -389,7 +388,7 @@ Real-world package combinations for typical projects.
 |---|---|
 | **Basic dApp** | `Nethereum.Web3` |
 | **Local Dev** | `Nethereum.DevChain` + `Nethereum.DevChain.Server` + `Nethereum.Explorer` |
-| **Production AppChain** | `Nethereum.AppChain.Server` + `Nethereum.AppChain.Sequencer` + `Nethereum.AppChain.P2P.Server` + `Nethereum.AppChain.Anchoring` |
+| **Production AppChain** | `Nethereum.AppChain.Server` + `Nethereum.AppChain.Sequencer` + `Nethereum.DevP2P.Sync` + `Nethereum.AppChain.Anchoring` |
 | **Blockchain Indexer** | `Nethereum.BlockchainProcessing` + `Nethereum.BlockchainStore.Postgres` + `Nethereum.TokenServices` |
 | **MUD World** | `Nethereum.Mud` + `Nethereum.Mud.Contracts` + `Nethereum.Mud.Repositories.Postgres` |
 | **Blazor Wallet** | `Nethereum.Wallet.UI.Components.Blazor` + `Nethereum.EIP6963WalletInterop` + `Nethereum.Reown.AppKit.Blazor` |

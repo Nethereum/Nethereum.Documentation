@@ -281,7 +281,11 @@ const sidebars: SidebarsConfig = {
           label: 'Package Reference',
           items: [
             'evm-simulator/nethereum-evm',
+            'evm-simulator/nethereum-evm-core',
             'evm-simulator/nethereum-evm-contracts',
+            'evm-simulator/nethereum-evm-precompiles',
+            'evm-simulator/nethereum-evm-precompiles-bls',
+            'evm-simulator/nethereum-evm-precompiles-kzg',
           ],
         },
       ],
@@ -312,6 +316,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'mainnet-follower/nethereum-mainnetchain',
             'mainnet-follower/nethereum-mainnetchain-server',
+            'mainnet-follower/nethereum-chainnode-hosting',
             'mainnet-follower/nethereum-corechain',
             {
               type: 'category',
@@ -829,6 +834,8 @@ const sidebars: SidebarsConfig = {
             'zk-proofs/nethereum-zkproofs-snarkjs-blazor',
             'zk-proofs/nethereum-zkproofs-rapidsnark',
             'zk-proofs/nethereum-circomwitnesscalc',
+            'zk-proofs/nethereum-evm-zisk',
+            'zk-proofs/nethereum-zisk-core',
           ],
         },
       ],
@@ -877,6 +884,8 @@ const sidebars: SidebarsConfig = {
             'client-extensions/nethereum-geth',
             'client-extensions/nethereum-besu',
             'client-extensions/nethereum-quorum',
+            'client-extensions/nethereum-did',
+            'client-extensions/nethereum-did-ethrdid',
           ],
         },
       ],

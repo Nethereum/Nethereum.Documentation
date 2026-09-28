@@ -99,6 +99,7 @@ const PACKAGE_CATEGORY = {
   'Nethereum.EVM': 'evm-simulator',
   'Nethereum.EVM.Core': 'evm-simulator',
   'Nethereum.EVM.Contracts': 'evm-simulator',
+  'Nethereum.EVM.Precompiles': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Bls': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Kzg': 'evm-simulator',
 
@@ -109,6 +110,7 @@ const PACKAGE_CATEGORY = {
   'Nethereum.CoreChain.RocksDB': 'mainnet-follower',
   'Nethereum.CoreChain.Freezer': 'mainnet-follower',
   'Nethereum.Freezer': 'mainnet-follower',
+  'Nethereum.ChainNode.Hosting': 'mainnet-follower',
 
   // §5 DevP2P (Ethereum peer-to-peer networking + sync stack)
   'Nethereum.DevP2P': 'devp2p',
@@ -122,12 +124,11 @@ const PACKAGE_CATEGORY = {
   'Nethereum.AppChain': 'application-chain',
   'Nethereum.AppChain.Server': 'application-chain',
   'Nethereum.AppChain.Sequencer': 'application-chain',
-  'Nethereum.AppChain.Sync': 'application-chain',
-  'Nethereum.AppChain.P2P': 'application-chain',
-  'Nethereum.AppChain.P2P.DotNetty': 'application-chain',
-  'Nethereum.AppChain.P2P.Server': 'application-chain',
+  'Nethereum.AppChain.Server.Core': 'application-chain',
   'Nethereum.AppChain.Policy': 'application-chain',
   'Nethereum.AppChain.Anchoring': 'application-chain',
+  'Nethereum.AppChain.Anchoring.Postgres': 'application-chain',
+  'Nethereum.Explorer.Anchoring': 'application-chain',
   'Nethereum.Consensus.Clique': 'application-chain',
   // AA-on-AppChain lives in the AppChain area (its own full section), not Account Abstraction
   'Nethereum.AccountAbstraction.AppChain': 'application-chain',
@@ -207,6 +208,10 @@ const PACKAGE_CATEGORY = {
   'Nethereum.ZkProofs.Snarkjs.Blazor': 'zk-proofs',
   'Nethereum.ZkProofs.RapidSnark': 'zk-proofs',
   'Nethereum.CircomWitnessCalc': 'zk-proofs',
+  'Nethereum.EVM.Zisk': 'zk-proofs',
+  'Nethereum.Zisk.Core': 'zk-proofs',
+  'Nethereum.Zisk.Prover.Server': 'zk-proofs',
+  'Nethereum.BlockProver.Server': 'zk-proofs',
 
   // §12 Consensus Light Client
   'Nethereum.Ssz': 'consensus-light-client',
@@ -217,6 +222,8 @@ const PACKAGE_CATEGORY = {
   // §10 Client Extensions
   'Nethereum.Geth': 'client-extensions',
   'Nethereum.Besu': 'client-extensions',
+  'Nethereum.DID': 'client-extensions',
+  'Nethereum.DID.EthrDID': 'client-extensions',
 
   // Misc packages
   'Nethereum.BigInteger.N351': 'core-foundation',

@@ -95,7 +95,7 @@ or `DefaultHardforkConfigs.Prague` before calling the extension.
 
 ## See Also
 
-- [`Nethereum.EVM.Precompiles`](../core-foundation/nethereum-evm-precompiles)
+- [`Nethereum.EVM.Precompiles`](nethereum-evm-precompiles)
   — the default backend bundle this layers on top of.
 - [`Nethereum.EVM.Precompiles.Kzg`](nethereum-evm-precompiles-kzg)
   — the sibling EIP-4844 KZG precompile.

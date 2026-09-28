@@ -87,7 +87,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | **AppChains (Preview)** | |
 | [Launch a sequencer and deploy contracts](application-chain/guide-appchain-quickstart) | [`Nethereum.AppChain.Server`](application-chain/nethereum-appchain-server) (Preview) |
 | [Configure RocksDB persistent storage](application-chain/guide-appchain-storage) | [`Nethereum.CoreChain.RocksDB`](mainnet-follower/nethereum-corechain-rocksdb) (Preview) |
-| [Sync follower nodes and verify state](application-chain/guide-appchain-sync) | [`Nethereum.AppChain.Sync`](application-chain/nethereum-appchain-sync) (Preview) |
+| [Sync follower nodes and verify state](application-chain/guide-appchain-sync) | [`Nethereum.DevP2P.Sync`](devp2p/nethereum-devp2p-sync) |
 | Use System.Text.Json / AOT-friendly RPC | [`Nethereum.JsonRpc.SystemTextJsonRpcClient`](json-rpc-transport/nethereum-jsonrpc-systemtextjsonrpcclient) |
 | Stream real-time data via WebSocket subscriptions | [`Nethereum.JsonRpc.WebSocketStreamingClient`](json-rpc-transport/nethereum-jsonrpc-websocketstreamingclient) |
 
@@ -270,10 +270,6 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.AppChain](application-chain/nethereum-appchain) | Core chain abstraction, genesis, IAppChain interface |
 | [Nethereum.AppChain.Server](application-chain/nethereum-appchain-server) | HTTP/WS JSON-RPC server (CLI tool) |
 | [Nethereum.AppChain.Sequencer](application-chain/nethereum-appchain-sequencer) | Block production, transaction ordering, AppChainBuilder |
-| [Nethereum.AppChain.Sync](application-chain/nethereum-appchain-sync) | Multi-peer sync, batch import, finality tracking |
-| [Nethereum.AppChain.P2P](application-chain/nethereum-appchain-p2p) | P2P security: reputation, rate limiting, authentication |
-| [Nethereum.AppChain.P2P.DotNetty](application-chain/nethereum-appchain-p2p-dotnetty) | DotNetty transport implementation |
-| [Nethereum.AppChain.P2P.Server](application-chain/nethereum-appchain-p2p-server) | Complete P2P node with Clique PoA |
 | [Nethereum.AppChain.Policy](application-chain/nethereum-appchain-policy) | Governance, access control, merkle authorization |
 | [Nethereum.AppChain.Anchoring](application-chain/nethereum-appchain-anchoring) | L1 state root commitment and verification |
 | [Nethereum.Consensus.Clique](application-chain/nethereum-consensus-clique) | Clique Proof-of-Authority consensus engine |

@@ -55,11 +55,10 @@ Sequencer Node (produces blocks)
 
 Follower Node (syncs and verifies)
     │
-    ├── Multi-peer sync with automatic failover
-    ├── Batch import for historical catch-up
-    ├── Live block polling for chain head
-    ├── Optional block re-execution for state validation
-    └── Finality tracking (soft vs L1-anchored)
+    ├── Shared DevP2P sync stack (RLPx transport, eth + snap)
+    ├── Dials the producer's --follow-peer enode
+    ├── Snap-bootstraps state, then forward-executes and follows the head
+    └── Re-executes every block and rejects state-root mismatches
 ```
 
 ## The Simple Path
@@ -67,7 +66,7 @@ Follower Node (syncs and verifies)
 | Task | How |
 |------|-----|
 | Launch a sequencer | `nethereum-appchain --chain-id 420420 --genesis-owner-key $KEY --sequencer-key $KEY` |
-| Launch a follower | `nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sync-peers http://sequencer:8546` |
+| Launch a follower | `nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sequencer-address $SEQ_ADDR --follow-peer enode://<producer-id>@<host>:30403` |
 | Use persistent storage | `nethereum-appchain --db-path ./chaindata` (RocksDB, default) |
 | Use in-memory storage | `nethereum-appchain --in-memory` |
 | Deploy contracts | Use Hardhat, Foundry, Remix, or Nethereum — same as any Ethereum network |
@@ -92,10 +91,7 @@ Follower Node (syncs and verifies)
 | `Nethereum.AppChain.Sequencer` | Block production, transaction ordering, AppChainBuilder | Preview |
 | `Nethereum.CoreChain` | Storage interfaces, block production, RPC framework | Preview |
 | `Nethereum.CoreChain.RocksDB` | RocksDB persistent storage backend | Preview |
-| `Nethereum.AppChain.Sync` | Multi-peer sync, batch import, finality tracking | Preview |
-| `Nethereum.AppChain.P2P` | P2P security: reputation, rate limiting, authentication | Preview |
-| `Nethereum.AppChain.P2P.DotNetty` | DotNetty transport implementation | Preview |
-| `Nethereum.AppChain.P2P.Server` | Complete P2P node with Clique PoA | Preview |
+| `Nethereum.DevP2P.Sync` | Shared eth/snap sync stack — followers sync over DevP2P, not a separate AppChain sync engine | Preview |
 | `Nethereum.AppChain.Policy` | Governance, access control, merkle authorization | Preview |
 | `Nethereum.AppChain.Anchoring` | L1 state root commitment and verification | Preview |
 | `Nethereum.Consensus.Clique` | Clique Proof-of-Authority consensus engine | Preview |
@@ -108,4 +104,4 @@ Follower Node (syncs and verifies)
 |---|---|
 | [AppChain Quickstart](guide-appchain-quickstart) | Launch a sequencer and follower, deploy contracts, interact via web3, programmatic AppChain with AppChainBuilder |
 | [Storage](guide-appchain-storage) | Storage interfaces, in-memory vs RocksDB, column families, configuration tuning |
-| [Syncing Follower Nodes](guide-appchain-sync) | Multi-peer sync, batch import, live polling, state validation, finality tracking |
+| [Syncing Follower Nodes](guide-appchain-sync) | How followers sync over the shared DevP2P stack: `--follow-peer`, snap bootstrap, forward execution, and independent state-root verification |

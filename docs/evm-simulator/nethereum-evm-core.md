@@ -603,6 +603,6 @@ Assert.False(result.IsValidationError);
 ## See also
 
 - [`Nethereum.EVM`](nethereum-evm) — the async host build of this same source, plus RPC state, decoding, state-change extraction and debugging.
-- [`Nethereum.EVM.Precompiles`](../core-foundation/nethereum-evm-precompiles) — the default crypto backends and `DefaultMainnetHardforkRegistry`.
+- [`Nethereum.EVM.Precompiles`](nethereum-evm-precompiles) — the default crypto backends and `DefaultMainnetHardforkRegistry`.
 - `Nethereum.EVM.Precompiles.Bls` / `Nethereum.EVM.Precompiles.Kzg` — the BLS and KZG backends.
 - `Nethereum.EVM.Zisk` — the zkVM guest wiring that consumes the `EVM_SYNC` build.

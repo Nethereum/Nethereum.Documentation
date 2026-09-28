@@ -179,5 +179,5 @@ verification checklist, and environment overrides (`ZISK_IMAGE`,
   and `BinaryBlockWitness` format.
 - [`Nethereum.Zisk.Core`](nethereum-zisk-core) — Zisk
   runtime bindings.
-- [`Nethereum.EVM.Precompiles`](nethereum-evm-precompiles)
+- [`Nethereum.EVM.Precompiles`](../evm-simulator/nethereum-evm-precompiles)
   — the non-zkVM backend bundle this mirrors in shape.

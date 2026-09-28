@@ -115,7 +115,7 @@ bool valid = kzg.VerifyBlobKzgProof(blob, commitment, proof);
 
 ## See Also
 
-- [`Nethereum.EVM.Precompiles`](../core-foundation/nethereum-evm-precompiles)
+- [`Nethereum.EVM.Precompiles`](nethereum-evm-precompiles)
   — default backend bundle and registry singleton.
 - [`Nethereum.EVM.Precompiles.Bls`](nethereum-evm-precompiles-bls)
   — sibling EIP-2537 BLS12-381 precompiles.

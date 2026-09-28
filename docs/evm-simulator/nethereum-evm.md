@@ -659,6 +659,6 @@ Precompile coverage depends on what you wire: `DefaultPrecompileRegistries.Front
 ## See also
 
 - [`Nethereum.EVM.Core`](nethereum-evm-core) — the shared engine and the guest build.
-- [`Nethereum.EVM.Precompiles`](../core-foundation/nethereum-evm-precompiles) — the default crypto backends, source-linked into this package.
+- [`Nethereum.EVM.Precompiles`](nethereum-evm-precompiles) — the default crypto backends, source-linked into this package.
 - `Nethereum.EVM.Precompiles.Bls` / `Nethereum.EVM.Precompiles.Kzg` — BLS12-381 and KZG.
 - `Nethereum.CoreChain` — block production, chain storage, and the Patricia root calculators.

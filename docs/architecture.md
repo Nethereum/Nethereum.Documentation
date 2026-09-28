@@ -213,11 +213,10 @@ graph TD
 
 ```mermaid
 graph TD
-    DevP2PSync["Nethereum.DevP2P.Sync"] --> AppChain["Nethereum.AppChain"]
-
-    Policy["Nethereum.AppChain.Policy"] --> AppChain
-    Anchoring["Nethereum.AppChain.Anchoring"] --> AppChain
-    Clique["Nethereum.Consensus.Clique"] --> AppChain
+    ServerCore["Nethereum.AppChain.Server.Core"] --> DevP2PSync["Nethereum.DevP2P.Sync"]
+    ServerCore --> Anchoring["Nethereum.AppChain.Anchoring"]
+    ServerCore --> Clique["Nethereum.Consensus.Clique"]
+    Sequencer["Nethereum.AppChain.Sequencer"] --> Anchoring
 ```
 
 Followers sync over the shared `Nethereum.DevP2P.Sync` stack — there is no separate AppChain sync or P2P package; see the [Syncing guide](application-chain/guide-appchain-sync).

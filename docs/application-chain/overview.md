@@ -35,7 +35,7 @@ If you can deploy to Sepolia, you can deploy to your AppChain. Zero new tooling.
 Sequencer Node (produces blocks)
     │
     ├── AppChain (IAppChain)
-    │   ├── Full EVM execution (Prague hardfork)
+    │   ├── Full EVM execution (Amsterdam hardfork)
     │   ├── Pluggable storage (InMemory / RocksDB)
     │   ├── Genesis with pre-funded accounts + CREATE2 factory
     │   └── Optional MUD World deployment

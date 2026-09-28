@@ -122,9 +122,8 @@ The server exposes more than just JSON-RPC:
 | WS | `/ws` | WebSocket subscriptions (`eth_subscribe`) |
 | GET | `/health` | Health check |
 | GET | `/status` | Comprehensive node status |
-| GET | `/metrics` | Prometheus metrics |
+| GET | `/metrics` | Prometheus metrics (when a metrics port is configured) |
 | GET | `/blocks/latest` | Latest block header |
-| GET | `/sync/status` | Sync status (followers) |
 
 ## Programmatic AppChain with AppChainBuilder
 
@@ -147,7 +146,6 @@ The builder supports all the same options as the CLI:
 ```csharp
 var chain = await new AppChainBuilder("MyChain", 420420)
     .WithOperator(privateKey)
-    .WithStorage(StorageType.RocksDb, "./data/mychain")
     .WithBaseFee(0)
     .WithBlockGasLimit(30_000_000)
     .WithOnDemandBlocks()
@@ -156,6 +154,8 @@ var chain = await new AppChainBuilder("MyChain", 420420)
 ```
 
 `WithOnDemandBlocks()` produces a block immediately when a transaction is submitted — useful for tests where you don't want to wait for interval-based production.
+
+`AppChainBuilder` runs fully in-memory (its default storage). For persistent RocksDB storage, run the AppChain via the CLI (RocksDB is the default; use `--db-path` to set the location) or inject stores manually — `WithStorage(StorageType.RocksDb, …)` on the builder is not supported and throws `NotSupportedException`.
 
 ### Presets
 
@@ -199,12 +199,15 @@ The `AppChainRpcClient` routes JSON-RPC calls directly to the in-process node wi
 By default, the AppChain deploys MUD World contracts during genesis (controlled by `--deploy-mud-world`). This means you can use the [MUD Framework](../mud-framework/overview) immediately:
 
 ```csharp
-var app = new AppNamespace(web3, worldAddress);
-await app.RegisterNamespaceRequestAndWaitForReceiptAsync();
-await app.Tables.BatchRegisterAllTablesRequestAndWaitForReceiptAsync();
+var chain = await new AppChainBuilder("MyChain", 420420)
+    .WithOperator(privateKey)
+    .BuildAsync();
+
+// The deployed World address (null if MUD was not deployed at genesis)
+var worldAddress = chain.MudResult?.WorldAddress;
 ```
 
-The MUD World address is available in `AppChainConfig.WorldAddress` after initialization.
+From there, register namespaces and tables using your MUD-generated namespace and table services — see the [MUD Framework guide](../mud-framework/guide-mud-quickstart). The generated namespace class derives from `NamespaceBase` and exposes `RegisterNamespaceRequestAndWaitForReceiptAsync()` and `Tables.BatchRegisterAllTablesRequestAndWaitForReceiptAsync()`.
 
 ## Common Gotchas
 
@@ -216,4 +219,4 @@ The MUD World address is available in `AppChainConfig.WorldAddress` after initia
 ## Next Steps
 
 - **[Storage](guide-appchain-storage)** — configure RocksDB for production, understand storage interfaces, tune performance
-- **[Syncing Follower Nodes](guide-appchain-sync)** — multi-peer sync, batch import, state validation, finality tracking
+- **[Syncing Follower Nodes](guide-appchain-sync)** — sync a follower over the shared DevP2P stack (`--follow-peer`), snap bootstrap, forward execution, and independent state-root verification

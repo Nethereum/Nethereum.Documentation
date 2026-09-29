@@ -100,9 +100,10 @@ When verification fails, `result.Error` contains one of these messages:
 | Error | Cause |
 |-------|-------|
 | `"Pairing check failed"` | Proof is invalid — tampered proof, wrong inputs, or mismatched VK |
-| `"Proof JSON is null or empty"` | Empty or null proof JSON string |
-| `"Verification key JSON is null or empty"` | Empty or null VK JSON string |
-| `"Public inputs JSON is null or empty"` | Empty or null public inputs JSON string |
+| `"Expected N public inputs but got M"` | The number of public inputs does not match the verification key |
+| `"Verification error: <message>"` | An exception occurred during verification |
+
+A null or empty proof, verification key, or public-inputs JSON string throws an `ArgumentException` before verification (it does not produce a `result.Error`).
 
 ## Related
 

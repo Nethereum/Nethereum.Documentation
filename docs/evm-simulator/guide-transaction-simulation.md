@@ -13,7 +13,7 @@ This is the same pattern used by the Nethereum Wallet to show users a transactio
 
 :::tip The Simple Way
 ```csharp
-var executor = new TransactionExecutor(HardforkConfig.Default);
+var executor = new TransactionExecutor(DefaultHardforkConfigs.Default);
 var result = await executor.ExecuteAsync(ctx);
 // result.Success, result.GasUsed, result.Logs, result.Traces
 ```
@@ -65,7 +65,9 @@ Pinning to a specific block number ensures consistent state throughout the simul
 `TransactionExecutionContext` holds everything the EVM needs: the transaction fields, block context, and state service.
 
 ```csharp
+using Nethereum.EVM;
 using Nethereum.EVM.Execution;
+using Nethereum.EVM.Precompiles;
 using Nethereum.Hex.HexConvertors.Extensions;
 using System.Numerics;
 
@@ -98,14 +100,14 @@ var ctx = new TransactionExecutionContext
 ### Step 3: Execute
 
 ```csharp
-var config = HardforkConfig.Default;  // Prague rules (latest)
+var config = DefaultHardforkConfigs.Default;  // Osaka rules; Amsterdam via DefaultMainnetHardforkRegistry.Instance.Get(HardforkName.Amsterdam)
 var executor = new TransactionExecutor(config);
 var execResult = await executor.ExecuteAsync(ctx);
 ```
 
 The executor runs the full EVM pipeline: intrinsic gas calculation, contract code loading, opcode execution, sub-calls, and gas refund accounting.
 
-`HardforkConfig` controls which EIPs are active. Use `HardforkConfig.Cancun` for Cancun-era rules or `HardforkConfig.Prague` (the default) for the latest.
+`HardforkConfig` controls which EIPs are active. Use `DefaultHardforkConfigs.Cancun` or `.Prague` for a specific fork; `DefaultHardforkConfigs.Default` is Osaka.
 
 ### Step 4: Decode the Result
 
@@ -214,7 +216,7 @@ var ctx = new TransactionExecutionContext
 };
 
 // 3. Execute
-var executor = new TransactionExecutor(HardforkConfig.Default);
+var executor = new TransactionExecutor(DefaultHardforkConfigs.Default);
 var execResult = await executor.ExecuteAsync(ctx);
 
 // 4. Decode

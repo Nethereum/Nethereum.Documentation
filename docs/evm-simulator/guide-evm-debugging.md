@@ -26,14 +26,15 @@ A debug session wraps a `Program` that has been executed with tracing enabled:
 ```csharp
 using Nethereum.EVM;
 using Nethereum.EVM.Debugging;
+using Nethereum.EVM.Precompiles;
 
 // First, execute with tracing
-var vm = new EVMSimulator();
+var vm = new EVMSimulator(DefaultHardforkConfigs.Cancun);
 var program = new Program(contractCode, context);
-await vm.ExecuteAsync(program, traceEnabled: true);
+await vm.ExecuteWithCallStackAsync(program, traceEnabled: true);
 
 // Create debug session
-var session = new EVMDebuggerSession(program);
+var session = program.CreateDebugSession(abiStorage, chainId);
 ```
 
 The session provides navigation over the recorded trace — it doesn't re-execute instructions. All stepping is instant.
@@ -50,7 +51,7 @@ session.StepForward();
 session.StepBack();
 
 // Jump to a specific step
-session.GoTo(42);
+session.GoToStep(42);
 
 // Get current position
 var currentStep = session.CurrentStep;
@@ -70,9 +71,9 @@ var sourceLocation = session.GetSourceLocationForStep(session.CurrentStep);
 
 if (sourceLocation != null)
 {
-    Console.WriteLine($"File: {sourceLocation.FileName}");
-    Console.WriteLine($"Line: {sourceLocation.Line}");
-    Console.WriteLine($"Column: {sourceLocation.Column}");
+    Console.WriteLine($"File: {sourceLocation.FilePath}");
+    Console.WriteLine($"Line: {sourceLocation.LineNumber}");
+    Console.WriteLine($"Column: {sourceLocation.ColumnNumber}");
     Console.WriteLine($"Length: {sourceLocation.Length}");
 }
 
@@ -92,9 +93,9 @@ var callInfo = session.GetCallInfoForStep(session.CurrentStep);
 
 if (callInfo != null)
 {
-    Console.WriteLine($"Contract: {callInfo.ContractAddress}");
+    Console.WriteLine($"Contract: {callInfo.TargetAddress}");
     Console.WriteLine($"Function: {callInfo.FunctionName}");
-    Console.WriteLine($"Depth: {callInfo.Depth}");
+    Console.WriteLine($"Depth: {session.CurrentDepth}");
 }
 ```
 
@@ -115,7 +116,7 @@ foreach (var step in steps)
 // Navigate to the first match
 if (steps.Any())
 {
-    session.GoTo(steps.First());
+    session.GoToStep(steps.First());
 }
 ```
 
@@ -150,7 +151,7 @@ The `EvmDebugService` in `Nethereum.Blazor.Solidity` provides a higher-level API
 
 ```csharp
 // In the Blazor Solidity debugger:
-var debugService = new EvmDebugService(web3, compiledArtifacts);
+var debugService = new EvmDebugService(web3, abiStorage);
 
 // Replay an on-chain transaction
 var replayResult = await debugService.ReplayTransactionAsync(txHash);

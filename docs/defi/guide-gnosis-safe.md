@@ -11,10 +11,11 @@ description: Build, sign, and execute multi-signature transactions through Gnosi
 ```csharp
 var safeAccount = new SafeAccount(safeAddress, chainId, privateKey);
 var web3 = new Web3(safeAccount, rpcUrl);
-// Any contract service now executes through the Safe automatically
-var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(to, amount);
+// Any ContractWeb3ServiceBase-derived service now executes through the Safe automatically
+var myTokenService = new MyTokenService(web3, contractAddress); // a generated service
+var receipt = await myTokenService.TransferRequestAndWaitForReceiptAsync(to, amount);
 ```
-Use `SafeAccount` to route all contract calls through a Safe — no manual transaction wrapping needed.
+Use `SafeAccount` to route contract calls through a Safe — no manual transaction wrapping needed.
 :::
 
 Gnosis Safe (now "Safe") is the most widely used multi-signature wallet on Ethereum. It requires M-of-N owner signatures before executing any transaction, making it essential for DAO treasuries, team wallets, and high-value operations. Nethereum provides a complete integration — from manually building Safe transactions with EIP-712 signatures, to a transparent `SafeAccount` that makes any contract service execute through a Safe automatically.
@@ -39,14 +40,13 @@ var safeAccount = new SafeAccount(safeAddress, chainId, privateKey);
 var web3 = new Web3(safeAccount, "https://mainnet.infura.io/v3/YOUR_KEY");
 ```
 
-Now any contract service created from this `web3` instance will automatically execute through the Safe. For example, an ERC-20 transfer:
+Now any contract service derived from `ContractWeb3ServiceBase` and created from this `web3` instance (for example a `HubService` or a generated service) will automatically execute through the Safe. The built-in `ERC20ContractService` does not qualify, because it is not a `ContractWeb3ServiceBase`. For example, with a generated token service:
 
 ```csharp
-var erc20Service = new Nethereum.Contracts.Standards.ERC20.ERC20ContractService(
-    web3.Eth, erc20Address);
+var tokenService = new MyTokenService(web3, tokenAddress);
 
 // This transfer executes through the Safe — signed by the SafeAccount's key
-var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(
+var receipt = await tokenService.TransferRequestAndWaitForReceiptAsync(
     recipientAddress, 1000000);
 ```
 
@@ -58,17 +58,18 @@ If you already have a contract service and want to switch it to Safe execution w
 
 ```csharp
 using Nethereum.GnosisSafe;
-using Nethereum.Contracts.Standards.ERC20;
 
 var web3 = new Web3(new Account(privateKey), rpcUrl);
-var erc20Service = new ERC20ContractService(web3.Eth, contractAddress);
+var tokenService = new MyTokenService(web3, contractAddress); // any ContractWeb3ServiceBase-derived service
 
 // Switch this service to execute through Safe
-erc20Service.ChangeContractHandlerToSafeExecTransaction(safeAddress, privateKey);
+tokenService.ChangeContractHandlerToSafeExecTransaction(safeAddress, privateKey);
 
 // All future calls on this service go through the Safe
-var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(to, amount);
+var receipt = await tokenService.TransferRequestAndWaitForReceiptAsync(to, amount);
 ```
+
+`ChangeContractHandlerToSafeExecTransaction<T>` is constrained to `T : ContractWeb3ServiceBase`, so it applies to services such as `HubService` or generated services, not to the built-in `ERC20ContractService`.
 
 This is useful when you need some services to go through the Safe and others to execute directly. Only the services you explicitly switch will use Safe execution.
 
@@ -108,7 +109,7 @@ var execTx = await safeService.BuildTransactionAsync(
 var receipt = await safeService.ExecTransactionRequestAndWaitForReceiptAsync(execTx);
 ```
 
-The `BuildTransactionAsync` method fetches the current Safe nonce, creates the EIP-712 typed data hash, signs it with each provided key, orders the signatures by signer address (required by Safe), and returns a ready-to-submit `ExecTransactionFunction`.
+The `BuildTransactionAsync` method fetches the current Safe nonce, creates the EIP-712 typed data hash, signs it with each provided key and concatenates the signatures via `GetCombinedSignaturesInOrder`, which sorts them by signature hex string (the Safe contract requires ascending signer-address order, so this helper does not by itself guarantee a valid order), and returns a ready-to-submit `ExecTransactionFunction`.
 
 ## Multi-Signature Workflow
 
@@ -158,16 +159,16 @@ Safe signatures have a custom V value format — standard Ethereum uses V=27/28,
 ### Combine and Execute
 
 ```csharp
-var signatures = new List<SafeSignature>
+var signatures = new List<GnosisSafeService.SafeSignature>
 {
-    new SafeSignature { Address = owner1Address, Signature = signature1 },
-    new SafeSignature { Address = owner2Address, Signature = signature2 }
+    new GnosisSafeService.SafeSignature { Address = owner1Address, Signature = signature1 },
+    new GnosisSafeService.SafeSignature { Address = owner2Address, Signature = signature2 }
 };
 
 var combinedSignatures = safeService.GetCombinedSignaturesInOrder(signatures);
 ```
 
-Safe requires signatures ordered by signer address (ascending). The `GetCombinedSignaturesInOrder` method handles sorting and concatenation.
+`GetCombinedSignaturesInOrder` sorts the signatures by their hex string and concatenates them. Safe requires ascending signer-address order, so verify the resulting order for your owners.
 
 ## MultiSend: Batch Multiple Actions
 

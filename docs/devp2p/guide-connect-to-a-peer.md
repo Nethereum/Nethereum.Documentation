@@ -167,7 +167,7 @@ Capability negotiation only checks *which protocols* two peers share — it says
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `ConnectAsync` throws `RlpxPeerRejectedException` | The remote peer rejected the handshake (full, banned you, or a capability mismatch) | Inspect the exception's `DisconnectReason`; not always retryable |
+| `ConnectAsync` throws `RlpxPeerRejectedException` | The remote peer rejected the handshake (full, banned you, or a capability mismatch) | Inspect the exception's `Reason` (a `DisconnectReason`); not always retryable |
 | `ConnectAsync` throws `RlpxNetRestrictedException` | None of the target's resolved IPs match your configured `NetRestrict` allow-list | Widen `NetRestrict`, or confirm you dialed the address you intended |
 | `SharedCapabilities` is empty or missing `eth` | Passed the wrong pubkey form, or the peer only advertises protocols you don't support | Confirm you passed `remotePubNoPrefix` (64-byte uncompressed key, no `0x04`) to the raw `ConnectAsync(host, port, pubkey)` overload — `StaticPeerConnector` handles this for you from an `enode://` string |
 | Connects, but never receives blocks | Handshake succeeded but the fork-ID Status check (in `Nethereum.DevP2P.Sync`) rejected the peer, or no `eth`/`snap` dispatch loop is wired to `PeerAccepted` | See [Run a Node](./guide-run-a-node) — `RlpxListener` alone does not run the protocol loop |

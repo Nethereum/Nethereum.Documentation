@@ -17,7 +17,7 @@ var web3 = devChain.CreateWeb3(account);
 That's it. A full Ethereum node running in your process — no Docker, no binaries, no setup.
 :::
 
-Nethereum DevChain is a complete in-process Ethereum node. It runs the full EVM (up to Prague hardfork), mines blocks instantly, and gives you funded accounts out of the box. This guide gets you from zero to a working local chain in under a minute.
+Nethereum DevChain is a complete in-process Ethereum node. It runs the full EVM (up to the Amsterdam hardfork; the `DevChainConfig` default is Prague and the DevChain server defaults to Amsterdam), mines blocks instantly, and gives you funded accounts out of the box. This guide gets you from zero to a working local chain in under a minute.
 
 ## Prerequisites
 
@@ -85,7 +85,7 @@ var devChain = new DevChainNode(config);
 await devChain.StartAsync(account);
 ```
 
-For Hardhat or Anvil compatibility (ChainId 31337, same mnemonic), use the presets:
+For Hardhat or Anvil compatibility (ChainId 31337, 30M gas limit, 1 gwei base fee) use the presets. The Hardhat/Anvil mnemonic is a `DevChainServerConfig` / CLI setting, not part of the preset:
 
 ```csharp
 var devChain = new DevChainNode(DevChainConfig.Hardhat);
@@ -128,7 +128,7 @@ var web3 = devChain.CreateWeb3(account);
 
 ## Storage Options
 
-By default, DevChain uses SQLite for blocks/transactions/receipts/logs and in-memory storage for account state. The SQLite database is deleted automatically when the node is disposed.
+By default, DevChain uses SQLite for blocks, transactions, receipts, logs, account state and trie nodes; only the filter registry is in memory. The SQLite database is deleted automatically when the node is disposed.
 
 **Fully in-memory** (fastest, no disk I/O):
 

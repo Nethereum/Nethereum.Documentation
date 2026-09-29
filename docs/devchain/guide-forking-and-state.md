@@ -141,7 +141,7 @@ Finding the right storage slot requires knowledge of the contract's storage layo
 
 ## Account Impersonation
 
-When using the HTTP server, you can impersonate any address — sign transactions as if you were that account, even without the private key:
+When using the HTTP server, `hardhat_impersonateAccount` records an address as impersonated. DevChain does not sign or send transactions for impersonated accounts (there is no `eth_sendTransaction` handler):
 
 ```bash
 # Via RPC
@@ -150,7 +150,7 @@ curl -X POST http://127.0.0.1:8545 \
   -d '{"jsonrpc":"2.0","method":"hardhat_impersonateAccount","params":["0xWhaleAddress"],"id":1}'
 ```
 
-This is useful for testing governance proposals, simulating whale movements, or interacting as a multisig. Stop impersonation with `hardhat_stopImpersonatingAccount`.
+Stop impersonation with `hardhat_stopImpersonatingAccount`.
 
 ## Always Pin the Block Number
 

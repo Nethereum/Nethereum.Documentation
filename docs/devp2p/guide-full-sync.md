@@ -66,14 +66,13 @@ The `headersFromStore: true` path assumes headers are already in the store. `Bac
 
 ## Keeping the tip band fed independently
 
-Phase 1's archive backfill and the "keep the live tip fresh" job are deliberately separate concerns: `TipBandBodyFollowService` fills `[execution-head+1 .. trusted-tip]` with bodies and receipts so the block executor never starves waiting on the *history* drain to catch up. It's driven the same way as a bounded backfill, but against an `IBodyFillCursor` anchored at the execution head rather than a fixed `[start, end]` range:
+Phase 1's archive backfill and the "keep the live tip fresh" job are deliberately separate concerns: `TipBandBodyFollowService` fills `[execution-head+1 .. trusted-tip]` with bodies and receipts so the block executor never starves waiting on the *history* drain to catch up. It runs its own poll loop against an `ExecutionHeadBodyFillCursor` anchored at the execution head rather than a fixed `[start, end]` range:
 
 ```csharp
 var service = new TipBandBodyFollowService(scheduler, pool, bundle, activations);
-var cursor = new ExecutionHeadBodyFillCursor(bundle);
 
-await service.FillOnceAsync(backfiller, cursor, ct);
-// cursor advances to the trusted tip independently of bundle.Metadata's archive body cursor
+await service.RunAsync(ct);
+// polls until cancelled; the tip-band cursor advances to the trusted tip independently of bundle.Metadata's archive body cursor
 ```
 
 Notice the archive cursor (`bundle.Metadata.GetLastFetchedBody()`) does **not** move when you drive the tip band this way — the two cursors track different things on purpose, so a slow archive backfill can never stall block execution at the tip.
@@ -110,7 +109,7 @@ Phase 1 validates the parent-hash chain as it fetches, so a peer serving a block
 |---|---|
 | Fill a bounded, known range of blocks | `ParallelBlockBackfiller.BackfillAsync(start, end, ct)` |
 | Fill bodies/receipts over headers already in the store | `BackfillAsync(start, end, headersFromStore: true, ct)` |
-| Keep the live tip fed without waiting on history | `TipBandBodyFollowService.FillOnceAsync` |
+| Keep the live tip fed without waiting on history | `TipBandBodyFollowService.RunAsync` |
 | Consume blocks as a stream with reorg handling | `IBlockSource` (`DevP2PBlockSource` pulling, or `PushedBlockSource` for a push model) |
 | Lay the header skeleton itself, backward from a trusted tip | `BackwardBlockWalker` |
 

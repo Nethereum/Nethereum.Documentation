@@ -32,6 +32,7 @@ CoreChain provides in-memory implementations for all storage interfaces — usef
 
 ```csharp
 using Nethereum.CoreChain.Storage.InMemory;
+using Nethereum.Merkle.Patricia.Storage;
 
 var blockStore = new InMemoryBlockStore();
 var txStore = new InMemoryTransactionStore(blockStore);
@@ -39,7 +40,7 @@ var receiptStore = new InMemoryReceiptStore();
 var logStore = new InMemoryLogStore();
 var stateStore = new InMemoryStateStore();
 var filterStore = new InMemoryFilterStore();
-var trieNodeStore = new InMemoryTrieNodeStore();
+var trieNodeStore = new InMemoryContentNodeStore();
 ```
 
 For persistent storage, use `Nethereum.CoreChain.RocksDB` (see [Custom Storage](guide-custom-storage)).
@@ -50,13 +51,29 @@ The `BlockProducer` takes pending transactions, executes them through the EVM, a
 
 ```csharp
 using Nethereum.CoreChain;
+using Nethereum.CoreChain.Forks;
+using Nethereum.EVM;
+
+var stateRootCalculator = new IncrementalStateRootCalculator(stateStore, trieNodeStore);
+var engine = new BlockExecutor(
+    stateStore,
+    blockStore,
+    new FixedChainActivations(HardforkName.Prague),
+    chainConfigFactory: _ => chainConfig,
+    hardforkConfigFactory: _ => chainConfig.GetHardforkConfig(),
+    stateRootCalculator: stateRootCalculator,
+    rewardPolicy: NoRewardPolicy.Instance,
+    trieNodeStore: trieNodeStore);
 
 var producer = new BlockProducer(
-    blockStore, txStore, receiptStore,
-    logStore, stateStore, trieNodeStore, chainConfig);
+    engine,
+    blockStore, txStore, receiptStore, logStore, stateStore,
+    trieNodeStore, stateRootCalculator);
 
-var result = await producer.ProduceBlockAsync(pendingTransactions);
+var result = await producer.ProduceBlockAsync(pendingTransactions, options);
 ```
+
+`options` is a `BlockProductionOptions`; `pendingTransactions` is a `List<ISignedTransaction>`.
 
 The result contains the block header (with state root, receipts root, transactions root), all processed transaction results, gas used, and the logs bloom filter.
 
@@ -67,17 +84,23 @@ CoreChain defines `IChainNode` as the unified interface for chain implementation
 ```csharp
 public interface IChainNode
 {
-    IBlockStore BlockStore { get; }
-    ITransactionStore TransactionStore { get; }
-    IReceiptStore ReceiptStore { get; }
-    IStateStore StateStore { get; }
-    ILogStore LogStore { get; }
-    IFilterStore FilterStore { get; }
-    ITrieNodeStore TrieNodeStore { get; }
+    ChainConfig Config { get; }
+    IBlockStore Blocks { get; }
+    ITransactionStore Transactions { get; }
+    IUncleStore Uncles { get; }
+    IReceiptStore Receipts { get; }
+    ILogStore Logs { get; }
+    IStateStore State { get; }
+    IFilterStore Filters { get; }
+    ITrieNodeStore TrieNodes { get; }
+    IBlobStore BlobStore { get; }
+    IBlockAccessListStore BlockAccessLists { get; }
+    IProofService ProofService { get; }
 
-    Task<CallResult> CallAsync(CallInput callInput, string blockParameter = "latest");
-    Task<BigInteger> EstimateGasAsync(CallInput callInput);
-    Task<byte[]> SendRawTransactionAsync(byte[] signedTransaction);
+    Task<CallResult> CallAsync(string to, byte[] data, string from = null, BigInteger? value = null,
+        BigInteger? gasLimit = null, Dictionary<string, StateOverride> stateOverrides = null,
+        List<Authorisation7702Signed> authorisationList = null);
+    Task<TransactionExecutionResult> SendTransactionAsync(ISignedTransaction tx);
     // ... block, transaction, and state accessors
 }
 ```
@@ -116,7 +139,7 @@ var chainConfig = new ChainConfig
 };
 ```
 
-The chain config controls the chain ID, and is passed to the block producer and RPC handlers.
+The chain config controls the chain ID, and is passed to the `BlockExecutor` factories and exposed as `IChainNode.Config`.
 
 ## Next Steps
 

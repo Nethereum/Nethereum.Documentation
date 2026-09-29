@@ -38,7 +38,7 @@ var receipt = await web3.Eth.GetEtherTransferService()
 // Trace it
 var traceConfig = new OpcodeTraceConfig
 {
-    DisableMemory = false,
+    EnableMemory = true,
     DisableStack = false,
     DisableStorage = false
 };
@@ -55,7 +55,7 @@ The trace result contains a `StructLogs` array — one entry per executed opcode
 | `Gas` | Gas remaining |
 | `GasCost` | Gas consumed by this opcode |
 | `Depth` | Call depth (1 = top-level, 2+ = internal calls) |
-| `Stack` | Stack contents (bottom to top) |
+| `Stack` | Stack contents (top of stack first) |
 | `Memory` | Memory contents (hex) |
 | `Storage` | Storage changes at this step |
 
@@ -75,7 +75,7 @@ var callInput = new CallInput
 
 var trace = await node.TraceCallAsync(
     callInput,
-    new OpcodeTraceConfig { DisableMemory = true },
+    new OpcodeTraceConfig { EnableMemory = false },
     stateOverrides: null
 );
 ```
@@ -109,7 +109,7 @@ curl -X POST http://127.0.0.1:8545 \
   -d '{
     "jsonrpc": "2.0",
     "method": "debug_traceTransaction",
-    "params": ["0xTXHASH", {"disableMemory": true}],
+    "params": ["0xTXHASH", {"enableMemory": false}],
     "id": 1
   }'
 
@@ -122,7 +122,7 @@ curl -X POST http://127.0.0.1:8545 \
     "params": [
       {"from": "0x...", "to": "0x...", "data": "0x..."},
       "latest",
-      {"disableMemory": true}
+      {"enableMemory": false}
     ],
     "id": 1
   }'
@@ -135,7 +135,7 @@ Control what data is captured to balance detail vs. performance:
 ```csharp
 var traceConfig = new OpcodeTraceConfig
 {
-    DisableMemory = true,   // Skip memory dumps (large, often not needed)
+    EnableMemory = false,   // Skip memory dumps (large, often not needed)
     DisableStack = false,   // Keep stack data (essential for debugging)
     DisableStorage = false  // Keep storage changes (useful for state debugging)
 };
@@ -146,7 +146,7 @@ For simple gas analysis, disable everything except the opcodes:
 ```csharp
 var minimal = new OpcodeTraceConfig
 {
-    DisableMemory = true,
+    EnableMemory = false,
     DisableStack = true,
     DisableStorage = true
 };

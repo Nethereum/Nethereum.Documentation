@@ -45,7 +45,7 @@ See the [SIWE guide](guide-siwe) for the full authentication flow including NFT-
 
 ## Gnosis Safe
 
-`Nethereum.GnosisSafe` provides multi-signature wallet interaction with Permit2 support.
+`Nethereum.GnosisSafe` provides multi-signature wallet interaction: EIP-712 Safe transaction signing, MultiSend, and `SafeAccount`, which routes contract services through a Safe.
 
 ## Privacy Pools (0xbow)
 

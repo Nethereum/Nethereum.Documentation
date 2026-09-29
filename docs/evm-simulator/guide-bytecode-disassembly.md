@@ -89,7 +89,7 @@ Console.WriteLine($"Has transfer: {hasTransfer}");
 Console.WriteLine($"Has all ERC-20 functions: {hasAll}");
 ```
 
-This checks whether the selector bytes appear as `PUSH4` operands in the bytecode — the standard pattern for Solidity function dispatch.
+This checks whether the selector appears as a `PUSH4` operand followed by `EQ` and `PUSH2` — the standard pattern for Solidity function dispatch.
 
 ## Real-World Example: Analyzing a Deployed Contract
 
@@ -134,7 +134,7 @@ This pattern is useful for verifying that a contract implements expected interfa
 
 ## Supported Opcodes
 
-The disassembler supports all EVM opcodes through the Prague hard fork:
+The disassembler supports all EVM opcodes through the Amsterdam hard fork (including `CLZ` and `SLOTNUM`):
 
 | Category | Opcodes |
 |----------|---------|

@@ -7,9 +7,9 @@ description: Simulate ERC-20 operations with the specialized token simulator
 
 # ERC-20 Token Simulation
 
-The `ERC20ContractSimulator` provides a specialized environment for simulating ERC-20 token operations — transfers, approvals, and balance queries — without deploying to a real network. It automatically discovers the token's storage layout and manages balance/allowance state internally.
+The `ERC20ContractSimulator` provides a specialized environment for simulating ERC-20 token operations without deploying to a real network. It can discover the slot of a mapping(address => uint256) balance layout (`CalculateMappingBalanceSlotAsync`) and simulate transfer and balanceOf.
 
-Use this when you need to test token transfer behavior in isolation — for example, detecting fee-on-transfer tokens or validating approval flows. For broader transaction simulation (DEX swaps, router calls, multi-contract interactions), use the [Transaction Simulation](guide-transaction-simulation) pipeline instead.
+Use this when you need to test token transfer behavior in isolation — for example, detecting fee-on-transfer tokens. For broader transaction simulation (DEX swaps, router calls, multi-contract interactions), use the [Transaction Simulation](guide-transaction-simulation) pipeline instead.
 
 ## Prerequisites
 
@@ -22,20 +22,14 @@ dotnet add package Nethereum.EVM.Contracts
 The `ERC20ContractSimulator` wraps a real ERC-20 contract's bytecode and simulates operations locally:
 
 ```csharp
-using Nethereum.EVM.Contracts;
-using Nethereum.EVM.BlockchainState;
+using Nethereum.EVM.Contracts.ERC20;
 using Nethereum.Web3;
 
 var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_KEY");
 
-// Create state service for fetching real token state
-var nodeDataService = new RpcNodeDataService(
-    web3.Eth, BlockParameter.CreateLatest());
-var stateService = new ExecutionStateService(nodeDataService);
-
 // Create the token simulator
 var tokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
-var simulator = new ERC20ContractSimulator(tokenAddress, stateService);
+var simulator = new ERC20ContractSimulator(web3, 1, tokenAddress);
 ```
 
 The simulator fetches the actual contract bytecode and storage from the blockchain, so it behaves identically to the real token.
@@ -49,23 +43,12 @@ var sender = "0xSenderAddress";
 var recipient = "0xRecipientAddress";
 var amount = BigInteger.Parse("1000000"); // 1 USDC (6 decimals)
 
-// Check balance before
-var balanceBefore = await simulator.BalanceOfAsync(sender);
-Console.WriteLine($"Sender balance before: {balanceBefore}");
+var result = await simulator.SimulateTransferAndBalanceStateAsync(sender, recipient, amount);
 
-// Simulate transfer
-var result = await simulator.TransferAsync(sender, recipient, amount);
-
-if (result.Success)
-{
-    var balanceAfter = await simulator.BalanceOfAsync(sender);
-    Console.WriteLine($"Sender balance after: {balanceAfter}");
-    Console.WriteLine($"Gas used: {result.GasUsed}");
-}
-else
-{
-    Console.WriteLine($"Transfer would fail: {result.Error}");
-}
+Console.WriteLine($"Sender balance before: {result.BalanceSenderBefore}");
+Console.WriteLine($"Sender balance after: {result.BalanceSenderAfter}");
+Console.WriteLine($"Recipient balance before: {result.BalanceReceiverBefore}");
+Console.WriteLine($"Recipient balance after: {result.BalanceReceiverAfter}");
 ```
 
 The simulation modifies local state only — no transaction is broadcast.
@@ -75,56 +58,24 @@ The simulation modifies local state only — no transaction is broadcast.
 Some tokens (like SafeMoon or USDT on certain chains) take a fee on every transfer. The simulator can detect this by comparing the expected transfer amount with the actual balance change:
 
 ```csharp
-var balanceSenderBefore = await simulator.BalanceOfAsync(sender);
-var balanceRecipientBefore = await simulator.BalanceOfAsync(recipient);
+var result = await simulator.SimulateTransferAndBalanceStateAsync(sender, recipient, amount);
 
-var result = await simulator.TransferAsync(sender, recipient, amount);
+var feeTaken = amount - (result.BalanceReceiverAfter - result.BalanceReceiverBefore);
 
-if (result.Success)
+if (feeTaken > 0)
 {
-    var balanceSenderAfter = await simulator.BalanceOfAsync(sender);
-    var balanceRecipientAfter = await simulator.BalanceOfAsync(recipient);
-
-    var senderDiff = balanceSenderBefore - balanceSenderAfter;
-    var recipientDiff = balanceRecipientAfter - balanceRecipientBefore;
-
-    if (recipientDiff < senderDiff)
-    {
-        var fee = senderDiff - recipientDiff;
-        Console.WriteLine($"Fee-on-transfer detected: {fee} tokens taken as fee");
-    }
+    Console.WriteLine($"Fee-on-transfer detected: {feeTaken} tokens taken as fee");
 }
-```
-
-## Simulating Approve and TransferFrom
-
-The approval flow requires two steps, just like on-chain:
-
-```csharp
-// 1. Owner approves spender
-var owner = "0xOwnerAddress";
-var spender = "0xSpenderAddress";
-var approveAmount = BigInteger.Parse("5000000"); // 5 USDC
-
-var approveResult = await simulator.ApproveAsync(owner, spender, approveAmount);
-
-// 2. Check allowance
-var allowance = await simulator.AllowanceAsync(owner, spender);
-Console.WriteLine($"Allowance: {allowance}");
-
-// 3. Spender transfers from owner
-var transferResult = await simulator.TransferFromAsync(
-    spender, owner, recipient, BigInteger.Parse("1000000"));
 ```
 
 ## Checking Events
 
-The simulation result includes all events emitted, which you can inspect for `Transfer` and `Approval` events:
+The simulation result includes the `Transfer` logs emitted, in `TransferLogs`:
 
 ```csharp
-if (result.Logs != null)
+if (result.TransferLogs != null)
 {
-    foreach (var log in result.Logs)
+    foreach (var log in result.TransferLogs)
     {
         // Transfer event topic: keccak256("Transfer(address,address,uint256)")
         var transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";

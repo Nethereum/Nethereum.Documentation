@@ -118,10 +118,10 @@ Both demos use the same commitment circuit from `Nethereum.PrivacyPools.Circuits
 
 **Public inputs** (visible to verifiers):
 - `value` — deposit amount in wei
-- `label` — Association Set identifier
+- `label` — pool-scope label, `keccak256(scope, nonce) mod field`, binding the commitment to a pool
 
 **Public outputs**:
-- `commitmentHash` — `Hash(nullifier, secret, value, label)` — uniquely identifies the deposit on-chain
+- `commitmentHash` — `Poseidon(value, label, Poseidon(nullifier, secret))` — uniquely identifies the deposit on-chain
 - `nullifierHash` — `Hash(nullifier)` — published on withdrawal to prevent double-spending
 
 The proof demonstrates: "I know a (nullifier, secret) pair that produces this commitment hash" — without revealing the nullifier or secret.

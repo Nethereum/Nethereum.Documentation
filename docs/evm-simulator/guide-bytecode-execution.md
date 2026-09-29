@@ -19,19 +19,20 @@ dotnet add package Nethereum.EVM
 
 ## Running Bytecode
 
-The simplest way to execute bytecode is with `ExecuteAsync`:
+The simplest way to execute bytecode is with `ExecuteWithCallStackAsync`:
 
 ```csharp
 using Nethereum.EVM;
+using Nethereum.EVM.Precompiles;
 using Nethereum.Hex.HexConvertors.Extensions;
 
 // PUSH1 0x04, PUSH1 0x04, ADD → pushes 8 onto the stack
 var bytecode = "6004600401".HexToByteArray();
 
-var vm = new EVMSimulator();
+var vm = new EVMSimulator(DefaultHardforkConfigs.Cancun);
 var program = new Program(bytecode);
 
-await vm.ExecuteAsync(program);
+await vm.ExecuteWithCallStackAsync(program, traceEnabled: false);
 
 var result = program.StackPeek(); // 0x0000...0008
 Console.WriteLine($"Result: {result.ToHex()}");
@@ -39,31 +40,9 @@ Console.WriteLine($"Result: {result.ToHex()}");
 
 The bytecode `6004600401` breaks down as: `PUSH1 0x04` (push 4), `PUSH1 0x04` (push 4), `ADD` (pop two, push sum). After execution, the stack contains a single value: 8.
 
-## Step-by-Step Execution
+## Step-by-Step Inspection
 
-For debugging or analysis, step through instructions one at a time:
-
-```csharp
-var bytecode = "60F0600F17".HexToByteArray(); // PUSH1 0xF0, PUSH1 0x0F, OR
-var vm = new EVMSimulator();
-var program = new Program(bytecode);
-
-// Step 1: PUSH1 0xF0
-await vm.StepAsync(program, 0);
-Console.WriteLine($"Stack: [{program.StackPeek().ToHex()}]");
-// Stack: [0xF0]
-
-// Step 2: PUSH1 0x0F
-await vm.StepAsync(program, 1);
-// Stack: [0x0F, 0xF0]
-
-// Step 3: OR (0xF0 | 0x0F = 0xFF)
-await vm.StepAsync(program, 2);
-Console.WriteLine($"Result: {program.StackPeek().ToHex()}");
-// Stack: [0xFF]
-```
-
-The second parameter to `StepAsync` is the step index, which maps to the position in `program.Instructions`.
+To inspect each step, run with a `ProgramContext` and `traceEnabled: true`, then read `program.Trace[i].Stack` and `.Instruction` for each step.
 
 ## Working with the Stack
 
@@ -135,9 +114,9 @@ var context = new ProgramContext(callInput, stateService);
 var contractCode = await stateService.GetCodeAsync(callInput.To);
 
 // Execute
-var vm = new EVMSimulator();
+var vm = new EVMSimulator(DefaultHardforkConfigs.Cancun);
 var program = new Program(contractCode, context);
-await vm.ExecuteAsync(program, traceEnabled: true);
+await vm.ExecuteWithCallStackAsync(program, traceEnabled: true);
 
 // Result
 if (!program.ProgramResult.IsRevert)
@@ -154,7 +133,7 @@ The `RpcNodeDataService` fetches state on demand: when the contract reads storag
 When `traceEnabled: true`, every instruction is recorded with its stack, memory, storage state, and gas cost:
 
 ```csharp
-await vm.ExecuteAsync(program, traceEnabled: true);
+await vm.ExecuteWithCallStackAsync(program, traceEnabled: true);
 
 foreach (var trace in program.Trace)
 {
@@ -186,9 +165,9 @@ Here's an example testing conditional execution with `JUMPI`:
 // PUSH1 0x01 (condition=true), PUSH1 0x05 (target), JUMPI, JUMPDEST, PUSH1 0xCC
 var bytecode = "60016005575B60CC".HexToByteArray();
 
-var vm = new EVMSimulator();
+var vm = new EVMSimulator(DefaultHardforkConfigs.Cancun);
 var program = new Program(bytecode);
-await vm.ExecuteAsync(program);
+await vm.ExecuteWithCallStackAsync(program, traceEnabled: false);
 
 var result = program.StackPeek(); // 0xCC — jump was taken
 ```

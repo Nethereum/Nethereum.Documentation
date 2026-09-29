@@ -34,30 +34,37 @@ nethereum-devchain
 The startup banner shows all funded accounts with their addresses and private keys, just like Hardhat or Anvil:
 
 ```
-Nethereum DevChain v5.x.x
-========================
+ _   _      _   _
+| \ | | ___| |_| |__   ___ _ __ ___ _   _ _ __ ___
+|  \| |/ _ \ __| '_ \ / _ \ '__/ _ \ | | | '_ ` _ \
+| |\  |  __/ |_| | | |  __/ | |  __/ |_| | | | | | |
+|_| \_|\___|\__|_| |_|\___|_|  \___|\__,_|_| |_| |_|
 
-RPC endpoint: http://127.0.0.1:8545
-Chain ID:     31337
-Gas limit:    30,000,000
-Mining:       auto
+              DevChain Server v7.0.0
 
-Available Accounts
-==================
-(0) 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
-(1) 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)
-...
+  RPC:        http://127.0.0.1:8545
+  Chain ID:   31337
+  Hardfork:   amsterdam
+  Gas Limit:  30,000,000
+  Mining:     auto-mine (instant)
+  Storage:    SQLite (auto-cleanup on exit)
 
-Private Keys
-==================
-(0) 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-(1) 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
-...
+  Available Accounts
+  ==================
+  (0) 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
+  (1) 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)
+  ...
 
-HD Wallet
-==================
-Mnemonic: test test test test test test test test test test test junk
-Path:     m/44'/60'/0'/0/{index}
+  Private Keys
+  ============
+  (0) 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+  (1) 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+  ...
+
+  HD Wallet
+  =========
+  Mnemonic:        test test test test test test test test test test test junk
+  Derivation Path: m/44'/60'/0'/0/x
 ```
 
 The default mnemonic and derivation path match Hardhat and Anvil, so existing test scripts work without changes.
@@ -144,7 +151,7 @@ curl -X POST http://127.0.0.1:8545 \
 
 ## Supported RPC Methods
 
-DevChain supports the complete Ethereum JSON-RPC specification plus development methods:
+DevChain supports the Ethereum JSON-RPC methods below plus development methods. There is no `eth_sendTransaction` handler; send signed transactions with `eth_sendRawTransaction`:
 
 | Category | Methods |
 |----------|---------|
@@ -173,7 +180,7 @@ These match Hardhat and Anvil conventions:
 | `hardhat_setCode` | Deploy bytecode at an address |
 | `hardhat_setNonce` | Set an account's nonce |
 | `hardhat_setStorageAt` | Write to a contract's storage slot |
-| `hardhat_impersonateAccount` | Sign transactions as any address |
+| `hardhat_impersonateAccount` | Record an address as impersonated (no signing support) |
 | `hardhat_stopImpersonatingAccount` | Stop impersonating |
 
 Anvil aliases are also registered for: `anvil_setBalance`, `anvil_setCode`, `anvil_setNonce`, `anvil_setStorageAt`, `anvil_mine`, `anvil_snapshot`, `anvil_revert`.
@@ -182,11 +189,13 @@ Anvil aliases are also registered for: `anvil_setBalance`, `anvil_setCode`, `anv
 
 The server supports three storage configurations:
 
-| Mode | Flag | Blocks/TXs/Receipts | Account State | Cleanup |
-|------|------|---------------------|---------------|---------|
-| **SQLite (default)** | none | SQLite temp file | In-memory | Auto-delete on exit |
-| **SQLite persistent** | `--persist [DIR]` | SQLite at `DIR/chain.db` | In-memory | Kept between restarts |
+| Mode | Flag | Blocks/TXs/Receipts/Logs | Account State and Trie Nodes | Cleanup |
+|------|------|--------------------------|------------------------------|---------|
+| **SQLite (default)** | none | SQLite temp file | SQLite temp file | Auto-delete on exit |
+| **SQLite persistent** | `--persist [DIR]` | SQLite at `DIR/chain.db` | SQLite at `DIR/chain.db` | Kept between restarts |
 | **In-memory** | `--in-memory` | In-memory | In-memory | Lost on exit |
+
+Filters are always held in memory.
 
 Use `--persist` when you want chain history to survive restarts. Use `--in-memory` for CI/CD or ephemeral test environments where speed matters most.
 
@@ -195,9 +204,8 @@ Use `--persist` when you want chain history to survive restarts. Use `--in-memor
 Instead of running the CLI, you can embed the DevChain server directly in your ASP.NET application:
 
 ```csharp
-using Nethereum.DevChain.Server.Configuration;
-using Nethereum.DevChain.Server.Hosting;
-using Nethereum.DevChain.Server.Server;
+using Nethereum.DevChain.Configuration;
+using Nethereum.DevChain.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -208,14 +216,14 @@ var config = new DevChainServerConfig
     Storage = "memory"
 };
 
-builder.Services.AddDevChainServer(config);
-builder.Services.AddHostedService<DevChainHostedService>();
+builder.AddDevChainServer(config);
 
 var app = builder.Build();
-app.Run();
+await app.MapDevChainEndpointsAsync();
+app.Run($"http://{config.Host}:{config.Port}");
 ```
 
-`AddDevChainServer` registers the `DevChainNode`, `DevAccountManager`, `RpcDispatcher`, and all storage providers as singletons. `DevChainHostedService` starts the node when the application starts and stops it on shutdown.
+`AddDevChainServer` registers the `DevChainNode`, `DevAccountManager`, `RpcDispatcher`, and all storage providers as singletons. `MapDevChainEndpointsAsync` starts the node and maps the JSON-RPC endpoints.
 
 ### Configuration via appsettings.json
 
@@ -248,7 +256,7 @@ If you're switching from Hardhat or Anvil to DevChain:
 | Fork support | `--fork <url>` | `--fork-url <url>` | `-f <url>` |
 | Persistent storage | No | No | `--persist` |
 | Interval mining | `--interval <sec>` | `-b <sec>` | `-b <ms>` (milliseconds) |
-| Account impersonation | `hardhat_impersonateAccount` | `anvil_impersonateAccount` | `hardhat_impersonateAccount` |
+| Account impersonation | `hardhat_impersonateAccount` | `anvil_impersonateAccount` | `hardhat_impersonateAccount` (registered, no signing support) |
 | Debug tracing | Limited | `debug_traceTransaction` | Both geth-compatible |
 
 The key difference: DevChain block time is in **milliseconds**, not seconds.

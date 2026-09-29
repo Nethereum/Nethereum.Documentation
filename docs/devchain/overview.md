@@ -47,7 +47,7 @@ Transactions are mined instantly by default. `CreateWeb3` wires directly to the 
 | **Debug Tracing** | `debug_traceTransaction` and `debug_traceCall` with opcode-level detail |
 | **Hardhat/Anvil Compat** | Same default mnemonic, same RPC methods, same chain ID (31337) |
 | **HTTP Server** | Expose as HTTP endpoint for MetaMask, Foundry, ethers.js |
-| **Full EVM** | Complete execution up to Prague hardfork via Nethereum.EVM |
+| **Full EVM** | Complete execution up to the Amsterdam hardfork via Nethereum.EVM (`DevChainConfig` defaults to Prague, the server to Amsterdam) |
 
 ## Configuration Presets
 
@@ -81,8 +81,6 @@ This creates an Aspire-orchestrated environment with:
 - **PostgreSQL** — database for blockchain data storage
 - **Blockchain indexer** — crawls and stores blocks, transactions, and logs
 - **Blazor explorer** — web-based blockchain explorer with ABI-decoded contract interaction
-- **Account abstraction bundler** — ERC-4337 UserOperation bundler
-- **Load test generator** — automated transaction load testing
 
 ## Packages
 

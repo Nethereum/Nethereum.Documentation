@@ -119,7 +119,7 @@ await nodeA.SendPingAsync(new IPEndPoint(IPAddress.Loopback, nodeB.Port), ping);
 // tableA.Count >= 1 and tableB.Count >= 1
 ```
 
-This is the EIP-868 endpoint-proof bonding step: a node only adds a peer to its Kademlia routing table after a successful ping/pong round trip, which is what makes discv4 resistant to naive amplification/spoofing attacks. `Discv4Listener` has `AutoRespond = true` by default, so in practice you rarely wire the `PingReceived` handler yourself — the harvester below does it for you.
+This is the discv4 endpoint-proof bonding step: a node only adds a peer to its Kademlia routing table after a successful ping/pong round trip, which is what makes discv4 resistant to naive amplification/spoofing attacks. `Discv4Listener` has `AutoRespond = true` by default, so in practice you rarely wire the `PingReceived` handler yourself — the harvester below does it for you.
 
 **Source:** `tests/Nethereum.DevP2P.SpecTests/Discv4/Discv4ListenerTests.cs:16` — `TwoListeners_PingPongRoundTrip_BothLearnEachOther`, tagged `[NethereumDocExample(DocSection.DevP2P, "devp2p", "discv4 ping/pong over loopback")]` (adapted: `Assert.*` calls on the received values are omitted for readability — the wire calls are unchanged).
 

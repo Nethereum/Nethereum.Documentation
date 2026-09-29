@@ -18,6 +18,8 @@ var balance = await web3.Eth.GetBalance.SendRequestAsync(address);
 ```
 
 Every call to `eth_getBalance`, `eth_getTransactionCount`, `eth_getCode`, and `eth_blockNumber` is now cryptographically verified via Merkle proofs against a beacon chain state root. No trust required.
+
+`eth_getStorageAt` is verified as well.
 :::
 
 ## Why Verified State Matters
@@ -84,21 +86,12 @@ var finalityUpdate = LightClientResponseMapper.ToDomain(response);
 var weakSubjectivityRoot = finalityUpdate.FinalizedHeader.Beacon.HashTreeRoot();
 ```
 
-Now create the light client configuration for Ethereum mainnet. The genesis validators root and fork version are fixed constants for each network.
+Now create the light client configuration for Ethereum mainnet. The genesis validators root is a fixed constant for each network, and `LightClientNetworks.CreateConfig` fills it in; the fork version comes from the config's `ChainSpec` per slot.
 
 ```csharp
 using Nethereum.Consensus.LightClient;
-using Nethereum.Hex.HexConvertors.Extensions;
 
-var config = new LightClientConfig
-{
-    GenesisValidatorsRoot = "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95"
-        .HexToByteArray(),
-    CurrentForkVersion = new byte[] { 0x06, 0x00, 0x00, 0x00 },
-    SlotsPerEpoch = 32,
-    SecondsPerSlot = 12,
-    WeakSubjectivityRoot = weakSubjectivityRoot
-};
+var config = LightClientNetworks.CreateConfig(1, weakSubjectivityRoot);
 ```
 
 Create and initialize the light client service. This fetches the bootstrap data and begins tracking the beacon chain.
@@ -133,7 +126,7 @@ The `VerifiedStateService` is now ready. You can use it with the `UseVerifiedSta
 
 The `UseVerifiedState` extension method is the recommended way to add verification to your application. It installs a request interceptor on the Web3 client that transparently verifies state queries using Merkle proofs.
 
-The most basic usage applies verification with default settings (finalized mode, no fallback):
+The most basic usage applies verification with default settings (finalized mode, with fallback to the unverified RPC response if proof verification fails):
 
 ```csharp
 using Nethereum.ChainStateVerification.Interceptor;
@@ -172,6 +165,7 @@ The interceptor verifies the following RPC methods automatically:
 - `eth_getBalance` -- Account ETH balance
 - `eth_getTransactionCount` -- Account nonce
 - `eth_getCode` -- Contract bytecode
+- `eth_getStorageAt` -- Contract storage slot
 - `eth_blockNumber` -- Returns the light client's verified block number instead of querying the RPC
 
 All other RPC methods (such as `eth_gasPrice`, `eth_sendRawTransaction`, `eth_call`) pass through to the RPC provider unmodified.
@@ -313,6 +307,7 @@ First, set up the verified execution environment by wrapping the `VerifiedStateS
 using Nethereum.ChainStateVerification.NodeData;
 using Nethereum.EVM;
 using Nethereum.EVM.BlockchainState;
+using Nethereum.EVM.Precompiles;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
@@ -336,8 +331,8 @@ callInput.ChainId = new HexBigInteger(1);
 
 var programContext = new ProgramContext(callInput, executionStateService);
 var program = new Program(code, programContext);
-var evmSimulator = new EVMSimulator();
-await evmSimulator.ExecuteAsync(program);
+var evmSimulator = new EVMSimulator(DefaultHardforkConfigs.Cancun);
+await evmSimulator.ExecuteWithCallStackAsync(program, traceEnabled: false);
 
 var result = new BalanceOfOutputDTO().DecodeOutput(
     program.ProgramResult.Result.ToHex());
@@ -436,11 +431,9 @@ This pattern ensures that users always see a verified balance when possible, wit
 
 - **BLS native library must be present** -- The `Nethereum.Signer.Bls.Herumi` package includes native binaries for BLS signature verification. Make sure the appropriate runtime binary (`bls_eth.dll` on Windows, `libbls_eth.so` on Linux, `libbls_eth.dylib` on macOS) is in your output directory.
 
-- **Fork version changes with network upgrades** -- The `CurrentForkVersion` in the light client config must match the current fork of the network. After a hard fork, this value changes. Fetch it dynamically from the beacon API for production use.
-
 - **Optimistic is not final** -- Data verified in optimistic mode is based on attestations that have not yet been finalized. In extremely rare reorganization scenarios, the data could change. Use finalized mode for anything involving fund transfers.
 
-- **Non-intercepted methods pass through unchanged** -- The `UseVerifiedState` interceptor only verifies the four methods listed above. All other RPC calls (gas estimation, transaction sending, event logs) go directly to the RPC provider without verification.
+- **Non-intercepted methods pass through unchanged** -- The `UseVerifiedState` interceptor only verifies the five methods listed above. All other RPC calls (gas estimation, transaction sending, event logs) go directly to the RPC provider without verification.
 
 - **One interceptor per client** -- Setting `UseVerifiedState` replaces any existing request interceptor on the Web3 client. If you need multiple interceptors, compose them manually.
 

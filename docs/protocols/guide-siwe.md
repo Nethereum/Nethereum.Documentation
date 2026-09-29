@@ -84,13 +84,12 @@ var parsed = SiweMessageParser.Parse(messageToSign);
 bool valid = await siweService.IsValidMessage(parsed, signature);
 ```
 
-`IsValidMessage` performs four checks in order:
-1. **Signature** — recovers the signer address and compares it to `parsed.Address`
-2. **Dates** — verifies `NotBefore` has passed and `ExpirationTime` hasn't
-3. **Session** — confirms the nonce matches a stored session
-4. **User registration** — delegates to `IEthereumUserService` if configured (returns `true` if none)
+`IsValidMessage` checks, in order:
+1. **Dates** — `NotBefore` has passed and `ExpirationTime` hasn't
+2. **Session** — the message matches the one stored under its nonce
+3. **Signature** — the signer is recovered (or validated via ERC-1271/ERC-6492) and compared with `Address`
 
-If any check fails, the method returns `false`.
+It does not consult `IEthereumUserService`; call `IsUserAddressRegistered(parsed)` separately. If any check fails it returns `false`.
 
 ## Session Management
 
@@ -129,8 +128,8 @@ var siweService = new SiweMessageService(
     new InMemorySessionNonceStorage(),
     nftUserService);
 
-// IsValidMessage now also checks NFT ownership
-bool valid = await siweService.IsValidMessage(parsed, signature);
+bool valid = await siweService.IsValidMessage(parsed, signature)
+    && await siweService.IsUserAddressRegistered(parsed); // NFT ownership is a separate call
 ```
 
 For custom authorization logic (database lookups, allowlists, token balances), implement `IEthereumUserService`:
@@ -254,12 +253,12 @@ Both return a `SiweMessage` with all fields populated from the text. The ABNF pa
 ## Common Gotchas
 
 - **Always use UTC** for `SetExpirationTime` and `SetNotBefore`. Using local time causes validation failures across timezones.
-- **Nonce reuse** — `BuildMessageToSign` generates a new nonce each time. Don't reuse nonces across messages; each sign-in attempt needs a fresh nonce.
+- **Nonce reuse** — `BuildMessageToSign` assigns a nonce to a message that has none and throws if the message already has one — create a fresh `SiweMessage` for each sign-in attempt.
 - **Session storage scope** — `InMemorySessionNonceStorage` doesn't survive app restarts. For production, implement `ISessionStorage` with persistent storage.
 - **ChainId matters** — set it to match the chain the user is connected to. A message signed for chain `1` (mainnet) should not be accepted on chain `5` (Goerli).
 
 ## Next Steps
 
-- **[Blazor Authentication](../blazor-dapp-integration/guide-blazor-authentication)** — Full Blazor Server and WASM authentication flow with `EthereumAuthenticationStateProvider`, route protection, and the `dotnet new nethereum-siwe` starter template
+- **[Blazor Authentication](../blazor-dapp-integration/guide-blazor-authentication)** — Full Blazor Server and WASM authentication flow with `EthereumAuthenticationStateProvider`, route protection, and the `dotnet new nethereum-siwe` starter template (from the external Nethereum.Templates.Pack)
 - **[Gnosis Safe](../defi/guide-gnosis-safe)** — Multi-signature wallet interaction (Safe wallets use ERC-1271 for SIWE)
 - **[EIP-712 Typed Data Signing](../signing-and-key-management/guide-eip712-signing)** — Structured data signing (different from SIWE's personal message signing)

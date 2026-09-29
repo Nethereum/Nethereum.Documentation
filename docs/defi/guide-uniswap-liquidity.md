@@ -87,8 +87,8 @@ The `Amount0Max` and `Amount1Max` are slippage protection — the transaction re
 After minting, extract the token ID from the receipt:
 
 ```csharp
-var tokenId = V4PositionReceiptHelper.GetMintedTokenId(
-    receipt, UniswapAddresses.MainnetPositionManagerV4);
+// requires: using Nethereum.Uniswap.V4.Positions;
+var tokenId = receipt.GetMintedTokenId(UniswapAddresses.MainnetPositionManagerV4);
 Console.WriteLine($"Position NFT: {tokenId}");
 ```
 
@@ -140,8 +140,8 @@ For more precise control, the liquidity calculator converts between liquidity un
 var amounts = uniswap.Positions.LiquidityCalculator.GetAmountsForLiquidityByTicks(
     sqrtPriceX96, tickLower, tickUpper, liquidity);
 
-var amount0 = amounts.Item1; // Token0 amount in wei
-var amount1 = amounts.Item2; // Token1 amount in wei
+var amount0 = amounts.Amount0; // Token0 amount in wei
+var amount1 = amounts.Amount1; // Token1 amount in wei
 ```
 
 ## Increase Liquidity

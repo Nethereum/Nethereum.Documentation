@@ -20,7 +20,7 @@ dotnet add package Nethereum.CoreChain.RocksDB     # RocksDB persistent storage 
 
 ## Storage Interfaces
 
-CoreChain defines seven storage interfaces:
+CoreChain defines these storage interfaces (among others):
 
 | Interface | What It Stores | Key Operations |
 |-----------|---------------|----------------|
@@ -57,21 +57,23 @@ The state store is the most complex — it manages account state, contract stora
 public interface IStateStore
 {
     // Account state
-    Task<AccountState> GetAccountAsync(string address);
-    Task SaveAccountAsync(string address, AccountState state);
-    Task<List<string>> GetAllAccountsAsync();
+    Task<Account> GetAccountAsync(string address);
+    Task SaveAccountAsync(string address, Account account);
+    Task<Dictionary<string, Account>> GetAllAccountsAsync();
 
     // Storage slots
-    Task<byte[]> GetStorageAsync(string address, byte[] key);
-    Task SaveStorageAsync(string address, byte[] key, byte[] value);
+    Task<byte[]> GetStorageAsync(string address, BigInteger slot);
+    Task SaveStorageAsync(string address, BigInteger slot, byte[] value);
 
     // Code
-    Task<byte[]> GetCodeByHashAsync(byte[] codeHash);
+    Task<byte[]> GetCodeAsync(byte[] codeHash);
     Task SaveCodeAsync(byte[] codeHash, byte[] code);
 
     // Snapshots (for EVM execution rollback)
-    Task<int> TakeSnapshotAsync();
-    Task RevertToSnapshotAsync(int snapshotId);
+    Task<IStateSnapshot> CreateSnapshotAsync();
+    Task CommitSnapshotAsync(IStateSnapshot snapshot);
+    Task RevertSnapshotAsync(IStateSnapshot snapshot);
+    // ... plus account existence/deletion, storage clearing and dirty-tracking members
 }
 ```
 
@@ -92,7 +94,7 @@ services.AddRocksDbStorage(new RocksDbStorageOptions
 {
     DatabasePath = "./chaindata",
     BlockCacheSize = 256 * 1024 * 1024,  // 256MB read cache
-    WriteBufferSize = 64 * 1024 * 1024,  // 64MB write buffer
+    DbWriteBufferSize = 64L * 1024 * 1024,  // 64MB write buffer
     EnableStatistics = true
 });
 ```
@@ -183,8 +185,8 @@ The key consideration for custom implementations is **atomicity** — block prod
 ## Performance Tips
 
 - **Block cache**: Increase `BlockCacheSize` in RocksDB for read-heavy workloads (explorer, indexing)
-- **Write buffer**: Increase `WriteBufferSize` for write-heavy workloads (fast block production)
-- **State snapshots**: The EVM creates many snapshots during execution — make `TakeSnapshotAsync` and `RevertToSnapshotAsync` as fast as possible
+- **Write buffer**: Increase `DbWriteBufferSize` for write-heavy workloads (fast block production)
+- **State snapshots**: The EVM creates many snapshots during execution — make `CreateSnapshotAsync` and `RevertSnapshotAsync` as fast as possible
 - **Bloom filters**: RocksDB enables bloom filters by default for fast key existence checks
 
 ## Next Steps

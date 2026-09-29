@@ -59,7 +59,7 @@ This is what makes your node useful to *other* nodes doing [Full Sync](./guide-f
 
 ## Relay locally-submitted transactions
 
-`RelayMempool` is the "good citizen" side of mempool participation: it admits transactions *your own node* (or a locally-connected wallet/RPC client) submits — after running them through `MempoolAdmissionValidator` — holds them in an `ITxPool`, and announces their hashes to your connected peers. It is deliberately **leaf-only**: it never re-gossips transactions it received from *other* peers, so a `SyncNode` participates in propagation without becoming a full relay hub.
+`RelayMempool` is the "good citizen" side of mempool participation: it admits transactions *your own node* (or a locally-connected wallet/RPC client) submits — after running them through `MempoolAdmissionValidator` — holds them in an `ITxPool`, and announces their hashes to your connected peers. It is **leaf-only by default** (`MempoolRelay.Ours`): it does not re-gossip transactions it received from *other* peers unless you opt in with `MempoolRelay.All`, so a `SyncNode` participates in propagation without becoming a full relay hub.
 
 ```csharp
 var node = new SyncNode(bundle, activations, logger, peers: pool, scheduler: scheduler, mempool: relayMempool);

@@ -2,12 +2,12 @@
 title: Revert & Error Decoding
 sidebar_label: Revert Decoding
 sidebar_position: 5
-description: Decode revert reasons, custom errors, and panic codes from failed transactions
+description: Decode revert reasons and custom errors from failed transactions
 ---
 
 # Revert & Error Decoding
 
-When a simulated transaction fails, understanding *why* it reverted is critical. The EVM simulator captures the revert data and the `ProgramResultDecoder` decodes it into human-readable error messages — including Solidity custom errors, `require()` messages, and panic codes.
+When a simulated transaction fails, understanding *why* it reverted is critical. The EVM simulator captures the revert data and the `ProgramResultDecoder` decodes it into human-readable error messages — including Solidity custom errors and `require()` messages.
 
 ## How Reverts Work
 
@@ -15,7 +15,7 @@ Solidity has three ways to signal failure:
 
 1. **`require(condition, "message")`** — encodes as `Error(string)` with selector `0x08c379a0`
 2. **`revert CustomError(params)`** — encodes as a custom error with its own 4-byte selector
-3. **Panic codes** — `Panic(uint256)` with selector `0x4e487b71` for overflow, division by zero, etc.
+3. **Panic codes** — `Panic(uint256)` with selector `0x4e487b71` for overflow, division by zero, etc. (the decoder does not decode it specially)
 
 The revert data is ABI-encoded and returned in `execResult.ReturnData`.
 
@@ -30,7 +30,7 @@ dotnet add package Nethereum.EVM
 After executing a transaction, check `Success` first:
 
 ```csharp
-var executor = new TransactionExecutor(HardforkConfig.Default);
+var executor = new TransactionExecutor(DefaultHardforkConfigs.Default);
 var execResult = await executor.ExecuteAsync(ctx);
 
 if (!execResult.Success)
@@ -70,8 +70,10 @@ if (decoded.IsRevert && decoded.RevertReason != null)
 For example, an ERC-20 insufficient balance error decodes to:
 ```
 Error name: ERC20InsufficientBalance
-Message: ERC20InsufficientBalance(sender: 0xYour..., balance: 100, needed: 1000)
+Message: ERC20InsufficientBalance
 ```
+
+The custom error's parameters are in `error.Parameters`.
 
 ## Decoding Revert Data Directly
 
@@ -93,7 +95,7 @@ This works with revert data from `eth_call` failures, `eth_estimateGas` errors, 
 | `Error` | The `ErrorABI` with name, selector, and parameter types |
 | `Parameters` | Decoded error parameters |
 | `Message` | Human-readable message (for standard `Error(string)`) |
-| `IsStandardError` | `true` for `Error(string)` and `Panic(uint256)` |
+| `IsStandardError` | `true` for `Error(string)` |
 | `IsDecoded` | `true` when the ABI was found and error was decoded |
 | `RawData` | Original hex data (always available as fallback) |
 
@@ -120,7 +122,7 @@ These are the most common error selectors you will encounter:
 In the complete simulation pipeline, check for errors at multiple levels:
 
 ```csharp
-// 1. Execution-level error (e.g., out of gas)
+// 1. Pre-execution validation failure
 if (execResult.IsValidationError)
 {
     Console.WriteLine($"Validation error: {execResult.Error}");
@@ -166,7 +168,7 @@ When the error selector is `0x4e487b71`, the single `uint256` parameter is a pan
 | `0x41` | Too much memory allocated |
 | `0x51` | Calling zero-initialized function variable |
 
-The decoder handles panic codes automatically — `GetDisplayMessage()` returns a description like "Arithmetic overflow" rather than the raw code.
+`Panic(uint256)` is not decoded specially: without a matching `ErrorABI`, `GetDisplayMessage()` returns the raw revert hex (`RawData`), so map the panic code with the table above.
 
 ## Next Steps
 

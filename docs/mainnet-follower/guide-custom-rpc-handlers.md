@@ -57,10 +57,10 @@ public class MyCustomHandler : RpcHandlerBase
     {
         // Extract parameters (type-safe)
         var address = GetParam<string>(request, 0);
-        var blockNumber = GetParam<string>(request, 1) ?? "latest";
+        var blockNumber = GetOptionalParam<string>(request, 1, "latest");
 
         // Access chain state through context
-        var balance = await context.Node.StateStore
+        var balance = await context.Node.State
             .GetAccountAsync(address);
 
         // Return success response
@@ -75,6 +75,7 @@ public class MyCustomHandler : RpcHandlerBase
 
 `RpcHandlerBase` provides helper methods:
 - `GetParam<T>(request, index)` — extract a typed parameter by position
+- `GetOptionalParam<T>(request, index, defaultValue)` — extract an optional typed parameter, falling back to a default
 - `Success(id, result)` — create a success response
 - `Error(id, code, message)` — create an error response
 

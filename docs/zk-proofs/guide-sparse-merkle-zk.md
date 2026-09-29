@@ -204,5 +204,5 @@ bool isBranch = SmtNodeCodec.IsBranch(data); // 0x01 prefix
 ## Related
 
 - [Verify ZK Proofs (Groth16)](guide-zk-proof-verification) — Verify snarkjs proofs that reference SMT roots
-- [Nethereum.Merkle Package Reference](nethereum-merkle) — Full API including standard and incremental trees
+- [Nethereum.Merkle Package Reference](../core-foundation/nethereum-merkle) — Full API including standard and incremental trees
 - [Nethereum.ZkProofsVerifier Package Reference](nethereum-zkproofsverifier) — Groth16 verification API

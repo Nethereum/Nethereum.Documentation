@@ -123,9 +123,9 @@ app.UseX402(options =>
 
 When a matching request has no `PAYMENT-SIGNATURE`, the middleware returns 402 with a `PaymentRequired` (in the `PAYMENT-REQUIRED` header and body). When a payment is present, it verifies and settles through the facilitator before forwarding.
 
-### Self-Facilitated Server
+### Facilitator-side processors
 
-Settle on-chain directly instead of using a remote facilitator. Only an RPC endpoint per chain id is configured — token, chain and domain come from each requirement:
+These register an `IX402PaymentProcessor` that verifies and settles on-chain with only an RPC endpoint per chain id (token, chain and domain come from each requirement). It is consumed by the hosted facilitator controllers (see Hosting a Facilitator). A server protected with `UseX402` still needs `AddX402Services(facilitatorUrl)`; that URL can point at your own facilitator host.
 
 ```csharp
 using Nethereum.X402.Extensions;
@@ -222,7 +222,7 @@ Endpoints: `POST /facilitator/verify`, `POST /facilitator/settle`, `GET /facilit
 | `invalid_exact_evm_signature` | EIP-3009 signature verification failed |
 | `invalid_exact_evm_authorization_value` | Amount below the requirement |
 | `invalid_exact_evm_recipient_mismatch` | Receiver doesn't match `PayTo` |
-| `invalid_network` / `unsupported_scheme` | Network/scheme not supported |
+| `invalid_network` / `unsupported_payload_type` | Network/payload type not supported |
 | `invalid_permit2_recipient_mismatch` | Permit2 witness recipient ≠ `PayTo` |
 | `permit2_allowance_required` | Payer hasn't approved Permit2 for the asset |
 | `invalid_permit2_signature` | Permit2 signature verification failed |

@@ -7,7 +7,7 @@ description: Full in-process EVM simulator with tracing, debugging, and state ch
 
 # EVM Simulator
 
-Nethereum includes a full in-process Ethereum Virtual Machine supporting all opcodes through Prague/Cancun, with native precompile implementations, call tracing, state change extraction, and step-by-step debugging. It passes all Ethereum VM and State tests.
+Nethereum includes a full in-process Ethereum Virtual Machine supporting every hardfork from Frontier through Amsterdam, with native precompile implementations, call tracing, state change extraction, and step-by-step debugging. It passes all Ethereum VM and State tests.
 
 The EVM simulator is the foundational engine that powers several higher-level Nethereum systems:
 
@@ -40,7 +40,7 @@ var ctx = new TransactionExecutionContext
 };
 
 // 3. Execute
-var executor = new TransactionExecutor(HardforkConfig.Default);
+var executor = new TransactionExecutor(DefaultHardforkConfigs.Default);
 var result = await executor.ExecuteAsync(ctx);
 
 // 4. Decode and extract
@@ -64,8 +64,8 @@ This pipeline handles gas calculation, EIP-1559 fees, sub-call execution, ABI de
 - Balance validation (fee-on-transfer, rebasing token detection)
 - Interactive debugging sessions with source map support
 - Bytecode disassembly and function signature detection
-- Configurable hardfork rules (Cancun, Prague)
-- Precompiled contracts: ecRecover, SHA-256, RIPEMD-160, identity, modexp, alt_bn128, blake2f, BLS12-381, KZG
+- Configurable hardfork rules (Frontier through Amsterdam)
+- Precompiled contracts: ecRecover, SHA-256, RIPEMD-160, identity, modexp, alt_bn128, blake2f, plus BLS12-381 and KZG via the `Nethereum.EVM.Precompiles.Bls` and `Nethereum.EVM.Precompiles.Kzg` packages
 
 ## Packages
 
@@ -85,13 +85,13 @@ This pipeline handles gas calculation, EIP-1559 fees, sub-call execution, ABI de
 | [Transaction Simulation](guide-transaction-simulation) | Simulate transactions locally and preview all state changes before signing — the wallet preview pattern |
 | [Call Tree Decoding](guide-call-tree-decoding) | Decode the full call hierarchy with function names, decoded parameters, and sub-calls |
 | [Log Extraction](guide-log-extraction) | Extract and decode events, and consolidate token transfers into net balance changes |
-| [Revert Decoding](guide-revert-decoding) | Decode revert reasons, custom errors, and Solidity panic codes |
+| [Revert Decoding](guide-revert-decoding) | Decode revert reasons and custom errors |
 
 ### Advanced
 
 | Guide | What You'll Learn |
 |---|---|
-| [ERC-20 Simulation](guide-erc20-simulation) | Simulate token transfers, approvals, and detect fee-on-transfer tokens |
+| [ERC-20 Simulation](guide-erc20-simulation) | Simulate token transfers and balance queries, discover the balance storage slot |
 | [Bytecode Execution](guide-bytecode-execution) | Execute raw EVM bytecode step-by-step with full stack, memory, and trace access |
 | [EVM Debugging](guide-evm-debugging) | Interactive source-level debugging with Solidity source maps |
 | [Bytecode Disassembly](guide-bytecode-disassembly) | Parse and analyze bytecode structure, detect function signatures |

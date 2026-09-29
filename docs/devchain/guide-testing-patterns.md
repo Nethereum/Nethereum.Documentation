@@ -27,6 +27,7 @@ using Nethereum.DevChain;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using System.Numerics;
+using Nethereum.StandardTokenEIP20.ContractDefinition;
 
 public class DevChainFixture : IAsyncLifetime
 {
@@ -131,8 +132,14 @@ Deploy contracts and interact with them using the standard Nethereum typed contr
 public async Task Deploy_ERC20_And_Check_Supply()
 {
     // Deploy using standard Nethereum contract deployment
-    var deploymentMessage = new StandardTokenDeployment { TotalSupply = 1_000_000 };
-    var deployHandler = _fixture.AliceWeb3.Eth.GetContractDeploymentHandler<StandardTokenDeployment>();
+    var deploymentMessage = new EIP20Deployment
+    {
+        InitialAmount = 1_000_000,
+        TokenName = "Test",
+        DecimalUnits = 18,
+        TokenSymbol = "TST"
+    };
+    var deployHandler = _fixture.AliceWeb3.Eth.GetContractDeploymentHandler<EIP20Deployment>();
     var receipt = await deployHandler.SendRequestAndWaitForReceiptAsync(deploymentMessage);
 
     var contractAddress = receipt.ContractAddress;

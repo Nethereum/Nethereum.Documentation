@@ -16,7 +16,7 @@ var receipt = await uniswap.UniversalRouter.ExecuteRequestAndWaitForReceiptAsync
 Access Uniswap through `web3.UniswapV4()` — pool discovery, quoting, and routing are all built in.
 :::
 
-Swapping tokens on Uniswap is the most common DeFi operation. Nethereum provides a complete Uniswap integration covering V2, V3, and V4 — including price quoting, slippage protection, and the Universal Router for executing swaps on-chain. This guide walks through the V4 flow (the latest and recommended version), with V3 and V2 patterns at the end.
+Swapping tokens on Uniswap is the most common DeFi operation. Nethereum provides a complete Uniswap integration covering V2, V3, and V4 — including price quoting, slippage protection, and the Universal Router for executing swaps on-chain. This guide walks through the V4 flow (the latest and recommended version), with the V3 pattern at the end.
 
 ```bash
 dotnet add package Nethereum.Uniswap
@@ -47,7 +47,9 @@ The `uniswap` object exposes sub-services: `uniswap.Pools` for pool state, `unis
 A Uniswap V4 pool is identified by a `PoolKey` — the two currencies, fee tier, tick spacing, and an optional hooks contract. You need to know the pool you want to trade in:
 
 ```csharp
-using Nethereum.Uniswap.V4.Contracts.PoolManager.ContractDefinition;
+using Nethereum.Uniswap.V4.Pricing.V4Quoter.ContractDefinition;
+using Nethereum.Uniswap.V4.Utils;
+using Nethereum.Uniswap.V4.Mappers;
 using Nethereum.Util;
 
 var eth = AddressUtil.ZERO_ADDRESS;  // Native ETH uses the zero address
@@ -142,10 +144,10 @@ var slippage = uniswap.Pricing.SlippageCalculator;
 
 // For exact-input swaps: calculate the minimum acceptable output
 var tolerance = new BigDecimal(0.5m); // 0.5% slippage
-var minAmountOut = slippage.CalculateMinimumAmountOut(expectedAmountOut, tolerance);
+var minAmountOut = slippage.CalculateMinimumAmountOut(expectedAmountOut, tolerance).AmountWithSlippage;
 
 // For exact-output swaps: calculate the maximum you're willing to pay
-var maxAmountIn = slippage.CalculateMaximumAmountIn(expectedAmountIn, tolerance);
+var maxAmountIn = slippage.CalculateMaximumAmountIn(expectedAmountIn, tolerance).AmountWithSlippage;
 ```
 
 Price impact tells you how much your trade moves the pool price. Large trades in shallow pools can have significant impact:
@@ -153,12 +155,11 @@ Price impact tells you how much your trade moves the pool price. Large trades in
 ```csharp
 var impactCalc = uniswap.Pricing.PriceImpactCalculator;
 
-var priceImpact = impactCalc.CalculatePriceImpact(inputAmount, outputAmount, midPrice);
-var level = impactCalc.ClassifyPriceImpact(priceImpact);
-// Returns: Low (<1%), Medium (1-3%), High (3-5%), Critical (>5%)
-
-var warning = impactCalc.GetPriceImpactWarning(level);
+var priceImpact = impactCalc.CalculatePriceImpact(priceBefore, priceAfter);
+// PriceImpactResult: PriceImpactPercentage, ImpactLevel (Low <1%, Medium 1-3%, High 3-5%, Critical >5%), Message, ShouldWarn
 ```
+
+`GetPriceImpactLevel(percentage)` classifies a percentage on its own, and `CalculatePriceImpactFromReserves(amountIn, reserveIn, reserveOut)` derives the impact from pool reserves.
 
 A swap with >5% price impact usually means you're trading too large for that pool's liquidity. Consider splitting the trade or finding a deeper pool.
 
@@ -280,6 +281,10 @@ if (!balanceResult.HasSufficientBalance)
 For Uniswap V3, swaps use the same Universal Router but with Permit2 for gasless approvals. The flow is: approve Permit2 once, then sign off-chain permits for each swap:
 
 ```csharp
+using Nethereum.ABI.EIP712.Permit2;   // PermitSingle, PermitDetails
+using Nethereum.Signer.EIP712.Permit2; // PermitSigner
+using Nethereum.Hex.HexConvertors.Extensions;
+
 // One-time: approve Permit2 to spend your WETH
 var weth9Service = web3.Eth.ERC20.GetContractService(weth9);
 await weth9Service.ApproveRequestAndWaitForReceiptAsync(permit2Address, IntType.MAX_INT256_VALUE);
@@ -298,16 +303,16 @@ var permit = new PermitSingle
     }
 };
 
-var permitService = new Permit2Service(web3, permit2Address);
-var signedPermit = await permitService.GetSinglePermitWithSignatureAsync(
-    permit, new EthECKey(privateKey));
+var chainId = await web3.Eth.ChainId.SendRequestAsync();
+var signature = PermitSigner.SignPermitSingle(
+    chainId.Value, permit2Address, permit, new EthECKey(privateKey));
 
 // Build the swap via Universal Router
 var planner = new UniversalRouterBuilder();
 planner.AddCommand(new Permit2PermitCommand
 {
-    Permit = signedPermit.PermitRequest,
-    Signature = signedPermit.GetSignatureBytes()
+    Permit = permit,
+    Signature = signature.HexToByteArray()
 });
 planner.AddCommand(new V3SwapExactInCommand
 {
@@ -341,7 +346,7 @@ catch (SmartContractCustomErrorRevertException e)
 }
 ```
 
-Common errors: `InsufficientOutputAmount` (slippage too tight), `InvalidPool` (pool doesn't exist), `Expired` (deadline passed).
+Common errors: `V3TooLittleReceived` / `V4TooLittleReceived` (output below the minimum — slippage too tight), `TransactionDeadlinePassed` (deadline passed).
 
 ## Next Steps
 

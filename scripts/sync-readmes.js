@@ -250,7 +250,7 @@ function extractDescription(content) {
     if (trimmed.startsWith('![')) continue;
     if (trimmed.startsWith('[![')) continue;
     if (/[a-zA-Z]{3,}/.test(trimmed)) {
-      return trimmed.replace(/\*\*/g, '').replace(/\*/g, '').substring(0, 200);
+      return trimmed.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\*\*/g, '').replace(/\*/g, '').substring(0, 200);
     }
   }
   return `${lines[0] || 'Package documentation'}`;

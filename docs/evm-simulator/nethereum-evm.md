@@ -459,7 +459,7 @@ public class TokenInfo
 }
 ```
 
-`ValidateTokenBalances(...)` cross-checks the transfer events against the balances actually observed in the execution state. That is what surfaces `FeeOnTransfer` and `Rebasing`: the token emitted a `Transfer` for X but the recipient's balance moved by something else. `HasDiscrepancy` is the one flag a UI should never hide.
+`ValidateTokenBalances(...)` cross-checks the transfer events against the balances actually observed in the execution state, but it only validates a token type when you pass the matching resolver delegate (`getErc20Balance`, `getErc721Owner`, `getErc1155Balance`); otherwise the change stays `NotValidated`. That is what surfaces `FeeOnTransfer` and `Rebasing`: the token emitted a `Transfer` for X but the recipient's balance moved by something else. `HasDiscrepancy` is the one flag a UI should never hide.
 
 ## Source-level debugging
 

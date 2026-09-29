@@ -10,8 +10,6 @@ format: md
 # Nethereum.Signer.Bls
 
 > **NuGet**: [`Nethereum.Signer.Bls`](https://www.nuget.org/packages/Nethereum.Signer.Bls/) | **Source**: [`src/Nethereum.Signer.Bls/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Signer.Bls)
-# Nethereum.Signer.Bls
-
 Core BLS signature abstraction for Ethereum consensus layer operations (Beacon Chain, sync committees, light clients).
 
 ## Overview
@@ -62,7 +60,7 @@ bool isValid = bls.VerifyAggregate(
     aggregateSignature: aggregateSig,      // 96 bytes
     publicKeys: validatorPublicKeys,       // Array of 48-byte public keys
     messages: messages,                    // Array of signing roots
-    domain: domainSeparationTag            // 32 bytes: forkDigest|domainType
+    domain: domain                         // 32-byte consensus-spec domain
 );
 
 Console.WriteLine($"Signature valid: {isValid}");
@@ -78,7 +76,7 @@ Core interface for BLS operations, implemented by `NativeBls`.
 public interface IBls
 {
     // Verifies an aggregate BLS signature (typically sync committees) over one or
-    // more messages and public keys using an ETH2-style domain separation.
+    // more messages and public keys; the domain is only length-checked (32 bytes).
     bool VerifyAggregate(byte[] aggregateSignature, byte[][] publicKeys, byte[][] messages, byte[] domain);
 
     // Aggregates multiple BLS signatures into a single signature.
@@ -163,9 +161,7 @@ public enum BlsImplementationKind
 
 Ethereum consensus layer uses domain separation to prevent signature reuse:
 
-```
-domain = fork_version || domain_type
-```
+`domain` is the 32-byte consensus-spec domain (`domain_type` followed by the first 28 bytes of `fork_data_root`). `NativeBls`/`HerumiNativeBindings` only validate that it is 32 bytes when supplied.
 
 Common domain types:
 - `DOMAIN_BEACON_PROPOSER` = `0x00000000` - Block proposals
@@ -182,8 +178,6 @@ BLS supports signature aggregation - multiple signatures can be combined into on
 ### Performance
 
 - Aggregate verification is **faster** than verifying N signatures individually
-- ~50-100ms to verify 512-validator sync committee on modern hardware
-- Native implementations (Herumi/BLST) are 100x faster than pure managed code
 
 ## Consensus Layer Use Cases
 

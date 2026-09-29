@@ -2,7 +2,7 @@
 title: "Nethereum.JsonRpc.WebSocketStreamingClient"
 sidebar_label: "Nethereum.JsonRpc.WebSocketStreamingClient"
 sidebar_position: 100
-description: "Reactive Extensions (Rx.NET) wrapper for Ethereum WebSocket streaming providing IObservable-based subscriptions and polling."
+description: "Reactive Extensions (Rx.NET) wrapper for Ethereum WebSocket streaming providing IObservable-based subscriptions and request/response handlers."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.JsonRpc.WebSocketStreamingClient/README.md"
 format: md
 ---
@@ -12,11 +12,11 @@ format: md
 > **NuGet**: [`Nethereum.JsonRpc.WebSocketStreamingClient`](https://www.nuget.org/packages/Nethereum.JsonRpc.WebSocketStreamingClient/) | **Source**: [`src/Nethereum.JsonRpc.WebSocketStreamingClient/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.JsonRpc.WebSocketStreamingClient)
 # Nethereum.JsonRpc.WebSocketStreamingClient
 
-Reactive Extensions (Rx.NET) wrapper for Ethereum WebSocket streaming providing IObservable-based subscriptions and polling.
+Reactive Extensions (Rx.NET) wrapper for Ethereum WebSocket streaming providing IObservable-based subscriptions and request/response handlers.
 
 ## Overview
 
-Nethereum.JsonRpc.WebSocketStreamingClient provides IObservable wrappers around WebSocket streaming functionality, enabling reactive programming patterns for Ethereum real-time data streams. This package combines Nethereum's WebSocket client with System.Reactive (Rx.NET) to provide a powerful, composable API for handling asynchronous event streams from Ethereum nodes.
+Nethereum.JsonRpc.WebSocketStreamingClient provides IObservable wrappers around WebSocket streaming functionality, enabling reactive programming patterns for Ethereum real-time data streams. This package combines Nethereum's `StreamingWebSocketClient` (from `Nethereum.JsonRpc.WebSocketClient`) with System.Reactive (Rx.NET) to provide a powerful, composable API for handling asynchronous event streams from Ethereum nodes.
 
 **What is Rx.NET?**
 
@@ -36,7 +36,7 @@ Rx.NET solves these problems with a composable, declarative API.
 
 **Key Features:**
 - IObservable wrappers for eth_subscribe subscriptions (newHeads, logs, newPendingTransactions)
-- IObservable wrappers for polling-based RPC requests (eth_blockNumber, eth_getBalance)
+- IObservable wrappers for request/response observable handlers (eth_blockNumber, eth_getBalance): send one request, emit the response, complete
 - Automatic subscription lifecycle management (subscribe, unsubscribe)
 - Error handling through Rx error channels
 - Full System.Reactive operator support (Where, Select, Buffer, Throttle, etc.)
@@ -46,12 +46,14 @@ Rx.NET solves these problems with a composable, declarative API.
 
 ```bash
 dotnet add package Nethereum.JsonRpc.WebSocketStreamingClient
+dotnet add package Nethereum.JsonRpc.WebSocketClient
 ```
 
 Or via Package Manager Console:
 
 ```powershell
 Install-Package Nethereum.JsonRpc.WebSocketStreamingClient
+Install-Package Nethereum.JsonRpc.WebSocketClient
 ```
 
 ## Dependencies
@@ -107,7 +109,7 @@ Install-Package Nethereum.JsonRpc.WebSocketStreamingClient
 
 ## Key Concepts
 
-### Observable Subscriptions vs Polling
+### Observable Subscriptions vs Request/Response Handlers
 
 **Subscription-Based (eth_subscribe):**
 
@@ -116,9 +118,9 @@ True server push - node sends events as they occur:
 - **EthNewBlockHeadersObservableSubscription** - New block headers
 - **EthNewPendingTransactionObservableSubscription** - New pending transactions
 
-**Polling-Based (Repeated RPC):**
+**Request/Response Observable Handlers:**
 
-Client-initiated requests at intervals:
+Send one request, emit the response, complete:
 - **EthBlockNumberObservableHandler** - Latest block number
 - **EthGetBalanceObservableHandler** - Account balance
 
@@ -484,16 +486,14 @@ await wsClient.StartAsync();
 
 var logsSubscription = new EthLogsObservableSubscription(wsClient);
 
-// Filter for high-value ERC-20 transfers (value in topic[3])
+// Filter for high-value ERC-20 transfers (value in log.Data; ERC-721 Transfer has a fourth topic, the tokenId)
 var subscription = logsSubscription
     .GetSubscriptionDataResponsesAsObservable()
-    .Where(log => log.Topics != null && log.Topics.Length == 4)
+    .Where(log => log.Topics != null && log.Topics.Length == 3)
     .Where(log =>
     {
-        // Parse value from topic[3] (indexed uint256). Topics is object[], and HexBigInteger
-        // has no object constructor, so convert to string first.
-        var value = new HexBigInteger(log.Topics[3].ToString());
-        return value.Value > 1000000000000000000; // > 1 token (18 decimals)
+        var value = new HexBigInteger(log.Data).Value;
+        return value > 1000000000000000000; // > 1 token (18 decimals)
     })
     .Subscribe(log =>
     {
@@ -562,6 +562,7 @@ await wsClient.StopAsync();
 ### Example 9: Error Handling with OnError
 
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 using System.Reactive.Linq;
@@ -682,7 +683,7 @@ public class EthNewPendingTransactionObservableSubscription : RpcStreamingSubscr
 
 ### EthBlockNumberObservableHandler
 
-Observable handler for polling block number.
+Observable handler for eth_blockNumber (sends one request, emits the response, completes).
 
 ```csharp
 public class EthBlockNumberObservableHandler : RpcStreamingResponseNoParamsObservableHandler<HexBigInteger, EthBlockNumber>
@@ -693,14 +694,14 @@ public class EthBlockNumberObservableHandler : RpcStreamingResponseNoParamsObser
     // Observable Stream (inherited)
     public IObservable<HexBigInteger> GetResponseAsObservable();
 
-    // Polling Methods (inherited)
+    // Request Methods (inherited)
     public Task SendRequestAsync(object id = null);
 }
 ```
 
 ### EthGetBalanceObservableHandler
 
-Observable handler for polling account balance.
+Observable handler for eth_getBalance (sends one request, emits the response, completes).
 
 ```csharp
 public class EthGetBalanceObservableHandler : RpcStreamingResponseParamsObservableHandler<HexBigInteger, EthGetBalance>
@@ -711,7 +712,7 @@ public class EthGetBalanceObservableHandler : RpcStreamingResponseParamsObservab
     // Observable Stream (inherited)
     public IObservable<HexBigInteger> GetResponseAsObservable();
 
-    // Polling Methods (inherited)
+    // Request Methods (inherited)
     public Task SendRequestAsync(string address, BlockParameter block, object id = null);
 }
 ```
@@ -741,7 +742,7 @@ public class RpcStreamingSubscriptionObservableHandler<TSubscriptionDataResponse
 
 ### RpcStreamingResponseObservableHandler<T>
 
-Base class for polling-based observable handlers. Also a **concrete** class, not `abstract`:
+Base class for request/response observable handlers (send one request, emit the response, complete). Also a **concrete** class, not `abstract`:
 
 ```csharp
 public class RpcStreamingResponseObservableHandler<TResponse> : RpcStreamingRequestResponseHandler<TResponse>
@@ -806,13 +807,13 @@ using (var disposable = observable.Subscribe(/* ... */))
 
 ### Cold vs Hot Observables
 
-These are **cold observables** - each subscription creates a new underlying RPC subscription:
+These are **hot observables** backed by a `Subject`; all `Subscribe` calls share the single `eth_subscribe` made by `SubscribeAsync`:
 
 ```csharp
 var blockSub = new EthNewBlockHeadersObservableSubscription(client);
 var observable = blockSub.GetSubscriptionDataResponsesAsObservable();
 
-// First subscription creates eth_subscribe
+// Subscribing to the observable does not send eth_subscribe
 var sub1 = observable.Subscribe(block => Console.WriteLine("Sub1: " + block.Number));
 await blockSub.SubscribeAsync();  // Creates subscription
 
@@ -857,11 +858,10 @@ See System.Reactive documentation for complete operator list.
 ## Related Packages
 
 ### Dependencies
-- **Nethereum.JsonRpc.Client** - WebSocket client and streaming abstractions
+- **Nethereum.JsonRpc.Client** - streaming abstractions (`IStreamingClient`); `StreamingWebSocketClient` is in `Nethereum.JsonRpc.WebSocketClient`
 - **Nethereum.RPC** - RPC request builders and DTOs
 - **Nethereum.Hex** - Hex encoding/decoding
 - **System.Reactive** - Reactive Extensions for .NET
 
 ### Alternative Approaches
 - **Nethereum.RPC.Reactive** - the **same** Rx.NET-based approach as this package (it depends on `System.Reactive` 4.1.3 and provides its own `EthNewBlockHeadersObservableSubscription`/`EthLogsObservableSubscription`/`EthNewPendingTransactionObservableSubscription` under `Nethereum.RPC.Reactive.Eth.Subscriptions`, reusable against any `IStreamingClient`). For **event-based** (non-Rx) subscriptions, use the plain handlers in `Nethereum.RPC.Eth.Subscriptions` (e.g. `EthNewBlockHeadersSubscription`), which expose C# `event`s instead of `IObservable`.
-- **Nethereum.Web3** - High-level Web3 client with built-in subscription support

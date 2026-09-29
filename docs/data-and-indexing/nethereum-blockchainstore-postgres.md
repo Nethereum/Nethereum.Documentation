@@ -10,8 +10,6 @@ format: md
 # Nethereum.BlockchainStore.Postgres
 
 > **NuGet**: [`Nethereum.BlockchainStore.Postgres`](https://www.nuget.org/packages/Nethereum.BlockchainStore.Postgres/) | **Source**: [`src/Nethereum.BlockchainStore.Postgres/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.BlockchainStore.Postgres)
-# Nethereum.BlockchainStore.Postgres
-
 PostgreSQL implementation of the Nethereum blockchain storage layer using Entity Framework Core and Npgsql.
 
 ## Overview
@@ -40,7 +38,7 @@ Targets `net8.0` and `net10.0`. Uses Npgsql.EntityFrameworkCore.PostgreSQL 8.x o
 
 - **Nethereum.BlockchainStore.EFCore** - Base `BlockchainDbContextBase`, entity builders, and repository implementations
 - **Npgsql.EntityFrameworkCore.PostgreSQL** - PostgreSQL EF Core provider
-- **EFCore.NamingConventions** - `UseLowerCaseNamingConvention()` for snake_case table/column names
+- **EFCore.NamingConventions** - `UseLowerCaseNamingConvention()` for lowercase table/column names
 - **Microsoft.EntityFrameworkCore.Design** - Design-time migration support (private asset)
 
 ## Quick Start

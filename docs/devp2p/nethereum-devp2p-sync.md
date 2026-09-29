@@ -179,7 +179,7 @@ Concrete infrastructure impls are also provided: `FetchRequestScheduler` (`IFetc
 | `PeerPoolOptions` | Peer-pool tuning record (`TargetPeerCount` 16, dial concurrency/cooldown, subnet-diversity caps, trusted-redial interval). |
 | `SyncPeerSession` (`IEthPeer`) | Live per-peer session for any chain: dial → RLPx + Hello → eth handshake (Status with EIP-2124 fork-ID) → header/body/receipt requests over the negotiated `eth/68`–`eth/71`. |
 | `PeerListener` / `PeerListenerOptions` | Inbound RLPx serving composition: binds a port, drives the eth server handshake and serves `eth` + `snap/1` to peers syncing *from* this node. |
-| `RelayMempool` | Good-citizen relay tx pool: admits locally-submitted signed txs (via `MempoolAdmissionValidator`), holds them in the `ITxPool`, and announces hashes to peers. Leaf-only — never re-gossips remote txs. |
+| `RelayMempool` | Good-citizen relay tx pool: admits locally-submitted signed txs (via `MempoolAdmissionValidator`), holds them in the `ITxPool`, and announces hashes to peers. Leaf-only by default (`MempoolRelay.Ours`) — it does not re-gossip remote txs unless `MempoolRelay.All` opts in. |
 | `MempoolAdmission` / `MempoolRejectReason` | Admission decision and its reject reasons for a submitted transaction. |
 | `Eth68PeerPool` / `Eth68PeerSession` | Broadcast peer registry for block/tx publishing (distinct from `IPeerPool`; used by `DevP2PBlockPublisher`). |
 | `Eip2124ForkIdCalculator` / `Eip2124ValidationResult` | EIP-2124 fork-ID compute (CRC32 over the fork schedule) and peer-compatibility validation (mirrors geth's stale/incompatible outcomes). *Defined in Nethereum.EVM.Core.* |

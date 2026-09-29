@@ -2,7 +2,7 @@
 title: "Nethereum.PrivacyPools"
 sidebar_label: "Nethereum.PrivacyPools"
 sidebar_position: 100
-description: ".NET SDK for the [0xbow Privacy Pools](https://github.com/0xbow-io/privacy-pools-core) protocol. Deposit ETH or ERC20 tokens with Poseidon commitments, withdraw with ZK proofs (direct or via relayer),"
+description: ".NET SDK for the 0xbow Privacy Pools protocol. Deposit ETH or ERC20 tokens with Poseidon commitments, withdraw with ZK proofs (direct or via relayer), recover accounts from a mnemonic, manage ASP tree"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.PrivacyPools/README.md"
 format: md
 ---
@@ -10,8 +10,6 @@ format: md
 # Nethereum.PrivacyPools
 
 > **NuGet**: [`Nethereum.PrivacyPools`](https://www.nuget.org/packages/Nethereum.PrivacyPools/) | **Source**: [`src/Nethereum.PrivacyPools/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.PrivacyPools)
-# Nethereum.PrivacyPools
-
 .NET SDK for the [0xbow Privacy Pools](https://github.com/0xbow-io/privacy-pools-core) protocol. Deposit ETH or ERC20 tokens with Poseidon commitments, withdraw with ZK proofs (direct or via relayer), recover accounts from a mnemonic, manage ASP trees, and run a relay service — all in C#, cross-compatible with the 0xbow TypeScript SDK.
 
 ## Use Cases
@@ -109,8 +107,8 @@ var circuitSource = new PrivacyPoolCircuitSource();
 // CLI / server — requires Node.js installed
 var proofProvider = pp.CreateProofProvider(new SnarkjsProofProvider(), circuitSource);
 
-// Blazor WASM — runs in-browser via JS interop (snarkjs.min.mjs must be in wwwroot)
-// var blazorProvider = new SnarkjsBlazorProvider(jsRuntime, "./js/snarkjs.min.mjs");
+// Blazor WASM — runs in-browser via JS interop (snarkjs.min.js must be in wwwroot)
+// var blazorProvider = new SnarkjsBlazorProvider(jsRuntime, "./js/snarkjs.min.js");
 // await blazorProvider.InitializeAsync();
 // var proofProvider = pp.CreateProofProvider(blazorProvider, circuitSource);
 

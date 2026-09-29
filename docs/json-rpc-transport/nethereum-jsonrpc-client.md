@@ -455,7 +455,7 @@ This package provides abstractions only. Use concrete implementations:
 | **Nethereum.JsonRpc.RpcClient** | HTTP/HTTPS | Standard node communication |
 | **Nethereum.JsonRpc.WebSocketClient** | WebSocket | Real-time subscriptions |
 | **Nethereum.JsonRpc.IpcClient** | IPC | Local node communication |
-| **Nethereum.JsonRpc.SystemTextJsonRpcClient** | HTTP (System.Text.Json) | .NET 6+ with System.Text.Json |
+| **Nethereum.JsonRpc.SystemTextJsonRpcClient** | HTTP (System.Text.Json) | .NET 9 (net9.0 only) with System.Text.Json |
 
 ### Error Types
 

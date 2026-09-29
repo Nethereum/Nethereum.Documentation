@@ -2,7 +2,7 @@
 title: "Nethereum.Quorum"
 sidebar_label: "Nethereum.Quorum"
 sidebar_position: 100
-description: "Nethereum Quorum is the Nethereum extension to interact with [Quorum](https://github.com/jpmorganchase/quorum), the permissioned implementation of Ethereum supporting data privacy created by JP Morgan"
+description: "Nethereum Quorum is the Nethereum extension to interact with Quorum, the permissioned implementation of Ethereum supporting data privacy created by JP Morgan."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Quorum/README.md"
 format: md
 ---

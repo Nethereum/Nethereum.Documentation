@@ -55,7 +55,7 @@ This package provides the foundational `IAppChain` interface and implementation.
 
 Genesis block construction includes account pre-funding, CREATE2 factory deployment (EIP-1014), and optional MUD World framework deployment. All storage operations are delegated through interfaces, enabling in-memory, RocksDB, or custom implementations.
 
-AppChain serves as the foundation that Sequencer and Sync packages build upon, providing the shared chain state that both producers and followers access.
+AppChain serves as the foundation that Sequencer and Server packages build upon, providing the shared chain state that both producers and followers access.
 
 ### Key Features
 

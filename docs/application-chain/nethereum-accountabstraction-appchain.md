@@ -40,7 +40,7 @@ dotnet add package Nethereum.AccountAbstraction.AppChain
 
 - **Nethereum.AccountAbstraction** - Core ERC-4337 types and services
 - **Nethereum.AccountAbstraction.Bundler** - Bundler configuration
-- **Nethereum.AppChain** - AppChain host and DevP2P stack
+- **Nethereum.AppChain** - Core AppChain abstraction (IAppChain, genesis)
 
 Nethereum.Web3 and Nethereum.Contracts are pulled in transitively.
 
@@ -188,7 +188,7 @@ Properties: `EntryPointAddress`, `AccountFactoryAddress`, `AccountRegistryAddres
 ### Dependencies
 - **[Nethereum.AccountAbstraction](../account-abstraction/nethereum-accountabstraction)** - Core ERC-4337 framework
 - **[Nethereum.AccountAbstraction.Bundler](../account-abstraction/nethereum-accountabstraction-bundler)** - Bundler configuration
-- **[Nethereum.AppChain](nethereum-appchain)** - AppChain host and DevP2P stack
+- **[Nethereum.AppChain](nethereum-appchain)** - Core AppChain abstraction (IAppChain, genesis)
 
 ### See Also
 - **[Nethereum.AppChain.Server](nethereum-appchain-server)** - AppChain server that hosts the bundler

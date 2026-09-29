@@ -2,7 +2,7 @@
 title: "Nethereum.Siwe"
 sidebar_label: "Nethereum.Siwe"
 sidebar_position: 100
-description: "Full Sign-In with Ethereum (EIP-4361) implementation with session management, signature verification, and pluggable user validation. Built on top of [Nethereum.Siwe.Core](../Nethereum.Siwe.Core/README"
+description: "Full Sign-In with Ethereum (EIP-4361) implementation with session management, signature verification, and pluggable user validation. Built on top of Nethereum.Siwe.Core."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Siwe/README.md"
 format: md
 ---
@@ -187,7 +187,7 @@ public class User
 A complete Blazor + REST API SIWE authentication template is available at [`Nethereum.Templates.Siwe`](https://github.com/Nethereum/Nethereum.Templates.Pack), providing:
 
 - **REST API** — Nonce generation, authentication endpoint, JWT creation and middleware validation
-- **Blazor WebAssembly** — MetaMask signing, JWT local storage, `SiweAuthenticationWasmStateProvider`
+- **Blazor WebAssembly** — MetaMask signing, JWT local storage
 - **Blazor Server** — Direct signing via `NethereumSiweAuthenticatorService`, protected session storage
 - **Blazor `<AuthorizeView>`** — Role-based access with `EthereumConnected` and `SiweAuthenticated` claims
 

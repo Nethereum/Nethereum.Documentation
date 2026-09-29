@@ -94,9 +94,12 @@ var builder = WebApplication.CreateBuilder(args);
 var config = new MainnetChainServerConfig { DataDir = "./mainnet-data", SnapBootstrap = true };
 builder.AddMainnetChainServer(config);
 
+using var loggerFactory = LoggerFactory.Create(logging => logging.AddConsole());
+await builder.Services.AddMainnetNodeAsync(config, loggerFactory);
+
 var app = builder.Build();
 app.MapMainnetChainEndpoints();
 app.Run("http://127.0.0.1:8545");
 ```
 
-`AddMainnetChainServer` registers the whole follower graph (validation, the optional beacon light-client gate, the node, the sync + serving services, and the JSON-RPC dispatcher); `MapMainnetChainEndpoints` maps `POST /` (JSON-RPC) and `GET /` (health). See the [`Nethereum.MainnetChain` package](nethereum-mainnetchain) for the hosting API.
+`AddMainnetChainServer` registers the follower graph (validation, the optional beacon light-client gate, and the JSON-RPC dispatcher); `AddMainnetNodeAsync` builds and registers the RocksDB and DevP2P production node; `MapMainnetChainEndpoints` maps `POST /` (JSON-RPC) and `GET /` (health). See the [`Nethereum.MainnetChain` package](nethereum-mainnetchain) for the hosting API.

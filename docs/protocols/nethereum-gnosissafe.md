@@ -202,7 +202,7 @@ public static string ConvertSignatureStringToGnosisVFormat(string signatureStrin
 
 **Signature Ordering:**
 
-Gnosis Safe requires signatures to be ordered by signer address.
+Gnosis Safe requires signatures to be ordered by signer address. `GetCombinedSignaturesInOrder` sorts the signatures by their hex string, so verify the resulting order for your owners.
 
 ```csharp
 // ExtendedGnosisSafeService.cs:258-268
@@ -449,13 +449,13 @@ var chainId = 1;
 var safeAccount = new SafeAccount(safeAddress, chainId, privateKey);
 var web3 = new Web3(safeAccount, "https://mainnet.infura.io/v3/YOUR_INFURA_KEY");
 
-// Any contract service will automatically use Safe execution
-var erc20Address = "0x...";
-var erc20Service = new Nethereum.Contracts.Standards.ERC20.ERC20ContractService(
-    web3.Eth, erc20Address);
+// Any ContractWeb3ServiceBase-derived service will automatically use Safe execution
+// (for example a HubService or a generated MyService(web3, address); the built-in ERC20ContractService does not qualify)
+var tokenAddress = "0x...";
+var tokenService = new MyTokenService(web3, tokenAddress);
 
 // This transfer will be executed through the Safe
-var transferReceipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(
+var transferReceipt = await tokenService.TransferRequestAndWaitForReceiptAsync(
     "0x...", // to
     1000000  // amount
 );
@@ -466,20 +466,20 @@ var transferReceipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(
 ```csharp
 using Nethereum.Web3;
 using Nethereum.GnosisSafe;
-using Nethereum.Contracts.Standards.ERC20;
 
 var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_INFURA_KEY");
 var safeAddress = "0x...";
 var contractAddress = "0x...";
 
-var erc20Service = new ERC20ContractService(web3.Eth, contractAddress);
+// Any ContractWeb3ServiceBase-derived service (a HubService or a generated MyService(web3, address))
+var tokenService = new MyTokenService(web3, contractAddress);
 
 // Change to Safe execution
 var privateKeys = new[] { "0x...", "0x..." };
-erc20Service.ChangeContractHandlerToSafeExecTransaction(safeAddress, privateKeys);
+tokenService.ChangeContractHandlerToSafeExecTransaction(safeAddress, privateKeys);
 
 // All transactions now go through Safe
-var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync("0x...", 1000);
+var receipt = await tokenService.TransferRequestAndWaitForReceiptAsync("0x...", 1000);
 ```
 
 ### MultiSend Transaction
@@ -622,7 +622,7 @@ var modules = await safeService.GetModulesPaginatedQueryAsync(
 2. **Nonce Assignment**: Safe nonce is automatically fetched and assigned
 3. **EIP-712 Hash**: Transaction data is hashed according to EIP-712 standard
 4. **Signature Collection**: Each owner signs the hash with their private key
-5. **Signature Ordering**: Signatures must be ordered by signer address (ascending)
+5. **Signature Ordering**: Safe requires signatures ordered by signer address (ascending); `GetCombinedSignaturesInOrder` sorts by signature hex string, so verify the order for your owners
 6. **V Value Conversion**: V values are offset by +4 for Gnosis Safe compatibility
 7. **Execution**: execTransaction is called with combined ordered signatures
 

@@ -2,7 +2,7 @@
 title: "Nethereum.Mud"
 sidebar_label: "Nethereum.Mud"
 sidebar_position: 100
-description: "Nethereum.Mud provides core infrastructure for interacting with [MUD (Onchain Engine)](https://mud.dev/) applications. MUD is a framework for building ambitious Ethereum applications with on-chain sta"
+description: "Nethereum.Mud provides core infrastructure for interacting with MUD (Onchain Engine) applications. MUD is a framework for building ambitious Ethereum applications with on-chain state management using "
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Mud/README.md"
 format: md
 ---
@@ -174,11 +174,11 @@ public partial class PlayerTableRecord : TableRecord<PlayerKey, PlayerValue>
 ### Running Code Generation
 
 ```bash
-# Using Nethereum.Generators.JavaScript
-npm install -g nethereum-codegen
+# Install the Nethereum code generator
+dotnet tool install -g Nethereum.Generator.Console
 
-# Generate from mud.config.ts
-nethereum-codegen generate
+# Generate from the multisettings file
+Nethereum.Generator.Console generate from-config -cfg .nethereum-gen.multisettings
 ```
 
 Or use the VS Code Solidity extension with multisettings support: https://github.com/juanfranblanco/vscode-solidity
@@ -831,7 +831,7 @@ MUD enables complex on-chain applications:
 - [MUD Documentation](https://mud.dev/)
 - [MUD GitHub](https://github.com/latticexyz/mud)
 - [Nethereum MUD Console Tests](https://github.com/Nethereum/Nethereum/tree/master/consoletests/NethereumMudLogProcessing)
-- [Code Generation Guide](../core-foundation/nethereum-contracts#advanced-multi-settings-configuration-preferred)
+- [Code Generation Guide](../core-foundation/nethereum-contracts#pattern-3-code-generation-production-recommended)
 
 ## Support
 

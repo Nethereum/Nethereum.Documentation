@@ -94,7 +94,7 @@ var simulator = new ERC20ContractSimulator(web3, chainId: 1, usdcAddress);
 // Simulate transfer from address1 to address2
 var senderAddress = "0x0000000000000000000000000000000000000001";
 var receiverAddress = "0x0000000000000000000000000000000000000025";
-var amount = 100; // 100 USDC (6 decimals)
+var amount = 100_000_000; // 100 USDC (6 decimals)
 
 var result = await simulator.SimulateTransferAndBalanceStateAsync(
     senderAddress,
@@ -367,7 +367,7 @@ var gasEstimate = await contractHandler.EstimateGasAsync(balanceOfFunction);
 
 Console.WriteLine($"Gas estimate from RPC: {gasEstimate.Value}");
 
-// Simulate with gas tracking
+// Simulate the balance query
 var simulator = new ERC20ContractSimulator(web3, 1, contractAddress);
 var blockNumber = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
 var nodeDataService = new RpcNodeDataService(web3.Eth, new BlockParameter(blockNumber));
@@ -375,8 +375,7 @@ var stateService = new ExecutionStateService(nodeDataService);
 
 var balance = await simulator.SimulateGetBalanceAsync(address, stateService);
 
-// Access trace for gas analysis
-// Note: Requires tracing enabled in ExecuteAsync
+// SimulateGetBalanceAsync returns only the balance, not a trace or a gas figure
 ```
 
 ## Use Cases
@@ -561,7 +560,6 @@ Nethereum is licensed under the MIT License.
 
 - **Nethereum.EVM** - Core EVM simulator
 - **Nethereum.Contracts** - Smart contract interaction
-- **Nethereum.Contracts.ContractStorage** - Storage utilities
 - **Nethereum.Web3** - Ethereum client library
 
 ## Support

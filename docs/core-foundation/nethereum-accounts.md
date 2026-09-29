@@ -932,7 +932,7 @@ var txHash = await web3.Eth.Transactions.SendRawTransaction.SendRequestAsync(sig
 
 | Issue | Symptom | Solution |
 |-------|---------|----------|
-| **Nonce too low** | `replacement transaction underpriced` | Reset nonce: `await account.NonceService.ResetNonceAsync()` |
+| **Nonce too low** | `nonce too low` | Reset nonce: `await account.NonceService.ResetNonceAsync()` |
 | **Nonce too high** | Transaction stuck pending | Reset nonce or wait for previous transactions to confirm |
 | **Nonce gap** | Multiple transactions stuck | Send missing nonce transaction or reset nonce |
 | **Race condition** | Some transactions fail with same nonce | Use `InMemoryNonceService` |
@@ -1089,7 +1089,7 @@ Console.WriteLine($"Blob transaction hash: {txHash}");
    var balance = await web3.Eth.GetBalance.SendRequestAsync(account.Address);
    if (balance.Value < requiredAmount)
    {
-       throw new InsufficientFundsException();
+       throw new InvalidOperationException("Insufficient balance");
    }
    ```
 
@@ -1184,7 +1184,7 @@ catch (Exception ex)
 - `string Password` - Password for node
 - `ITransactionManager TransactionManager` - ManagedAccountTransactionManager
 - `INonceService NonceService` - Optional nonce service
-- `IAccountSigningService AccountSigningService` - **always `null`** (`private set`, never assigned); `ManagedAccount` relies on the node's `personal_sign`/`personal_signTypedData` for signing instead, so this property is not functional for `PersonalSign`/`SignTypedDataV4` calls
+- `IAccountSigningService AccountSigningService` - **always `null`** (`private set`, never assigned), so `PersonalSign`/`SignTypedDataV4` through it are not available; `ManagedAccount` sends transactions through the node's `personal_sendTransaction` (`PersonalSignAndSendTransaction`)
 
 *Source: `src/Nethereum.Accounts/Managed/ManagedAccount.cs:34`*
 

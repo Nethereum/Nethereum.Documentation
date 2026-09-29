@@ -268,7 +268,6 @@ var contractAddress = receipt.ContractAddress;
 - No compile-time checking of constructor parameters
 - Easy to pass wrong parameter type or order
 - Less maintainable for complex constructors
-```
 
 ## Contract Definition Patterns
 
@@ -980,7 +979,7 @@ try
         null, // value
         null, // cancellation token source
         "0xRECIPIENT",
-        1000000000000000000000 // More than balance
+        BigInteger.Parse("1000000000000000000000") // More than balance
     );
 }
 catch (SmartContractCustomErrorRevertException ex)
@@ -1546,7 +1545,7 @@ Console.WriteLine($"Contract at: {result.Address}");
 
 2. **Use Code Generation for Production**: Automate DTO creation
    ```bash
-   Nethereum.Generator.Console generate from-abi -abi MyContract.abi.json
+   Nethereum.Generator.Console generate from-abi -abi MyContract.abi.json -o Generated -ns MyApp.Contracts
    ```
 
 3. **Estimate Gas Before Sending**:

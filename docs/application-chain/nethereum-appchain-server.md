@@ -161,7 +161,7 @@ Leave all four unset and the server generates ephemeral keys itself — see [Get
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--deploy-mud-world` | `false` | Deploy MUD World contracts |
+| `--deploy-mud-world` | `true` | Deploy MUD World contracts at genesis (`--deploy-mud-world false` to skip) |
 | `--world-salt` | | MUD World salt (32 bytes hex) |
 
 ### Anchoring

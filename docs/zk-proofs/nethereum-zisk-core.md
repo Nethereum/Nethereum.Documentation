@@ -37,8 +37,8 @@ C# onto Zisk's execution environment:
 - **`ZiskOutput`** — write the public-output slots that become
   commitments. Typical slots: result flag, gas used, block hash,
   state root, transactions root, receipts root.
-- **`ZiskMemoryMap`** — fixed memory-region constants (input offset,
-  output offset, heap base) matching the Zisk ELF layout.
+- **`ZiskMemoryMap`** — fixed memory-region constants (input, ROM, RAM,
+  UART and output-register bases) matching the Zisk ELF layout.
 - **`ZiskBinaryReader`** / **`ZiskBinaryWriter`** — AOT-safe readers
   / writers over byte spans, replacing `System.IO.BinaryReader` in the
   trimmed guest build.
@@ -79,7 +79,7 @@ keeping the guest side AOT- and trim-friendly.
 The guest binary is built with `bflat`/NativeAOT cross-compiled to
 RISC-V (via the `nethereum/bflat-riscv64` Docker image) and linked
 against `libziskos.a`. The build orchestration lives in
-[`zisk/`](../../zisk/README.md) at the repo root:
+[`zisk/`](https://github.com/Nethereum/Nethereum/blob/master/zisk/README.md) at the repo root:
 
 ```bash
 bash zisk/scripts/setup-host.sh   # first-time setup (image + Zisk host tools)
@@ -87,7 +87,7 @@ bash zisk/scripts/build.sh        # source mode
 bash zisk/scripts/build.sh --dll  # DLL mode
 ```
 
-See [`zisk/README.md`](../../zisk/README.md) for the full build,
+See [`zisk/README.md`](https://github.com/Nethereum/Nethereum/blob/master/zisk/README.md) for the full build,
 proving, and verification flow.
 
 ## See Also

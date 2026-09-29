@@ -2,7 +2,7 @@
 title: "Nethereum.WebAuthn.Windows"
 sidebar_label: "Nethereum.WebAuthn.Windows"
 sidebar_position: 100
-description: "Nethereum.WebAuthn.Windows implements [Nethereum.WebAuthn](../Nethereum.WebAuthn/README.md)'s"
+description: "Nethereum.WebAuthn.Windows implements Nethereum.WebAuthn's"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.WebAuthn.Windows/README.md"
 format: md
 ---
@@ -18,7 +18,7 @@ required.
 ## Requirements
 
 - Windows 10 version 1809 or later (`webauthn.dll` ships in-box since then).
-- A registered Windows Hello sign-in (PIN, fingerprint, face) or an attached security key.
+- A registered Windows Hello sign-in (PIN, fingerprint, face). Only the platform authenticator is used; roaming security keys are not supported.
 
 ## Installation
 

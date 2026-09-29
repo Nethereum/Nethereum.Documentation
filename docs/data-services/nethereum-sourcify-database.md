@@ -10,8 +10,6 @@ format: md
 # Nethereum.Sourcify.Database
 
 > **NuGet**: [`Nethereum.Sourcify.Database`](https://www.nuget.org/packages/Nethereum.Sourcify.Database/) | **Source**: [`src/Nethereum.Sourcify.Database/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Sourcify.Database)
-# Nethereum.Sourcify.Database
-
 EF Core (PostgreSQL) implementation of `ISourcifyRepository` for storing Sourcify verified contract data locally. Provides a complete relational schema mirroring Sourcify's data model with 10 entity types.
 
 ## Installation
@@ -82,7 +80,7 @@ byte[] selector = new byte[] { 0xa9, 0x05, 0x9c, 0xbb };
 var sig = await repository.GetSignatureByHash4Async(selector);
 Console.WriteLine(sig?.SignatureText); // "transfer(address,uint256)"
 
-// Full-text search (returns up to 100 results)
+// Substring search (returns up to 100 results)
 var results = await repository.SearchSignaturesAsync("transfer");
 foreach (var s in results)
     Console.WriteLine($"{s.SignatureText}");

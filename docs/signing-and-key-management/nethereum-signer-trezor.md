@@ -314,15 +314,6 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using System.Numerics;
 using System.Collections.Generic;
 
-// ERC-2612 Permit domain and message
-public class EIP712Domain
-{
-    public string Name { get; set; }
-    public string Version { get; set; }
-    public BigInteger ChainId { get; set; }
-    public string VerifyingContract { get; set; }
-}
-
 // Connect to TREZOR
 var trezorBroker = NethereumTrezorManagerBrokerFactory.Create(promptHandler, loggerFactory);
 var trezorManager = await trezorBroker.WaitForFirstTrezorAsync();
@@ -332,9 +323,9 @@ await trezorSigner.InitializeAsync();
 var signerAddress = await trezorSigner.GetAddressAsync();
 
 // Create typed data
-var typedData = new TypedData<EIP712Domain>
+var typedData = new TypedData<Domain>
 {
-    Domain = new EIP712Domain
+    Domain = new Domain
     {
         Name = "USD Coin",
         Version = "2",

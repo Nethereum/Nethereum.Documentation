@@ -2,7 +2,7 @@
 title: "Nethereum.Mud.Contracts"
 sidebar_label: "Nethereum.Mud.Contracts"
 sidebar_position: 100
-description: "Nethereum.Mud.Contracts provides contract definitions and services for interacting with [MUD (Onchain Engine)](https://mud.dev/) World and Store contracts. It enables you to call MUD systems, query ta"
+description: "Nethereum.Mud.Contracts provides contract definitions and services for interacting with MUD (Onchain Engine) World and Store contracts. It enables you to call MUD systems, query tables, and process St"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Mud.Contracts/README.md"
 format: md
 ---
@@ -10,8 +10,6 @@ format: md
 # Nethereum.Mud.Contracts
 
 > **NuGet**: [`Nethereum.Mud.Contracts`](https://www.nuget.org/packages/Nethereum.Mud.Contracts/) | **Source**: [`src/Nethereum.Mud.Contracts/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Mud.Contracts)
-# Nethereum.Mud.Contracts
-
 Nethereum.Mud.Contracts provides contract definitions and services for interacting with [MUD (Onchain Engine)](https://mud.dev/) World and Store contracts. It enables you to call MUD systems, query tables, and process Store events.
 
 ## Features
@@ -156,15 +154,14 @@ Console.WriteLine($"Connected to World at {worldAddress}");
 using Nethereum.Mud;
 using Nethereum.Mud.Contracts.World;
 using Nethereum.Mud.EncodingDecoding;
-using Nethereum.ABI.FunctionEncoding;
+using Nethereum.Contracts;
 
 // Create resource ID for the system
 var systemId = ResourceEncoder.EncodeSystem("Game", "MoveSystem");
 
 // Encode function call (e.g., move(direction))
-var functionEncoder = new FunctionCallEncoder();
 var moveFunction = new MoveFunction { Direction = 1 }; // Assuming generated function DTO
-var callData = functionEncoder.EncodeRequest(moveFunction);
+var callData = moveFunction.GetCallData(); // byte[]
 
 // Call the system via World
 var receipt = await worldService.CallRequestAndWaitForReceiptAsync(
@@ -240,7 +237,7 @@ var playerRepository = new InMemoryTableRepository();
 
 // Setup event processing
 var storeEventsService = new StoreEventsLogProcessingService(web3, worldAddress);
-var progressRepository = new InMemoryBlockProgressRepository();
+var progressRepository = new InMemoryBlockchainProgressRepository();
 
 var processor = storeEventsService.CreateProcessor(
     playerRepository,
@@ -399,7 +396,7 @@ Console.WriteLine($"Values: {string.Join(", ", schema.SchemaValues.Select(v => v
 ```csharp
 public class WorldService : ContractWeb3ServiceBase
 {
-    public WorldService(Web3 web3, string contractAddress);
+    public WorldService(IWeb3 web3, string contractAddress);
 
     // System calls
     Task<TransactionReceipt> CallRequestAndWaitForReceiptAsync(
@@ -464,7 +461,7 @@ public class RegistrationSystemService
 ```csharp
 public class StoreEventsLogProcessingService
 {
-    public StoreEventsLogProcessingService(Web3 web3, string contractAddress);
+    public StoreEventsLogProcessingService(IWeb3 web3, string contractAddress);
 
     // Query all SetRecord events
     Task<List<EventLog<StoreSetRecordEventDTO>>> GetAllSetRecord(...);
@@ -589,10 +586,10 @@ Generate table and system services using `.nethereum-gen.multisettings`:
 
 ```bash
 # Install Nethereum code generator
-npm install -g nethereum-codegen
+dotnet tool install -g Nethereum.Generator.Console
 
 # Generate C# code
-nethereum-codegen generate
+Nethereum.Generator.Console generate from-config -cfg .nethereum-gen.multisettings
 
 # Or use VS Code extension
 # https://github.com/juanfranblanco/vscode-solidity
@@ -628,7 +625,7 @@ foreach (var eventLog in events)
 
 ```csharp
 var storeEventsService = new StoreEventsLogProcessingService(web3, worldAddress);
-var progressRepo = new InMemoryBlockProgressRepository();
+var progressRepo = new InMemoryBlockchainProgressRepository();
 var tableRepo = new InMemoryTableRepository();
 
 var processor = storeEventsService.CreateProcessor(

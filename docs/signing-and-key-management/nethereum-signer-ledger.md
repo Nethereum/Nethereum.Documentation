@@ -10,8 +10,6 @@ format: md
 # Nethereum.Signer.Ledger
 
 > **NuGet**: [`Nethereum.Signer.Ledger`](https://www.nuget.org/packages/Nethereum.Signer.Ledger/) | **Source**: [`src/Nethereum.Signer.Ledger/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Signer.Ledger)
-# Nethereum.Signer.Ledger
-
 Ledger hardware wallet integration for Ethereum transaction signing with Nethereum.
 
 ## Overview
@@ -56,6 +54,7 @@ dotnet add package Nethereum.Signer.Ledger
 
 ```csharp
 using Nethereum.Ledger;
+using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Ledger.Net;
 
@@ -71,7 +70,7 @@ var account = new ExternalAccount(ledgerSigner, chainId: 1);
 await account.InitialiseAsync();
 
 // Use with Web3
-var web3 = new Web3.Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
 
 // Address is retrieved from Ledger
 Console.WriteLine("Address: " + account.Address);
@@ -406,7 +405,7 @@ var addressFrom = "0x07dCc60Ec5179f30ba30a2Ec25B683d5C5276025";
 var privateKey = "0x32b28a67ec29294be914a356a9f439cf1fd8c56a400d897f75f46694fb06a9c9";
 
 // Sign with regular account
-var regularAccount = new Web3.Accounts.Account(privateKey, chainId: 1);
+var regularAccount = new Account(privateKey, chainId: 1);
 var transactionInput = new TransactionInput
 {
     From = addressFrom,

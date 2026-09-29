@@ -10,8 +10,6 @@ format: md
 # Nethereum.Signer
 
 > **NuGet**: [`Nethereum.Signer`](https://www.nuget.org/packages/Nethereum.Signer/) | **Source**: [`src/Nethereum.Signer/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Signer)
-# Nethereum.Signer
-
 Cryptographic signing library for Ethereum transactions, messages, and typed data using secp256k1 elliptic curve cryptography.
 
 ## Overview
@@ -301,6 +299,7 @@ Console.WriteLine($"Signer: {recovered.GetKey().GetPublicAddress()}");
 using Nethereum.Signer;
 using Nethereum.Util;
 using Nethereum.Hex.HexConvertors.Extensions;
+using System.Text;
 
 var privateKey = "0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7";
 var key = new EthECKey(privateKey);
@@ -313,7 +312,7 @@ Console.WriteLine($"Ethereum signature: {signature1}");
 
 // Method 2: Hash message yourself, then sign with prefix
 var hasher = new Sha3Keccack();
-byte[] messageHash = hasher.CalculateHash(message);
+byte[] messageHash = hasher.CalculateHash(Encoding.UTF8.GetBytes(message));
 string signature2 = signer.Sign(messageHash, key);
 Console.WriteLine($"Pre-hashed signature: {signature2}");
 
@@ -322,38 +321,11 @@ var rawSigner = new MessageSigner();
 string signature3 = rawSigner.Sign(messageHash, key);
 Console.WriteLine($"Raw signature: {signature3}");
 
-// Verify: signature1 == signature2 (both use Ethereum prefix)
-Console.WriteLine($"Ethereum signatures match: {signature1 == signature2}");
+// signature1 != signature2: Sign(messageHash, key) applies the prefix to the 32-byte hash, whereas EncodeUTF8AndSign applies it to the message bytes
+Console.WriteLine($"Signatures match: {signature1 == signature2}"); // False
 ```
 
-### Example 7: Deterministic Key Generation from Seed
-
-```csharp
-using Nethereum.Signer;
-using Nethereum.Hex.HexConvertors.Extensions;
-using System.Text;
-
-// Generate deterministic key from seed (useful for testing)
-byte[] seed = Encoding.UTF8.GetBytes("my-secret-seed-phrase");
-var key1 = EthECKey.GenerateKey(seed);
-var key2 = EthECKey.GenerateKey(seed);
-
-// Same seed = same key
-Console.WriteLine($"Key 1: {key1.GetPrivateKey()}");
-Console.WriteLine($"Key 2: {key2.GetPrivateKey()}");
-Console.WriteLine($"Match: {key1.GetPrivateKey() == key2.GetPrivateKey()}");
-
-// Different seed = different key
-byte[] differentSeed = Encoding.UTF8.GetBytes("different-seed");
-var key3 = EthECKey.GenerateKey(differentSeed);
-Console.WriteLine($"Key 3: {key3.GetPrivateKey()}");
-Console.WriteLine($"Different: {key1.GetPrivateKey() != key3.GetPrivateKey()}");
-
-// WARNING: For production, use truly random keys:
-var randomKey = EthECKey.GenerateKey(); // Cryptographically secure random
-```
-
-### Example 8: Verify Signature with AllowOnlyLowS (Prevent Malleability)
+### Example 7: Verify Signature with AllowOnlyLowS (Prevent Malleability)
 
 ```csharp
 using Nethereum.Signer;
@@ -386,7 +358,7 @@ Console.WriteLine($"Signature valid (any S): {isValidAny}");
 // Always use VerifyAllowingOnlyLowS for security
 ```
 
-### Example 9: Shared Secret Calculation (ECDH)
+### Example 8: Shared Secret Calculation (ECDH)
 
 ```csharp
 using Nethereum.Signer;
@@ -463,7 +435,7 @@ public class EthereumMessageSigner : MessageSigner
     // Recover signer address
     public string EncodeUTF8AndEcRecover(string message, string signature);
     public override string EcRecover(byte[] message, string signature);
-    public override string HashAndEcRecover(string message, string signature);
+    public string HashAndEcRecover(string message, string signature); // inherited from MessageSigner
 
     // Hash with Ethereum prefix
     public byte[] HashPrefixedMessage(string message);
@@ -479,7 +451,7 @@ Raw message signing (without Ethereum prefix).
 public class MessageSigner
 {
     public virtual string Sign(byte[] message, EthECKey key);
-    public virtual string Sign(byte[] message, string privateKey);
+    public string Sign(byte[] message, string privateKey);
     public virtual string HashAndSign(byte[] plainMessage, EthECKey key);
     public string HashAndSign(string plainMessage, string privateKey);
     public string HashAndSign(byte[] plainMessage, string privateKey);
@@ -609,7 +581,6 @@ public abstract class EthExternalSignerBase : IEthExternalSigner
 
 ### Used By (Consumers)
 - **Nethereum.Accounts** - Account management with key-based signing
-- **Nethereum.KeyStore** - Encrypted keystore (UTC/JSON) wallet files
 - **Nethereum.HDWallet** - BIP32/BIP39 hierarchical deterministic wallets
 - **Nethereum.Signer.EIP712** - EIP-712 typed structured data signing
 - **Nethereum.Signer.Ledger** - Ledger hardware wallet integration
@@ -683,7 +654,7 @@ string sig = signer.EncodeUTF8AndSign(message, key);
 
 ### BouncyCastle vs NBitcoin.Secp256k1
 
-.NET 6+ uses NBitcoin.Secp256k1 for better performance:
+`EthECKey.SignRecoverable` defaults to `true` (NBitcoin.Secp256k1) on .NET 8+ and `false` on earlier targets; on .NET 6+ you can enable it explicitly:
 
 ```csharp
 #if NET6_0_OR_GREATER

@@ -2,7 +2,7 @@
 title: "Nethereum.AppChain.Contracts"
 sidebar_label: "Nethereum.AppChain.Contracts"
 sidebar_position: 100
-description: "Solidity smart contracts for the Nethereum AppChain anchoring and messaging system. Built with [Foundry](https://getfoundry.sh/)."
+description: "Solidity smart contracts for the Nethereum AppChain anchoring and messaging system. Built with Foundry."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.AppChain.Contracts/README.md"
 format: md
 ---
@@ -21,7 +21,7 @@ Solidity smart contracts for the Nethereum AppChain anchoring and messaging syst
 | `AppChainAnchor.sol` | Anchor registry — stores block anchors per AppChain with pluggable proof verification. `AggregatedAnchor` struct with 3 proof systems (NoProof, StarkHashOffChain, SnarkOnChain) and extensible registry. |
 | `AppChainHub.sol` | Public AppChain registry and messaging hub. Chain ID reservation (prevents squatting via registration fee), cross-chain messaging with authorized senders, anchor storage, message acknowledgment with Merkle root checkpoints. Optional — AppChains deploy their own `AppChainAnchor` independently; the Hub provides discovery, coordination, and a standardised messaging layer. |
 | `AppChainPolicy.sol` | Membership and policy governance — Merkle-root membership management (writers/admins/blacklist), configurable policy parameters (calldata limits, log limits, gas limits, sequencer), and epoch-based tree rebuilding. |
-| `AppChainProofManager.sol` | Proof registry — manages per-block proof submissions from provers, tracks proof system upgrades. |
+| `AppChainProofManager.sol` | Proof registry — records per-block proof submissions from authorized provers (direct or bond-requested), each checked against the anchor's minimum proof system. |
 
 ### Authority & Access Control
 
@@ -53,9 +53,9 @@ The `AppChainAnchor` contract maps proof system IDs to verifier contracts via `r
 | 1 | StarkHashOffChain | optional | false | Off-chain STARK verification |
 | 2 | SnarkOnChain | required | **true** | Full on-chain SNARK verification via `IVerifier.verify()` (pluggable verifier; shipped: `ZiskVerifierAdapter`) |
 
-The registry is extensible — additional proof systems can be registered by the authority. 7 C# submission strategies (DA × Proof mode combinations) map to these 3 on-chain proof system IDs.
+The registry is extensible — additional proof systems can be registered by the registry owner (`registerProofSystem` is `onlyOwner`). 7 C# submission strategies (DA × Proof mode combinations) map to these 3 on-chain proof system IDs.
 
-See [STRATEGY_VERIFIERS.md](STRATEGY_VERIFIERS.md) for the full strategy-to-verifier mapping.
+See [STRATEGY_VERIFIERS.md](https://github.com/Nethereum/Nethereum/blob/master/src/Nethereum.AppChain.Contracts/STRATEGY_VERIFIERS.md) for the full strategy-to-verifier mapping.
 
 ## Build
 
@@ -82,7 +82,7 @@ Generated Nethereum contract services live in:
 
 Regenerate with:
 ```bash
-dotnet nethereum generate from-abi --config .nethereum-gen.multisettings
+Nethereum.Generator.Console generate from-config -cfg .nethereum-gen.multisettings
 ```
 
 ## Security Model

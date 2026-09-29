@@ -10,8 +10,6 @@ format: md
 # Nethereum.Signer.AWSKeyManagement
 
 > **NuGet**: [`Nethereum.Signer.AWSKeyManagement`](https://www.nuget.org/packages/Nethereum.Signer.AWSKeyManagement/) | **Source**: [`src/Nethereum.Signer.AWSKeyManagement/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Signer.AWSKeyManagement)
-# Nethereum.Signer.AWSKeyManagement
-
 AWS Key Management Service (KMS) integration for Ethereum transaction signing with cloud-based Hardware Security Module (HSM) backed keys.
 
 ## Overview
@@ -114,7 +112,7 @@ var account = new ExternalAccount(signer, chainId: 1);
 await account.InitialiseAsync();
 
 // Use with Web3
-var web3 = new Web3.Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
 
 Console.WriteLine($"Address: {account.Address}");
 ```

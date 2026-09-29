@@ -16,15 +16,14 @@ High-performance IPC (Inter-Process Communication) JSON-RPC client for local Eth
 
 ## Overview
 
-Nethereum.JsonRpc.IpcClient provides **IPC transport implementations** for communicating with local Ethereum nodes via **Named Pipes (Windows)** and **Unix Domain Sockets (Linux/macOS)**. IPC offers **significantly lower latency** than HTTP for local node communication, making it ideal for high-performance applications running on the same machine as the Ethereum node.
+Nethereum.JsonRpc.IpcClient provides **IPC transport implementations** for communicating with local Ethereum nodes via **Named Pipes (Windows)** and **Unix Domain Sockets (Linux/macOS)**. IPC bypasses the HTTP stack, which typically lowers latency for a node on the same machine.
 
 **Key Features:**
 - **Named Pipes** support (Windows)
 - **Unix Domain Sockets** support (Linux, macOS)
-- **Ultra-low latency** (~1ms vs ~5ms HTTP)
-- Automatic connection management and retry
-- Thread-safe request handling
-- Production-tested reliability
+- **Typically lower latency** than HTTP for a co-located node
+- Reconnects lazily on the next request after a connection error
+- Requests are serialised with an internal lock (one connection per client)
 - Compatible with Geth, Erigon, Besu IPC endpoints
 
 **Use Cases:**
@@ -64,12 +63,12 @@ using Nethereum.RPC.Eth.Blocks;
 // Connect to Geth IPC endpoint (Windows)
 var client = new IpcClient(@"\\.\pipe\geth.ipc");
 
-// Query blockchain with ultra-low latency
+// Query blockchain over IPC
 var ethBlockNumber = new EthBlockNumber(client);
 var blockNumber = await ethBlockNumber.SendRequestAsync();
 
 Console.WriteLine($"Current block: {blockNumber.Value}");
-// Typical latency: ~1ms (vs ~5ms for HTTP localhost)
+// Typically lower latency than HTTP for a co-located node
 ```
 
 ### Linux/macOS (Unix Domain Sockets)
@@ -93,6 +92,7 @@ Console.WriteLine($"Chain ID: {chainId.Value}");
 ### Example 1: Connecting to Geth IPC Endpoints
 
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
 using Nethereum.RPC.Eth.Blocks;
 using System.Runtime.InteropServices;
@@ -167,7 +167,7 @@ using Nethereum.RPC.Eth;
 var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddConsole();
-    builder.SetMinimumLevel(LogLevel.Debug);
+    builder.SetMinimumLevel(LogLevel.Trace);
 });
 
 var logger = loggerFactory.CreateLogger<IpcClient>();
@@ -182,14 +182,15 @@ var client = new UnixIpcClient(
 // All requests are logged
 var ethGasPrice = new EthGasPrice(client);
 var gasPrice = await ethGasPrice.SendRequestAsync();
-// Console output: Sending request: {"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":1}
-// Console output: Received response: {"jsonrpc":"2.0","result":"0x...","id":1}
+// Console output: RPC Request: {"jsonrpc":"2.0","method":"eth_gasPrice",...}
+// Console output: RPC Response: 0x...
 ```
 
 ### Example 4: Using with Nethereum.Web3
 
 ```csharp
 using Nethereum.Web3;
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
 using System.Runtime.InteropServices;
 
@@ -201,7 +202,7 @@ IClient ipcClient = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
 // Use with Web3
 var web3 = new Web3(ipcClient);
 
-// Ultra-fast local queries
+// Local queries
 var balance = await web3.Eth.GetBalance.SendRequestAsync(
     "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
 );
@@ -244,7 +245,7 @@ while (true)
 
     await Task.Delay(100); // Poll every 100ms
 }
-// Typical latency: 1-2ms (IPC) vs 5-10ms (HTTP localhost)
+// Typically lower latency than HTTP for a co-located node
 ```
 
 ### Example 6: Connection Error Handling and Retry
@@ -300,6 +301,7 @@ catch (RpcClientUnknownException ex)
 ### Example 7: Erigon IPC Connection
 
 ```csharp
+using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.IpcClient;
 using Nethereum.RPC.Eth.Blocks;
 using System.Runtime.InteropServices;
@@ -474,24 +476,24 @@ public void Dispose()
 
 ### Performance Comparison
 
-| Transport | Latency (localhost) | Use Case |
-|-----------|---------------------|----------|
-| **IPC** | 0.5-2ms | Local node, high-frequency |
-| HTTP | 3-10ms | Local node, standard |
-| HTTPS (remote) | 50-200ms | Cloud providers |
+| Transport | Use Case |
+|-----------|----------|
+| **IPC** | Local node, high-frequency |
+| HTTP | Local or remote node, standard |
+| HTTPS (remote) | Cloud providers |
 
-**IPC is ~5x faster than HTTP for local communication.**
+**IPC typically has lower latency than HTTP for a co-located node.**
 
 ### Thread Safety
 
-- **NOT thread-safe** - uses internal locking for single connection
+- Requests are serialised with an internal lock over a single connection
 - For concurrent requests, create multiple client instances
 - Each instance maintains its own IPC connection
 - Safe to use from single thread or with external synchronization
 
 ### Batch Requests Are NOT Supported
 
-`IpcClientBase.SendBatchRequestAsync` overrides the base implementation and throws `NotImplementedException` (`IpcClientBase.cs:96-99`); the batch-only `SendAsync(RpcRequestMessage[])` overload does the same. Do not call `SendBatchRequestAsync` on `IpcClient`/`UnixIpcClient`/`SimpleIpcClient` - send individual requests instead. This is not a significant loss: **IPC is already very fast**, so batching provides less benefit than it does over HTTP.
+`IpcClientBase.SendBatchRequestAsync` overrides the base implementation and throws `NotImplementedException` (`IpcClientBase.cs:96-99`); the batch-only `SendAsync(RpcRequestMessage[])` overload does the same. Do not call `SendBatchRequestAsync` on `IpcClient`/`UnixIpcClient`/`SimpleIpcClient` - send individual requests instead. This is not a significant loss: **IPC has low overhead**, so batching provides less benefit than it does over HTTP.
 
 ### Error Handling
 
@@ -512,14 +514,14 @@ public void Dispose()
 
 **Use IPC when:**
 - Running on same machine as node
-- Ultra-low latency required (<2ms)
+- Lowest latency to a co-located node required
 - High-frequency requests (MEV, indexing)
 - Production node operator
 
 **Use HTTP when:**
 - Connecting to remote node
 - Simple request/response pattern
-- Standard latency acceptable (5-10ms)
+- Standard latency acceptable
 
 **Use WebSocket when:**
 - Need real-time subscriptions (`eth_subscribe`)

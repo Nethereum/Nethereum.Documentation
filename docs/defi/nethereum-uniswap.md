@@ -612,7 +612,6 @@ project `Nethereum.Uniswap.Testing` in the [Nethereum.UniswapV2 repository](http
 - Token approvals, balance validation, and price services
 - Pool discovery and caching strategies
 - Position management, liquidity operations, and atomic rebalancing
-```
 
 
 # Uniswap V3 / Permit 2 / V2Quoter
@@ -741,15 +740,13 @@ catch (SmartContractCustomErrorRevertException e)
 
 ## Uniswap V2 ERC20 single path and multipath
 
-To enable hardhat.
-
-1. Go to the directory testchains\hardhat and run ```npm install```
-2. Configure your fork alchemy api key and block number in your Test settings https://github.com/Nethereum/Nethereum.UniswapV2/blob/main/Nethereum.Uniswap.Testing/appsettings.test.json#L6
-3. When you run your tests it will automatically launch hardhat and fork on the configured block number.
-
 ### Code example
 
 ```csharp
+using Nethereum.Uniswap.V2.UniswapV2Factory;
+using Nethereum.Uniswap.V2.UniswapV2Router02;
+using Nethereum.Uniswap.V2.UniswapV2Router02.ContractDefinition;
+
         [Fact]
         public async void ShouldBeAbleToGetThePairForDaiWeth()
         {
@@ -781,7 +778,7 @@ To enable hardhat.
             
             var deadline = DateTimeOffset.Now.AddMinutes(15).ToUnixTimeSeconds();
             
-            var swapEthForExactTokens = new Contracts.UniswapV2Router02.ContractDefinition.SwapExactETHForTokensFunction()
+            var swapEthForExactTokens = new SwapExactETHForTokensFunction()
             {
                 AmountOutMin = amounts[1],
                 Path = path,

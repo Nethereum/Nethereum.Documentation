@@ -10,8 +10,6 @@ format: md
 # Nethereum.HDWallet
 
 > **NuGet**: [`Nethereum.HDWallet`](https://www.nuget.org/packages/Nethereum.HDWallet/) | **Source**: [`src/Nethereum.HDWallet/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.HDWallet)
-# Nethereum.HdWallet
-
 BIP32 and BIP39 hierarchical deterministic (HD) wallet implementation for generating Ethereum-compatible addresses from mnemonic seed phrases.
 
 ## Overview
@@ -439,7 +437,6 @@ var depositAddress = publicWallet.GetAddress(customerID);
 ## Related Packages
 
 ### Used By (Consumers)
-- **Nethereum.Accounts** - Account management
 - Wallet applications
 - Multi-sig services
 - Payment processors

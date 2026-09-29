@@ -195,6 +195,7 @@ var totalSupply = await tokenService.TotalSupplyQueryAsync();
 From: [Nethereum Playground Example 1014](https://playground.nethereum.com/csharp/id/1014)
 
 ```csharp
+using Nethereum.Util;
 using Nethereum.Web3;
 
 // Convert Ether to Wei

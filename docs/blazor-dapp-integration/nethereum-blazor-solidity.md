@@ -187,12 +187,12 @@ public class EvmReplayResult
 
 The debugger automatically discovers Solidity source files when an ABI output directory is provided (e.g., Forge's `out/` or Hardhat's `artifacts/`). The matching process:
 
-1. `FileSystemABIInfoStorage` scans the directory for compiled contract artifacts containing runtime bytecode
+1. `FileSystemABIInfoStorage` scans the directory for `*.json` compiled contract artifacts (Foundry-style `deployedBytecode.object` / `sourceMap`) and for `build-info` files (standard JSON output with `evm.deployedBytecode`)
 2. For each contract in the trace, the deployed bytecode is compared against the stored artifacts
 3. When a match is found, the source map and source file paths from the compilation output are used to map program counter values to source locations
 4. Source files are loaded and displayed in the `DebugSourcePanel`
 
-This works with standard Solidity compiler output formats (Forge, Hardhat, solc --combined-json).
+This works with Foundry artifacts and build-info standard JSON output.
 
 ## Related Packages
 

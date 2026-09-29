@@ -223,6 +223,7 @@ web3.Eth.GetBlocksWithTransactionHashes(
 ```csharp
 using Nethereum.Web3;
 using Nethereum.RPC.Reactive.Polling;
+using System.Reactive;
 using System.Reactive.Linq;
 
 var web3 = new Web3("https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
@@ -328,9 +329,11 @@ public class BlockMonitor
 {
     private StreamingWebSocketClient client;
     private EthNewBlockHeadersObservableSubscription subscription;
+    private string webSocketUrl;
 
     public async Task StartAsync(string wsUrl)
     {
+        webSocketUrl = wsUrl;
         client = new StreamingWebSocketClient(wsUrl);
         client.Error += Client_Error;
 
@@ -880,7 +883,7 @@ Blocks are skipped in the stream
 
 ## Related Packages
 
-- **Nethereum.JsonRpc.WebSocketStreamingClient** - Core IObservable infrastructure for WebSocket subscriptions (foundation for this package)
+- **Nethereum.JsonRpc.WebSocketStreamingClient** - Separate package with an equivalent set of observable subscription types in namespace `Nethereum.JsonRpc.WebSocketStreamingClient` (not a dependency of this package)
 - **Nethereum.RPC** - Core RPC functionality
 - **Nethereum.JsonRpc.WebSocketClient** - WebSocket client for subscriptions
 - **Nethereum.Web3** - High-level Web3 API

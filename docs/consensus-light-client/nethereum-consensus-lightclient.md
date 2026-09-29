@@ -21,7 +21,7 @@ dotnet add package Nethereum.Consensus.LightClient
 dotnet add package Nethereum.Signer.Bls.Herumi  # For BLS signature verification
 ```
 
-**Native Library Requirement**: BLS signature verification requires the Herumi BLS native library (`bls_eth.dll`/`libbls_eth.so`/`libbls_eth.dylib`). The library is included in the `Nethereum.Signer.Bls.Herumi` NuGet package for Windows/Linux/macOS x64/arm64.
+**Native Library Requirement**: BLS signature verification requires the Herumi BLS native library (`bls_eth.dll`/`libbls_eth.so`/`libbls_eth.dylib`). The library is included in the `Nethereum.Signer.Bls.Herumi` NuGet package for Windows x64, Linux x64/arm64, macOS x64/arm64 and Android arm64 (there is no Windows arm64 build).
 
 ## Overview
 
@@ -38,7 +38,7 @@ Nethereum.Consensus.LightClient implements the Ethereum light client sync protoc
 
 **Security Model:**
 - Requires trusted weak subjectivity checkpoint to bootstrap
-- Verifies 512-validator sync committee signatures (67% participation threshold)
+- Verifies 512-validator sync committee signatures (baseline participation floor for updates; 2/3 supermajority participation required for finality updates)
 - Tracks both finalized (2/3 finality) and optimistic (latest) headers
 - Uses BLS12-381 signature aggregation for efficient verification
 
@@ -854,7 +854,7 @@ public class EthereumLightClient
 
         var beaconClient = new BeaconApiClient(beaconNodeUrl);
         _nativeBls = new NativeBls(new HerumiNativeBindings());
-        var store = new FileLightClientStore("lightclient.json");
+        var store = new FileLightClientStore("lightclient-state.bin");
 
         _lightClient = new LightClientService(beaconClient.LightClient, _nativeBls, config, store);
         _headerProvider = new TrustedHeaderProvider(_lightClient)

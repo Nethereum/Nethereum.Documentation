@@ -428,16 +428,13 @@ public class ContractInteractionValidator : AbstractValidator<ContractInteractio
     public ContractInteractionValidator()
     {
         RuleFor(x => x.ContractAddress)
-            .IsEthereumAddress()
-            .WithMessage("Please provide a valid Ethereum contract address");
+            .IsEthereumAddress();
 
         RuleFor(x => x.FunctionData)
-            .IsHex()
-            .WithMessage("Function data must be valid hexadecimal with 0x prefix");
+            .IsHex();
 
         RuleFor(x => x.RpcEndpoint)
-            .IsUri()
-            .WithMessage("Please provide a valid RPC endpoint URL");
+            .IsUri();
     }
 }
 ```
@@ -572,7 +569,7 @@ provider.SelectedAccountChanged += async (account) =>
 
 ### Multi-Wallet Support
 
-Some providers (like WalletConnect with multiple sessions) support multiple simultaneous wallet connections:
+Providers report `MultipleWalletsProvider` to indicate support for multiple simultaneous wallet connections (`NethereumWalletConnectHostProvider` returns `false`):
 
 ```csharp
 if (provider.MultipleWalletsProvider)

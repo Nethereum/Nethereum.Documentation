@@ -133,7 +133,7 @@ field short. Accepting it requires extending the format first.
 
 ## Build Pipeline
 
-The build orchestration lives in [`zisk/`](../../zisk/README.md) at
+The build orchestration lives in [`zisk/`](https://github.com/Nethereum/Nethereum/blob/master/zisk/README.md) at
 the repo root. It uses the `nethereum/bflat-riscv64` Docker image
 built from the [Nethereum/bflat-riscv64 fork on the `nethereum`
 branch](https://github.com/Nethereum/bflat-riscv64/tree/nethereum).
@@ -169,7 +169,7 @@ ziskemu -e zisk/output/nethereum_evm_elf \
     -n 500000000
 ```
 
-See [`zisk/README.md`](../../zisk/README.md) for proving flow,
+See [`zisk/README.md`](https://github.com/Nethereum/Nethereum/blob/master/zisk/README.md) for proving flow,
 verification checklist, and environment overrides (`ZISK_IMAGE`,
 `LIBZISKOS_DIR`).
 

@@ -10,8 +10,6 @@ format: md
 # Nethereum.KeyStore
 
 > **NuGet**: [`Nethereum.KeyStore`](https://www.nuget.org/packages/Nethereum.KeyStore/) | **Source**: [`src/Nethereum.KeyStore/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.KeyStore)
-# Nethereum.KeyStore
-
 Password-encrypted private key storage using the Web3 Secret Storage Definition standard.
 
 ## Overview
@@ -449,7 +447,7 @@ P = 1
 | **R** | Block size | Linear | Linear |
 | **P** | Parallelization | Linear | Linear (if parallel) |
 
-**N dominates:** Doubling N doubles time and memory. N=262144 uses ~256MB RAM.
+**N dominates:** Doubling N doubles time and memory. Scrypt needs about 128 x N x R bytes, so the default N=262144 with R=1 uses ~32MB RAM.
 
 ## Web3 Secret Storage Format
 

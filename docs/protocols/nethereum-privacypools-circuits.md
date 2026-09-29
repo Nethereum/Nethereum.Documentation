@@ -2,7 +2,7 @@
 title: "Nethereum.PrivacyPools.Circuits"
 sidebar_label: "Nethereum.PrivacyPools.Circuits"
 sidebar_position: 100
-description: "Embedded circuit artifacts for the [0xbow Privacy Pools](https://github.com/0xbow-io/privacy-pools-core) protocol. Provides `PrivacyPoolCircuitSource` — implements both `ICircuitArtifactSource` and `I"
+description: "Embedded circuit artifacts for the 0xbow Privacy Pools protocol. Provides `PrivacyPoolCircuitSource` — implements both `ICircuitArtifactSource` and `ICircuitGraphSource`, loading compiled Circom circu"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.PrivacyPools.Circuits/README.md"
 format: md
 ---
@@ -76,7 +76,7 @@ var proofProvider = new PrivacyPoolProofProvider(
 
 ```csharp
 var circuitSource = new PrivacyPoolCircuitSource();
-var blazorProvider = new SnarkjsBlazorProvider(jsRuntime, "./js/snarkjs.min.mjs");
+var blazorProvider = new SnarkjsBlazorProvider(jsRuntime, "./js/snarkjs.min.js");
 await blazorProvider.InitializeAsync();
 var proofProvider = new PrivacyPoolProofProvider(blazorProvider, circuitSource);
 ```

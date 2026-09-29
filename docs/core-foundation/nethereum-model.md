@@ -311,7 +311,7 @@ var log = Log.Create(
 // Or create log without data
 var logWithoutData = Log.Create(
     address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    topics: topic1, topic2, topic3
+    topics: new[] { topic1, topic2, topic3 }
 );
 ```
 

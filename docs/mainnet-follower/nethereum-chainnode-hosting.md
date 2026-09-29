@@ -98,7 +98,7 @@ format, protocol behaviour, or is a named opt-in seam).
 | `EnableLogIndex` | Build the log/filter index. | `false` | expert |
 
 `ChainNodeStorage.BuildStorageOptions` (`ChainNodeStorage.cs:40-56`) maps this 1:1 onto
-`RocksDbStorageOptions`; `BuildJournalOptions` (`ChainNodeStorage.cs:58-69`) implements the
+`RocksDbStorageOptions`, except `JournalBlocks` and `FlushCadenceBlocks`; `BuildJournalOptions` (`ChainNodeStorage.cs:58-69`) implements the
 `JournalBlocks` tri-state above.
 
 ### `Network` — `ChainNodeNetworkConfig` (`Configuration/ChainNodeNetworkConfig.cs`)

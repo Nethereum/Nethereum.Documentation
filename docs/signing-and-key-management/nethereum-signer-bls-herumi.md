@@ -93,7 +93,7 @@ public class NativeBls : IBls
 }
 ```
 
-- `VerifyAggregate` — verifies an aggregate BLS signature over one or more messages using ETH2-style domain separation.
+- `VerifyAggregate` — verifies an aggregate signature over 32-byte signing roots; the `domain` argument is only length-checked (32 bytes when supplied) by `HerumiNativeBindings`.
 - `AggregateSignatures` — combines multiple BLS signatures into a single aggregated signature (used for ERC-4337 BLS aggregation).
 - `Verify` — verifies an individual BLS signature over a single message.
 - `ExtractSignatureAndPublicKey` — splits a combined `signatureWithPubKey` byte array into the 96-byte signature and 48-byte public key.
@@ -162,7 +162,7 @@ Ethereum consensus layer uses domain types to prevent cross-context signature re
 | RANDAO | `0x02000000` | Randomness reveals |
 | Sync Committee | `0x07000000` | Light client sync |
 
-These domain bytes are passed to BLS signing/verification as the `domain` parameter.
+The `domain` argument is validated (32 bytes when non-empty) but not applied by the bindings — compute the signing root, including the domain, before calling.
 
 ### Native Library Loading
 

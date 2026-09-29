@@ -2,7 +2,7 @@
 title: "Nethereum.Mud.Repositories.Postgres"
 sidebar_label: "Nethereum.Mud.Repositories.Postgres"
 sidebar_position: 100
-description: "Nethereum.Mud.Repositories.Postgres provides a production-ready PostgreSQL implementation for persisting and querying [MUD (Onchain Engine)](https://mud.dev/) table data. It includes database schema n"
+description: "Nethereum.Mud.Repositories.Postgres provides a production-ready PostgreSQL implementation for persisting and querying MUD (Onchain Engine) table data. It includes database schema normalization, allowi"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Mud.Repositories.Postgres/README.md"
 format: md
 ---
@@ -606,7 +606,7 @@ r.TableId == tableIdHex
 
 **2. Leverage composite indexes:**
 ```sql
-CREATE INDEX ix_address_tableid_key0 ON storedrecords (addressbytes, tableidbytes, key0bytes);
+CREATE INDEX ix_address_tableid_key0 ON storedrecords (address, tableid, key0);
 ```
 
 **3. Use NUMERIC for BigInteger:**
@@ -698,7 +698,7 @@ await normalizeService.ExecuteAsync(cancellationToken);
 
 ```csharp
 // Write: Via MUD contracts
-await worldService.CallFromRequestAndWaitForReceiptAsync(systemId, callData);
+await worldService.CallRequestAndWaitForReceiptAsync(systemId, callData);
 
 // Read: From normalized table
 var players = await connection.QueryAsync<PlayerInfo>(
@@ -737,27 +737,29 @@ services.AddDbContext<MudPostgresStoreRecordsDbContext>(options =>
 ```sql
 CREATE TABLE storedrecords (
     rowid BIGSERIAL,
-    addressbytes BYTEA NOT NULL,
-    tableidbytes BYTEA NOT NULL,
-    keybytes BYTEA NOT NULL,
-    key0bytes BYTEA,
-    key1bytes BYTEA,
-    key2bytes BYTEA,
-    key3bytes BYTEA,
+    address BYTEA NOT NULL,
+    tableid BYTEA NOT NULL,
+    key BYTEA NOT NULL,
+    key0 BYTEA,
+    key1 BYTEA,
+    key2 BYTEA,
+    key3 BYTEA,
     static_data BYTEA,
     encoded_lengths BYTEA,
     dynamic_data BYTEA,
     isdeleted BOOLEAN NOT NULL DEFAULT false,
     blocknumber NUMERIC(1000, 0),
     logindex INTEGER,
-    PRIMARY KEY (addressbytes, tableidbytes, keybytes)
+    PRIMARY KEY (address, tableid, key)
 );
 
 CREATE INDEX ix_rowid ON storedrecords (rowid);
-CREATE INDEX ix_address_tableid_key0 ON storedrecords (addressbytes, tableidbytes, key0bytes);
+CREATE INDEX ix_address_tableid_key0 ON storedrecords (address, tableid, key0);
 ```
 
 ### ChainStates Table (Chain Validation)
+
+The EF model maps `ChainState` to `mud_chainstates` (and `BlockProgress` to `mud_blockprogress`); the shipped upgrade script creates a table named `chainstates`, as shown below.
 
 ```sql
 CREATE TABLE chainstates (

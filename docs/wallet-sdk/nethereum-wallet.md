@@ -926,7 +926,8 @@ using Nethereum.Wallet.UI;
 services.AddSingleton<IWalletVaultService, FileWalletVaultService>(sp =>
     new FileWalletVaultService("./vault.json"));
 
-services.AddSingleton<ICoreWalletAccountService, CoreWalletAccountService>();
+services.AddSingleton<ICoreWalletAccountService>(sp =>
+    new CoreWalletAccountService(sp.GetRequiredService<WalletVault>()));
 services.AddSingleton<IWalletConfigurationService, InMemoryWalletConfigurationService>();
 services.AddSingleton<IWalletStorageService, FileWalletStorageService>();
 

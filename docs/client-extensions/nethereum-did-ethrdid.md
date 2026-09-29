@@ -16,7 +16,7 @@ did:ethr method implementation using the ERC-1056 EthereumDIDRegistry contract f
 
 - **EthereumDIDRegistryService** - Typed contract service for ERC-1056 identity management
 - **EthrDidResolver** - Resolves did:ethr identifiers to W3C DID Documents from on-chain events
-- **Multi-chain support** - Configurable registry addresses per chain
+- **Registry addresses** - `EthrDidConstants` provides default registry addresses for Ethereum mainnet, Sepolia and Polygon (`GetDefaultRegistryAddresses()`); `EthrDidResolver` takes one `registryAddress` (default: the mainnet registry).
 - **Full ERC-1056 support** - Owner management, delegates, attributes (including signed variants)
 
 ## Usage

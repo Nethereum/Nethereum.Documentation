@@ -93,7 +93,7 @@ string encoded = functionCallEncoder.EncodeRequest(
     "0x1234567890abcdef1234567890abcdef12345678",  // recipient
     1000000000000000000  // amount (1 ETH in wei)
 );
-// Result: "0xc6888fa10000000000000000000000001234567890abcdef1234567890abcdef12345678000000000000000000000000000000000000000000000000001e4c89d6c7e400"
+// Result: "0xc6888fa10000000000000000000000001234567890abcdef1234567890abcdef123456780000000000000000000000000000000000000000000000000de0b6b3a7640000"
 ```
 
 ### Decoding Function Output
@@ -392,6 +392,7 @@ From test: `Eip712TypedDataSignerSimpleScenarioTest.cs:66`
 ```csharp
 using Nethereum.ABI.EIP712;
 using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using System.Collections.Generic;
 
@@ -481,6 +482,7 @@ From test: `Eip712TypedDataSignerTest.cs:107`
 
 ```csharp
 using Nethereum.ABI.EIP712;
+using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 
 // EIP-712 typed data as JSON (MetaMask format)

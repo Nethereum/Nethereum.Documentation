@@ -65,6 +65,7 @@ using Nethereum.EVM;                   // HardforkConfig, WithKzgBackend
 using Nethereum.EVM.Precompiles;       // DefaultHardforkConfigs
 using Nethereum.EVM.Precompiles.Kzg;   // CkzgOperations
 
+CkzgOperations.InitializeFromEmbeddedSetup();
 IKzgOperations kzgOps = new CkzgOperations();      // or your own
 HardforkConfig cancun = DefaultHardforkConfigs.Cancun
     .WithKzgBackend(kzgOps);

@@ -2,7 +2,7 @@
 title: "Nethereum.ZkProofs.Snarkjs.Blazor"
 sidebar_label: "Nethereum.ZkProofs.Snarkjs.Blazor"
 sidebar_position: 100
-description: "Browser-based Groth16 zero-knowledge proof generation for Blazor WebAssembly applications. This package provides a `IZkProofProvider` implementation that calls [snarkjs](https://github.com/iden3/snark"
+description: "Browser-based Groth16 zero-knowledge proof generation for Blazor WebAssembly applications. This package provides a `IZkProofProvider` implementation that calls snarkjs via JavaScript interop, enabling"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.ZkProofs.Snarkjs.Blazor/README.md"
 format: md
 ---

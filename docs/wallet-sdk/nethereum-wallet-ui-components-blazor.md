@@ -61,7 +61,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddSingleton<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddSingleton<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, AesEncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
 
 await builder.Build().RunAsync();
 ```
@@ -79,7 +79,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddScoped<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddScoped<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, AesEncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
 
 var app = builder.Build();
 app.Run();
@@ -974,9 +974,9 @@ services.AddTransactionServices();
 ```
 
 Registers:
+- `IPendingTransactionService` (`PendingTransactionService`)
+- `TransactionHistoryViewModel` and its localizer
 - `TransactionMonitoringService` (IHostedService)
-- `ITransactionService`
-- Pending transaction notifications
 
 ### DApp Prompts
 
@@ -987,13 +987,11 @@ services.AddPromptsServices();
 ```
 
 Registers:
-- `PromptsPluginViewModel`
+- `NotificationBadgeViewModel`
+- `PromptsPluginViewModel` (as `IDashboardPluginViewModel`)
 - `DAppTransactionPromptViewModel`
+- `DAppPermissionPromptViewModel`
 - `DAppSignaturePromptViewModel`
-- `DAppChainSwitchPromptViewModel`
-- `DAppChainAdditionPromptViewModel`
-- `IPromptQueueService`
-- `IChainAdditionPromptService`
 
 ## Browser Compatibility
 
@@ -1029,7 +1027,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddSingleton<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddSingleton<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, AesEncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
 
 // Configure wallet UI
 builder.Services.AddSingleton<INethereumWalletUIConfiguration>(sp =>

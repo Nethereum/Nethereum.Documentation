@@ -10,8 +10,6 @@ format: md
 # Nethereum.TokenServices
 
 > **NuGet**: [`Nethereum.TokenServices`](https://www.nuget.org/packages/Nethereum.TokenServices/) | **Source**: [`src/Nethereum.TokenServices/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.TokenServices)
-# Nethereum.TokenServices
-
 A standalone .NET library for ERC20 token discovery, balance retrieval, pricing, and multi-account scanning. Designed for multi-chain support with pluggable providers and discovery strategies.
 
 ## Installation
@@ -185,7 +183,7 @@ var watchlist = new[]
 {
     new TokenInfo { Address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", Symbol = "USDC", Decimals = 6 },
     new TokenInfo { Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", Symbol = "WETH", Decimals = 18 },
-    new TokenInfo { Address = "0x6B175474E89094C44Da98b954EescdeCB5BAD0", Symbol = "DAI", Decimals = 18 }
+    new TokenInfo { Address = "0x6B175474E89094C44Da98b954EedeAC495271d0F", Symbol = "DAI", Decimals = 18 }
 };
 
 var balances = await tokenService.GetBalancesForTokensWithPricesAsync(

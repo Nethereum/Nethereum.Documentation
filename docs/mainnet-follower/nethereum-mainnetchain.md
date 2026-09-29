@@ -223,6 +223,6 @@ IServiceCollection UseInMemoryBundleAndSource(this IServiceCollection services, 
 
 ## Notes
 
-- Block execution is pinned to mainnet (chain id 1) with the Cancun hardfork and proof-of-work reward policy in `MainnetChainNodeFactory`; there is no hardfork toggle on the config.
+- Block execution follows mainnet's fork schedule (`MainnetChainActivations`) with chain id 1 and the proof-of-work reward policy, wired in `MainnetChainNodeFactory`; there is no hardfork toggle on the config.
 - Setting `NETHEREUM_WIPE_SNAP_STATE=1` performs a one-shot wipe of snap state/trie CFs on startup (keeps headers/bodies/receipts and their cursors) — used to restart Phase 2 cleanly on an existing archive.
 - The runnable server lives in **Nethereum.MainnetChain.Server** (tool command `nethereum-mainnetchain`); this package is the embeddable library behind it.

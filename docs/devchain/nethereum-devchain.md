@@ -105,9 +105,9 @@ DevChain uses a hybrid storage strategy by default:
 | Transactions | SQLite | Historical, grows unbounded |
 | Receipts | SQLite | Historical, grows unbounded |
 | Logs | SQLite | Historical, grows unbounded |
-| State | In-Memory | Needs fast snapshot/revert |
+| State | SQLite (HistoricalStateStore over SqliteStateStore; snapshot/revert is diff-based) | Persisted with the chain |
 | Filters | In-Memory | Transient, bounded |
-| Trie Nodes | In-Memory | Needs fast access |
+| Trie Nodes | SQLite | Persisted with the chain |
 
 SQLite uses WAL journal mode for concurrent reads during block production. The database is auto-deleted on dispose unless persistence is enabled.
 
@@ -172,7 +172,7 @@ var fastConfig = new DevChainConfig
 
 ### EIP-4844 Blob Transactions
 
-DevChain stores blob sidecars in-memory and exposes a beacon-compatible REST endpoint:
+Blob sidecars are stored only when the node has an `IBlobStore`: `DevChainNode.CreateInMemory()` supplies an in-memory one; the default SQLite constructor and `AddDevChainServer` do not, so `node.BlobStore` is null and sidecars are dropped.
 
 ```csharp
 // Send blob transaction with sidecar
@@ -185,8 +185,6 @@ await node.MineBlockAsync();
 var blobs = await node.BlobStore.GetBlobsByBlockNumberAsync(blockNumber);
 var originalData = BlobEncoder.DecodeBlobs(blobs.Select(b => b.Blob).ToList());
 ```
-
-When running as an ASP.NET hosted service, blobs are also available via the beacon REST API at `GET /eth/v1/beacon/blob_sidecars/{block_id}`.
 
 ### Transaction Processing
 
@@ -304,7 +302,7 @@ var stateOverrides = new Dictionary<string, StateOverride>
 {
     [address] = new StateOverride
     {
-        Balance = "0x1000000000000000000",
+        Balance = new HexBigInteger("0x1000000000000000000"),
         Code = "0x...",
         State = new Dictionary<string, string>
         {
@@ -348,8 +346,8 @@ registry.AddAnvilAliases();      // Anvil compatibility
 | `hardhat_setCode` | Set contract code |
 | `hardhat_setNonce` | Set account nonce |
 | `hardhat_setStorageAt` | Set storage slot |
-| `hardhat_impersonateAccount` | Impersonate account |
-| `hardhat_stopImpersonatingAccount` | Stop impersonating |
+| `hardhat_impersonateAccount` | Record an address as impersonated (registered only via `AddDevChainServer`, not `AddDevHandlers`; no signing support) |
+| `hardhat_stopImpersonatingAccount` | Stop impersonating (registered only via `AddDevChainServer`) |
 
 ### Debug Methods
 

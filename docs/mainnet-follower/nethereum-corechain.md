@@ -181,7 +181,7 @@ public class BlockProductionResult
 }
 ```
 
-The `BlockProducer` constructor takes the engine, the `IBlockStore` / `ITransactionStore` / `IReceiptStore` / `ILogStore` / `IStateStore` / `ITrieNodeStore` / `IIncrementalStateRootCalculator`, and then, in this order, the optional `ITransactionOrderingPolicy`, `IBlockHashProvider`, `IBlockEncodingProvider` and `IBlockRootsProvider` seams, followed by an `IWithdrawalStore`, a `NodeCommitBlockContext` and an `IBlockAccessListStore`. Every optional parameter is positional with a `null` default, so passing them by name is the safe way to reach the later ones.
+The `BlockProducer` constructor takes the engine, the `IBlockStore` / `ITransactionStore` / `IReceiptStore` / `ILogStore` / `IStateStore` / `ITrieNodeStore` / `IIncrementalStateRootCalculator`, and then, in this order, the optional `ITransactionOrderingPolicy`, `IBlockHashProvider`, `IBlockEncodingProvider` and `IBlockRootsProvider` seams, followed by an `IWithdrawalStore` and a `NodeCommitBlockContext`. Those optional parameters are positional with a `null` default, so passing them by name is the safe way to reach the later ones. A second overload adds the `IBlockAccessListStore` and requires every one of those parameters to be passed.
 
 **Compose the stack and produce a block** — extracted from `BlockProducerTests.ProduceBlock_WithValidTransfer_Succeeds` (`tests/Nethereum.CoreChain.UnitTests/BlockProducerTests.cs`):
 
@@ -241,11 +241,12 @@ public sealed class BlockExecutionOptions
     public int? TraceTxIndex { get; init; }
     public BlockExecutionRole Role { get; init; } = BlockExecutionRole.Building;
     public SimulateCallOptions? SimulateCallOptions { get; init; }
+    public BigInteger SimulateGlobalGasUsedBefore { get; init; }
     public List<AccountChanges>? DeclaredBlockAccessList { get; init; }
 }
 ```
 
-`Role` is the difference between sealing a block and judging one: `Validating` compares the executed result against what the header *declares*, and `Simulating` runs the block for `eth_simulateV1`-style speculative execution, with `SimulateCallOptions` (`Validation`, `TraceTransfers`, per-account `ExpectedNonces`) tuning that mode. `DeclaredBlockAccessList` carries the block access list as the block declares it (an Engine API payload, an eth/71 body) — EIP-7928's Engine API returns `INVALID` both when the list "is malformed" and when it "doesn't match", and recomputing hashes can only answer the second; only the declared list itself can answer the first.
+`Role` is the difference between sealing a block and judging one: `Validating` compares the executed result against what the header *declares*, and `Simulating` runs the block for `eth_simulateV1`-style speculative execution, with `SimulateCallOptions` (`Validation`, `TraceTransfers`, per-account `ExpectedNonces`) tuning that mode. `SimulateGlobalGasUsedBefore` is `eth_simulateV1`-only: gas already spent by every prior simulated block in the same request, since geth funds a no-gas call from a single RPC gas-cap budget spanning the whole call rather than resetting per block — a later block's synthetic transactions carry `min(blockGasLimit - blockGasUsedSoFar, RpcGasCap - globalGasUsedSoFar)`. It is zero for the first block and for every non-simulating role. `DeclaredBlockAccessList` carries the block access list as the block declares it (an Engine API payload, an eth/71 body) — EIP-7928's Engine API returns `INVALID` both when the list "is malformed" and when it "doesn't match", and recomputing hashes can only answer the second; only the declared list itself can answer the first.
 
 ## Block validity checks
 
@@ -262,6 +263,7 @@ public enum BlockValidityCheck
     BlobGasCapacity,
     BlobGasUsed,
     ExcessBlobGas,
+    BlobFieldFormat,
     BaseFee,
     BlockAccessListHash,
     BlockAccessListGasLimit,
@@ -282,6 +284,7 @@ public interface IBlockValidityChecks
     bool BlobGasCapacityExceeded { get; }
     bool BlobGasUsedMismatch { get; }
     bool ExcessBlobGasMismatch { get; }
+    bool BlobFieldFormatMismatch { get; }
     bool BaseFeeMismatch { get; }
     bool BlockAccessListHashMismatch { get; }
     bool BlockAccessListGasLimitExceeded { get; }
@@ -509,6 +512,7 @@ public enum SnapPhase : byte
     Phase2Running = 1,
     Phase3Running = 2,
     Complete      = 3,
+    Generating    = 4,
 }
 ```
 

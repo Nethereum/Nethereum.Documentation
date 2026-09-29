@@ -2,7 +2,7 @@
 title: "Nethereum.X402"
 sidebar_label: "Nethereum.X402"
 sidebar_position: 100
-description: "A .NET implementation of the [x402 protocol](https://github.com/coinbase/x402) (protocol version 2) for accepting HTTP 402 (Payment Required) stablecoin payments with signed, gasless token authorizati"
+description: "A .NET implementation of the x402 protocol (protocol version 2) for accepting HTTP 402 (Payment Required) stablecoin payments with signed, gasless token authorizations."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.X402/README.md"
 format: md
 ---
@@ -174,9 +174,9 @@ app.Run();
 
 When a matching request has no `PAYMENT-SIGNATURE`, the middleware returns 402 with a `PaymentRequired` (emitted in the `PAYMENT-REQUIRED` header and the body). When a payment is present, it verifies and settles through the facilitator before forwarding.
 
-### Self-Facilitated Server
+### Facilitator-side processors
 
-Instead of a remote facilitator, settle on-chain directly. Register a processor; only an RPC endpoint per chain id is needed (token, chain and domain come from each requirement):
+These register an `IX402PaymentProcessor` that verifies and settles on-chain with only an RPC endpoint per chain id (token, chain and domain come from each requirement). It is consumed by the hosted facilitator controllers (see Hosting a Facilitator). A server protected with `UseX402` still needs `AddX402Services(facilitatorUrl)`; that URL can point at your own facilitator host.
 
 ```csharp
 using Nethereum.X402.Extensions;

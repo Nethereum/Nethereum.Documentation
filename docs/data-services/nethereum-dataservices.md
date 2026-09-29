@@ -191,12 +191,12 @@ var status = await sourcify.GetVerificationStatusAsync(result.VerificationId);
 
 ### Proxy Resolution
 
-The `SourcifyABIInfoStorage` automatically resolves proxy contracts and fetches the implementation ABI:
+The `SourcifyABIInfoStorage` detects proxy contracts and records their implementation addresses in `ABIInfo.ProxyImplementationAddresses`; it does not fetch the implementation ABI itself. `CompositeABIInfoStorage` then fetches and caches the implementation ABIs:
 
 ```csharp
 var sourcifyStorage = new SourcifyABIInfoStorage(); // resolveProxies: true by default
 
-// Automatically detects proxy and returns implementation ABI
+// Returns the proxy's own ABI; ProxyImplementationAddresses lists the implementation addresses
 var abiInfo = await sourcifyStorage.GetABIInfoAsync(chainId: 1, "0xProxyAddress...");
 ```
 

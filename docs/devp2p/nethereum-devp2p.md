@@ -194,7 +194,7 @@ Nethereum.RLP, Nethereum.Signer, Nethereum.Util (direct project references). The
 
 ## Discovery
 
-- **`Discv4Listener`** — signed unencrypted UDP discovery with EIP-868 endpoint-proof bonding and amplification defence (back-ping throttle). Kademlia `Discv4RoutingTable`. **`PeerDiscoveryService`** is the high-level harvester: `DiscoverAsync(seedEnodes, perSeedTimeout, ct)`.
+- **`Discv4Listener`** — signed unencrypted UDP discovery with discv4 endpoint-proof bonding and amplification defence (back-ping throttle). Kademlia `Discv4RoutingTable`. **`PeerDiscoveryService`** is the high-level harvester: `DiscoverAsync(seedEnodes, perSeedTimeout, ct)`.
 - **`Discv5Listener`** — authenticated discovery (WHOAREYOU + HKDF session keys, AES-GCM, opaque TalkReq/TalkResp). Per-IP `TokenBucketRateLimiter` + banned-IP LRU *before* any crypto. **`Discv5PeerDiscoveryService`** runs the periodic FindNode walk; **`Discv5Bootnodes.ResolveMainnet()`** seeds it.
 - **`EnrTreeResolver`** — EIP-1459 DNS ENR-tree discovery (`ResolveAsync` / `ResolveEnrsAsync`) with OS-DNS-then-public-resolver fallback; knows the mainnet all/snap/les trees.
 

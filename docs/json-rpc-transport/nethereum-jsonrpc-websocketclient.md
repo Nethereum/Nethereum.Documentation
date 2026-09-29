@@ -24,7 +24,7 @@ Nethereum.JsonRpc.WebSocketClient provides **WebSocket transport implementations
 - **Event streaming** with automatic message routing
 - Request/response and streaming modes
 - Custom request headers support
-- Connection management and automatic reconnection
+- Lazy reconnect on next request (WebSocketClient); StreamingWebSocketClient exposes an Error event for your own reconnect logic
 - Thread-safe subscription handling
 - Production-tested reliability
 
@@ -201,8 +201,10 @@ using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Reactive.Eth.Subscriptions;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Hex.HexTypes;
+using Nethereum.Web3;
 
 var client = new StreamingWebSocketClient("wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID");
+await client.StartAsync();
 
 // Create logs subscription for USDC Transfer events
 var transferEventSignature = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -227,12 +229,10 @@ subscription.GetSubscriptionDataResponsesAsObservable().Subscribe(log =>
     Console.WriteLine($"USDC Transfer:");
     Console.WriteLine($"  From: {from}");
     Console.WriteLine($"  To: {to}");
-    Console.WriteLine($"  Amount: {amount / 1000000m:N2} USDC");  // USDC has 6 decimals
+    Console.WriteLine($"  Amount: {Web3.Convert.FromWei(amount, 6):N2} USDC");  // USDC has 6 decimals
     Console.WriteLine($"  Tx: {log.TransactionHash}");
     Console.WriteLine();
 });
-
-await client.StartAsync();
 
 Console.WriteLine("Monitoring USDC transfers. Press Enter to stop.");
 Console.ReadLine();
@@ -245,9 +245,12 @@ client.Dispose();
 ### Example 4: Pending Transaction Monitoring (Mempool)
 
 ```csharp
+using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Reactive.Eth.Subscriptions;
+using Nethereum.Util;
 using Nethereum.Web3;
+using System.Reactive.Linq;
 
 var client = new StreamingWebSocketClient("ws://localhost:8546");
 
@@ -264,7 +267,7 @@ subscription.GetSubscriptionDataResponsesAsObservable()
             Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {txHashes.Count} new pending transactions");
 
             // Fetch details for first transaction
-            var web3 = new Web3(client);
+            var web3 = new Web3(new WebSocketClient("ws://localhost:8546"));
             var txDetails = await web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(txHashes[0]);
 
             if (txDetails != null)
@@ -273,7 +276,7 @@ subscription.GetSubscriptionDataResponsesAsObservable()
                 Console.WriteLine($"  From: {txDetails.From}");
                 Console.WriteLine($"  To: {txDetails.To}");
                 Console.WriteLine($"  Value: {Web3.Convert.FromWei(txDetails.Value)} ETH");
-                Console.WriteLine($"  Gas Price: {Web3.Convert.FromWei(txDetails.GasPrice, Web3.Convert.UnitConversion.Gwei)} Gwei");
+                Console.WriteLine($"  Gas Price: {Web3.Convert.FromWei(txDetails.GasPrice, UnitConversion.EthUnit.Gwei)} Gwei");
             }
         }
     });
@@ -296,6 +299,7 @@ client.Dispose();
 ```csharp
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Reactive.Eth.Subscriptions;
+using System.Reactive.Linq;
 
 var client = new StreamingWebSocketClient("ws://localhost:8546");
 

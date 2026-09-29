@@ -154,12 +154,13 @@ var root = SszTransactionEncoder.Current.HashTreeRootTransaction7702(tx7702);
 ### Example 5: Receipt Encoding
 
 ```csharp
+using System.Collections.Generic;
+using Nethereum.Model;
 using Nethereum.Model.SSZ;
-using Nethereum.RPC.Eth.DTOs;
 
 // Basic receipt (transfer)
 var encoded = SszReceiptEncoder.Current.EncodeBasicReceipt(
-    from: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+    from: "0xbeef000000000000000000000000000000000001",
     gasUsed: 21000,
     logs: new List<Log>(),
     status: true);

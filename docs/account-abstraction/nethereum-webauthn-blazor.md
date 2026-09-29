@@ -2,7 +2,7 @@
 title: "Nethereum.WebAuthn.Blazor"
 sidebar_label: "Nethereum.WebAuthn.Blazor"
 sidebar_position: 100
-description: "Nethereum.WebAuthn.Blazor implements [Nethereum.WebAuthn](../Nethereum.WebAuthn/README.md)'s"
+description: "Nethereum.WebAuthn.Blazor implements Nethereum.WebAuthn's"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.WebAuthn.Blazor/README.md"
 format: md
 ---

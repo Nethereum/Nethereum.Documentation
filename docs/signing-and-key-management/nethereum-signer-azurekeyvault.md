@@ -10,8 +10,6 @@ format: md
 # Nethereum.Signer.AzureKeyVault
 
 > **NuGet**: [`Nethereum.Signer.AzureKeyVault`](https://www.nuget.org/packages/Nethereum.Signer.AzureKeyVault/) | **Source**: [`src/Nethereum.Signer.AzureKeyVault/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Signer.AzureKeyVault)
-# Nethereum.Signer.AzureKeyVault
-
 Azure Key Vault integration for Ethereum transaction signing with cloud-based Hardware Security Module (HSM) backed keys.
 
 ## Overview
@@ -23,7 +21,7 @@ Nethereum.Signer.AzureKeyVault provides **external signing capability** for Ethe
 - Private keys never leave Azure Key Vault
 - FIPS 140-2 Level 2 (standard tier) or Level 3 (premium HSM tier) validated
 - Support for Legacy, EIP-1559, and EIP-7702 transactions
-- Message signing with secp256k1 (ES256K)
+- Message signing with secp256k1 (`ECDSA256` by default; `ES256K` when `UseLegacyECDSA256 = false`)
 - Azure Active Directory authentication (Managed Identity, Service Principal, etc.)
 - Scalable for enterprise and serverless architectures
 - Audit logging and access control via Azure RBAC
@@ -105,7 +103,7 @@ var account = new ExternalAccount(signer, chainId: 1);
 await account.InitialiseAsync();
 
 // Use with Web3
-var web3 = new Web3.Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
 
 Console.WriteLine($"Address: {account.Address}");
 ```

@@ -730,8 +730,10 @@ public class Eip712TypedDataSigner
 
 ### Used By (Consumers)
 - **Nethereum.Accounts** - Account signing with EIP-712
-- **Nethereum.Contracts.Standards** - ERC-2612 Permit, EIP-3009
-- **Nethereum.X402** - HTTP 402 payment authorization
+- **Nethereum.GnosisSafe** - Safe transaction typed-data signing
+- **Nethereum.Uniswap** - Permit2 signing
+- **Nethereum.WebAuthn** - EIP-712 typed data with passkeys
+- **Nethereum.X402** - HTTP 402 payment authorization (uses `Eip712TypedDataSigner`)
 
 ### Dependencies
 - **Nethereum.ABI** - EIP-712 encoding engine

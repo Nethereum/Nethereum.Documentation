@@ -31,7 +31,7 @@ Nethereum.Wallet.RpcRequests implements EIP-1193 wallet RPC methods with user pr
 - **Permissions** - `wallet_requestPermissions`, `wallet_getPermissions`, `wallet_revokePermissions`
 - **Registered stubs (return -32601 "not implemented")** - `wallet_registerOnboarding`, `wallet_watchAsset`, `eth_decrypt`, `eth_getEncryptionPublicKey`, `web3_clientVersion`, `eth_subscribe`
 
-> `eth_chainId` has a handler (`EthChainIdHandler`) but is **not** wired by `WalletRpcHandlerRegistration.RegisterAll`; register it explicitly if required.
+> `eth_chainId` is handled by `EthChainIdHandler`, which `WalletRpcHandlerRegistration.RegisterAll` registers.
 
 ## Installation
 
@@ -382,6 +382,7 @@ public static void RegisterAll(RpcHandlerRegistry registry)
     registry.Register(new EthSignTypedDataV4Handler());
     registry.Register(new EthRequestAccountsHandler());
     registry.Register(new EthAccountsHandler());
+    registry.Register(new EthChainIdHandler());
     registry.Register(new EthDecryptHandler());
     registry.Register(new EthGetEncryptionPublicKeyHandler());
     registry.Register(new Web3ClientVersionHandler());
@@ -390,7 +391,7 @@ public static void RegisterAll(RpcHandlerRegistry registry)
 }
 ```
 
-`WalletRegisterOnboardingHandler`, `WalletWatchAssetHandler`, `EthDecryptHandler`, `EthGetEncryptionPublicKeyHandler`, `Web3ClientVersionHandler` and `EthSubscribeHandler` are registered but are currently not-implemented stubs (they return `-32601`). `EthChainIdHandler` is **not** registered by `RegisterAll`.
+`WalletRegisterOnboardingHandler`, `WalletWatchAssetHandler`, `EthDecryptHandler`, `EthGetEncryptionPublicKeyHandler`, `Web3ClientVersionHandler` and `EthSubscribeHandler` are registered but are currently not-implemented stubs (they return `-32601`).
 
 **From:** `src/Nethereum.Wallet.RpcRequests/WalletRpcHandlerRegistration.cs:8`
 

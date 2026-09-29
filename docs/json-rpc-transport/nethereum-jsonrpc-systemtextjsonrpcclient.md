@@ -23,7 +23,6 @@ Nethereum.JsonRpc.SystemTextJsonRpcClient provides a **modern, high-performance 
 - **AOT compilation** support (Native AOT, ReadyToRun)
 - **Source-generated JSON** serialization (zero reflection) for a curated set of RPC DTOs
 - **Bearer token** authentication
-- **HTTP/2** and **HTTP/3** support
 - **net9.0 only** - it is not multi-targeted like most other Nethereum packages
 - Production-ready connection management
 
@@ -354,8 +353,6 @@ Console.WriteLine($"Block: {blockNumber.Value}");
 ```bash
 dotnet publish -c Release -r linux-x64
 # Creates fully native executable with no runtime dependencies
-# Binary size: ~10-15 MB (vs 60+ MB with standard deployment)
-# Startup time: <50ms (vs 500+ ms with JIT)
 ```
 
 ### Example 10: Complete AOT Application with ABI Deserialization (from Nethereum.AOTSigningTest)
@@ -366,6 +363,7 @@ dotnet publish -c Release -r linux-x64
 using Nethereum.JsonRpc.SystemTextJsonRpcClient;
 using Nethereum.Web3;
 using Nethereum.Contracts;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using System.Numerics;
 
@@ -511,7 +509,7 @@ public RequestInterceptor? OverridingRequestInterceptor { get; set; }
 | **Target Framework** | net9.0 only | net451;net461;netstandard2.0;net6.0;net8.0;net9.0;net10.0 |
 | **RPC payload serialization** | System.Text.Json | Newtonsoft.Json |
 | **AOT Support** | Yes (source generators) | No |
-| **Authentication** | Bearer, Basic | Basic only |
+| **Authentication** | Bearer via AddBearerToken; Basic via URL user-info or header | Basic only |
 
 **Note:** No benchmark numbers are published for this comparison - verify performance/memory claims yourself for your workload before relying on them.
 
@@ -533,8 +531,8 @@ public RequestInterceptor? OverridingRequestInterceptor { get; set; }
 ### AOT Compilation Benefits
 
 **Native AOT advantages:**
-- **Fast startup**: <50ms (vs 500ms+ with JIT)
-- **Small binaries**: 10-15 MB self-contained executable
+- **Fast startup**: no JIT compilation at startup
+- **Small binaries**: self-contained native executable
 - **Lower memory**: No JIT overhead
 - **Predictable performance**: No tier-0/tier-1 compilation delays
 - **Container-friendly**: Smaller Docker images

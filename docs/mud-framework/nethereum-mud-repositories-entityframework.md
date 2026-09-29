@@ -2,7 +2,7 @@
 title: "Nethereum.Mud.Repositories.EntityFramework"
 sidebar_label: "Nethereum.Mud.Repositories.EntityFramework"
 sidebar_position: 100
-description: "Nethereum.Mud.Repositories.EntityFramework provides Entity Framework Core abstractions for persisting [MUD (Onchain Engine)](https://mud.dev/) table data. It enables you to sync on-chain MUD state to "
+description: "Nethereum.Mud.Repositories.EntityFramework provides Entity Framework Core abstractions for persisting MUD (Onchain Engine) table data. It enables you to sync on-chain MUD state to a relational databas"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Mud.Repositories.EntityFramework/README.md"
 format: md
 ---
@@ -700,7 +700,7 @@ var tasks = worlds.Select(async world =>
     var repository = new MyMudTableRepository(context);
     var progressRepo = new BlockProgressRepository<MyMudDbContext>(context);
     var processor = CreateProcessor(world.Item1, repository, progressRepo);
-    await processor.ExecuteAsync(0);
+    await processor.ExecuteAsync(startAtBlockNumberIfNotProcessed: 0);
 });
 
 await Task.WhenAll(tasks);

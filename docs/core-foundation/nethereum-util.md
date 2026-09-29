@@ -800,7 +800,7 @@ Poseidon is a hash function designed for zero-knowledge proof circuits (zk-SNARK
 using Nethereum.Util;
 using System.Numerics;
 
-// Default hasher (CircomT3 preset - 2 inputs)
+// Default hasher (CircomT3 preset - up to 3 inputs)
 var hasher = new PoseidonHasher();
 
 // Hash field elements

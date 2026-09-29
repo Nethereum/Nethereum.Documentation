@@ -23,7 +23,7 @@ A local Ethereum development node with JSON-RPC server. Similar to Hardhat Netwo
 - SQLite storage by default with auto-cleanup on exit
 - State forking from live networks
 - Hardhat and Anvil-compatible RPC methods
-- Account impersonation for testing
+- Account impersonation registration (`hardhat_impersonateAccount`; no signing support)
 
 ## Installation
 
@@ -126,7 +126,7 @@ SQLite uses WAL journal mode for good read/write concurrency. In SQLite and Rock
 | |\  |  __/ |_| | | |  __/ | |  __/ |_| | | | | | |
 |_| \_|\___|\__|_| |_|\___|_|  \___|\__,_|_| |_| |_|
 
-              DevChain Server v6.5.0
+              DevChain Server v7.0.0
 
   RPC:        http://127.0.0.1:8545
   Chain ID:   31337
@@ -258,7 +258,7 @@ Create `appsettings.json` in the working directory:
 | `hardhat_setCode` | Set contract code |
 | `hardhat_setNonce` | Set account nonce |
 | `hardhat_setStorageAt` | Set storage slot |
-| `hardhat_impersonateAccount` | Impersonate account |
+| `hardhat_impersonateAccount` | Record an address as impersonated (no signing support) |
 | `hardhat_stopImpersonatingAccount` | Stop impersonating |
 
 ### Debug
@@ -273,7 +273,6 @@ Create `appsettings.json` in the working directory:
 | `debug_getRawBlock` | RLP-encoded block |
 | `debug_getRawReceipts` | RLP-encoded receipts for a block |
 | `debug_getRawTransaction` | RLP-encoded transaction |
-| `debug_setHead` | Set the canonical chain head to a block number |
 
 ### Anvil Aliases
 
@@ -366,9 +365,10 @@ await provider.send("evm_revert", [snapshotId]);
 
 ```javascript
 await provider.send("hardhat_impersonateAccount", ["0xWhaleAddress"]);
-// Send transactions as the impersonated account
 await provider.send("hardhat_stopImpersonatingAccount", ["0xWhaleAddress"]);
 ```
+
+`hardhat_impersonateAccount` / `hardhat_stopImpersonatingAccount` are accepted and record the address; DevChain does not sign or send transactions for impersonated accounts (no `eth_sendTransaction` handler).
 
 ### Trace Transaction
 
@@ -433,7 +433,7 @@ Nethereum DevChain implements the standard feature set expected from Ethereum de
 
 - Fork support from live networks
 - Transaction tracing (Geth-compatible debug APIs)
-- Account impersonation
+- Account impersonation registration (no signing support)
 - State snapshots and revert
 - `evm_*` and `hardhat_*` RPC methods
 - Same default mnemonic and derivation path as Hardhat/Anvil

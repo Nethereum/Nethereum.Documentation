@@ -10,8 +10,6 @@ format: md
 # Nethereum.BlockchainProcessing
 
 > **NuGet**: [`Nethereum.BlockchainProcessing`](https://www.nuget.org/packages/Nethereum.BlockchainProcessing/) | **Source**: [`src/Nethereum.BlockchainProcessing/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.BlockchainProcessing)
-# Nethereum.BlockchainProcessing
-
 **Nethereum.BlockchainProcessing** provides a comprehensive framework for crawling, processing, and storing Ethereum blockchain data including blocks, transactions, receipts, and event logs with flexible filtering, progress tracking, and storage capabilities.
 
 ## Overview
@@ -113,11 +111,16 @@ Process all blocks, transactions, and logs:
 ```csharp
 using Nethereum.BlockchainProcessing;
 using Nethereum.Web3;
+using Nethereum.RPC.Eth.DTOs;
+using System.Collections.Generic;
 using System.Numerics;
 
 var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_KEY");
 
-var processedData = new ProcessedData();
+var blocks = new List<BlockWithTransactions>();
+var transactions = new List<TransactionVO>();
+var transactionsWithReceipt = new List<TransactionReceiptVO>();
+var filterLogs = new List<FilterLogVO>();
 
 var blockProcessor = web3.Processing.Blocks.CreateBlockProcessor(steps =>
 {
@@ -125,28 +128,28 @@ var blockProcessor = web3.Processing.Blocks.CreateBlockProcessor(steps =>
     steps.BlockStep.AddSynchronousProcessorHandler(block =>
     {
         Console.WriteLine($"Block: {block.Number}");
-        processedData.Blocks.Add(block);
+        blocks.Add(block);
     });
 
     // Process each transaction
     steps.TransactionStep.AddSynchronousProcessorHandler(tx =>
     {
         Console.WriteLine($"  Transaction: {tx.Transaction.TransactionHash}");
-        processedData.Transactions.Add(tx);
+        transactions.Add(tx);
     });
 
     // Process transaction receipts
     steps.TransactionReceiptStep.AddSynchronousProcessorHandler(tx =>
     {
         Console.WriteLine($"  Receipt - Gas Used: {tx.TransactionReceipt.GasUsed}");
-        processedData.TransactionsWithReceipt.Add(tx);
+        transactionsWithReceipt.Add(tx);
     });
 
     // Process event logs
     steps.FilterLogStep.AddSynchronousProcessorHandler(filterLog =>
     {
         Console.WriteLine($"    Log: {filterLog.Log.Address}");
-        processedData.FilterLogs.Add(filterLog);
+        filterLogs.Add(filterLog);
     });
 });
 
@@ -1065,7 +1068,7 @@ var blockProcessor = web3.Processing.Blocks.CreateBlockProcessor(steps =>
 
 ### Log Processing Retry
 
-Log processing has built-in retry with exponential backoff:
+Log processing retries automatically on RPC errors (up to `MaxGetLogsRetries`), shrinking the requested block range on each retry (`BlockRangeRequestStrategy`):
 
 ```csharp
 // Automatically retries on RPC errors
@@ -1247,8 +1250,8 @@ using Nethereum.BlockchainProcessing.Metrics;
 var metrics = new LogProcessingMetrics(
     chainId: "1", processorType: "TokenTransfers", name: "MyApp");
 
-// Pass to log processing service
-var processor = logProcessingService.CreateProcessor(
+// Pass to the token transfer log processing service
+var processor = tokenService.CreateProcessor(
     transferLogRepository, blockProgressRepository,
     observer: metrics);
 

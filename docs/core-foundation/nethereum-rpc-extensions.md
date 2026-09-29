@@ -193,7 +193,7 @@ var receipt = await transferFunction.SendTransactionAndWaitForReceiptAsync(
     whaleAddress, // from (impersonated)
     new HexBigInteger(300000), // gas
     null, // value
-    null, // gas price
+    null, // cancellation token source
     "0xYourTestAccount", // to
     1000000 // amount
 );
@@ -267,7 +267,7 @@ await hardhat.IncreaseTimeAsync(604800);
 
 // Now unlock should succeed
 var receipt = await contract.GetFunction("unlock").SendTransactionAndWaitForReceiptAsync(account.Address);
-Console.WriteLine($"Unlocked successfully after time travel: {receipt.Status == 1}");
+Console.WriteLine($"Unlocked successfully after time travel: {receipt.Status.Value == 1}");
 ```
 
 **From:** `src/Nethereum.RPC.Extensions/HardhatService.cs:49`
@@ -277,6 +277,7 @@ Console.WriteLine($"Unlocked successfully after time travel: {receipt.Status == 
 ### Example 4: Snapshot and Revert - Testing Different Scenarios
 
 ```csharp
+using Nethereum.Hex.HexTypes;
 using Nethereum.Web3;
 using Nethereum.RPC.Extensions;
 
@@ -294,7 +295,10 @@ Console.WriteLine($"Snapshot created: {snapshotId}");
 // Test scenario 1: Destructive operation
 await contract.GetFunction("withdraw").SendTransactionAndWaitForReceiptAsync(
     account.Address,
-    amount: 1000000
+    new HexBigInteger(300000), // gas
+    null, // value
+    null, // cancellation token source
+    1000000 // amount
 );
 var balance1 = await contract.GetFunction("getBalance").CallAsync<int>();
 Console.WriteLine($"Balance after withdraw: {balance1}");
@@ -305,7 +309,10 @@ await evmTools.EvmRevert.SendRequestAsync(snapshotId);
 // Test scenario 2: Different operation
 await contract.GetFunction("deposit").SendTransactionAndWaitForReceiptAsync(
     account.Address,
-    amount: 500000
+    new HexBigInteger(300000), // gas
+    null, // value
+    null, // cancellation token source
+    500000 // amount
 );
 var balance2 = await contract.GetFunction("getBalance").CallAsync<int>();
 Console.WriteLine($"Balance after deposit: {balance2}");
@@ -498,7 +505,7 @@ public class TestSetup
         {
             await hardhat.SetBalance.SendRequestAsync(
                 account,
-                new HexBigInteger(100000000000000000000) // 100 ETH
+                new HexBigInteger(Web3.Convert.ToWei(100)) // 100 ETH
             );
         }
 

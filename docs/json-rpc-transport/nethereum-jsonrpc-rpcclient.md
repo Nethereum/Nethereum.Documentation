@@ -16,7 +16,7 @@ Production-ready HTTP/HTTPS JSON-RPC client for Ethereum node communication.
 
 ## Overview
 
-Nethereum.JsonRpc.RpcClient provides the **standard HTTP/HTTPS transport implementation** for communicating with Ethereum nodes via JSON-RPC. This is the most commonly used RPC client in Nethereum, offering robust connection management, automatic retries, authentication support, and production-tested reliability.
+Nethereum.JsonRpc.RpcClient provides the **standard HTTP/HTTPS transport implementation** for communicating with Ethereum nodes via JSON-RPC. This is the most commonly used RPC client in Nethereum, offering connection pooling, HttpClient rotation on older frameworks, authentication support and configurable timeouts.
 
 **Key Features:**
 - HTTP/HTTPS transport with HttpClient
@@ -459,12 +459,6 @@ Task<RpcResponseMessage> SendAsync(RpcRequestMessage request, string route = nul
 
 ### Performance
 
-| Operation | Latency | Notes |
-|-----------|---------|-------|
-| **Local node** | 1-10ms | Localhost Geth/Erigon |
-| **Cloud provider** | 50-200ms | Infura, Alchemy, QuickNode |
-| **Slow network** | 200-500ms | High latency regions |
-
 **Optimization Tips:**
 - Enable HTTP/2 with `EnableMultipleHttp2Connections`
 - Use batch requests for multiple calls
@@ -517,7 +511,7 @@ Logs include:
 - Request JSON payloads
 - Response JSON payloads
 - Exception details
-- Performance metrics
+- Timeout and error details
 
 ## Related Packages
 

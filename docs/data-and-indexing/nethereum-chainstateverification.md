@@ -10,8 +10,6 @@ format: md
 # Nethereum.ChainStateVerification
 
 > **NuGet**: [`Nethereum.ChainStateVerification`](https://www.nuget.org/packages/Nethereum.ChainStateVerification/) | **Source**: [`src/Nethereum.ChainStateVerification/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.ChainStateVerification)
-# Nethereum.ChainStateVerification
-
 **Nethereum.ChainStateVerification** provides verified execution-state primitives using cryptographic proofs rooted in consensus-layer light client state. It enables trustless querying of account balances, storage, code, and nonces with merkle proof verification against finalized or optimistic headers.
 
 ## Overview
@@ -476,33 +474,34 @@ From: `VerifiedStateService.cs:84-86, TrieProofVerifier.cs:22-25, 40-43`
 Complete setup with light client:
 
 ```csharp
+using Nethereum.Beaconchain;
+using Nethereum.Beaconchain.LightClient;
 using Nethereum.ChainStateVerification;
 using Nethereum.Consensus.LightClient;
-using Nethereum.Consensus.LightClient.BeaconApiClient;
-using Nethereum.RPC.Eth.DTOs;
-using Nethereum.Web3;
+using Nethereum.Consensus.Ssz;
+using Nethereum.JsonRpc.Client;
+using Nethereum.RPC.Eth;
+using Nethereum.Signer.Bls;
+using Nethereum.Signer.Bls.Herumi;
 
 // Step 1: Setup light client
-var beaconClient = new BeaconApiHttpClient("https://lodestar-mainnet.chainsafe.io");
+var beaconClient = new BeaconApiClient("https://lodestar-mainnet.chainsafe.io");
 
-var config = new LightClientConfig
-{
-    GenesisValidatorsRoot = "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95".HexToByteArray(),
-    CurrentForkVersion = "0x06000000".HexToByteArray(), // Electra
-    SlotsPerEpoch = 32,
-    SecondsPerSlot = 12,
-    WeakSubjectivityRoot = await beaconClient.GetFinalizedBlockRootAsync()
-};
+var response = await beaconClient.LightClient.GetFinalityUpdateAsync();
+var finalityUpdate = LightClientResponseMapper.ToDomain(response);
+var weakSubjectivityRoot = finalityUpdate.FinalizedHeader.Beacon.HashTreeRoot();
+
+var config = LightClientNetworks.CreateConfig(1, weakSubjectivityRoot);
+
+var nativeBls = new NativeBls(new HerumiNativeBindings());
+await nativeBls.InitializeAsync();
 
 var store = new InMemoryLightClientStore();
-var bls = new HerumiNativeBindings();
-bls.InitializeLibrary();
-
-var lightClient = new LightClientService(config, beaconClient, store, bls);
+var lightClient = new LightClientService(beaconClient.LightClient, nativeBls, config, store);
 await lightClient.InitializeAsync();
 
-// Sync light client (run periodically)
-await lightClient.SyncAsync();
+// Update the light client (run periodically)
+await lightClient.UpdateAsync();
 
 // Step 2: Create verified state service
 var trustedProvider = new TrustedHeaderProvider(lightClient);
@@ -577,7 +576,7 @@ Console.WriteLine($"Verified nonce: {nonce}");
 1. **Use Finalized Mode** for maximum security
 2. **Enable Code Verification** (`VerifyCodeHash = true`)
 3. **Handle Exceptions** - switch RPC nodes on `InvalidChainDataException`
-4. **Keep Light Client Synced** - regularly call `lightClient.SyncAsync()`
+4. **Keep Light Client Synced** - regularly call `lightClient.UpdateAsync()` / `UpdateFinalityAsync()`
 5. **Monitor Staleness** - check header age: `DateTime.UtcNow - header.Timestamp`
 
 ## Performance Considerations

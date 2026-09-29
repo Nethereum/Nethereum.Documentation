@@ -32,7 +32,7 @@ dotnet add package Nethereum.Web3
 
 You need:
 
-- A **smart contract account** address (SimpleAccount, a modular NethereumAccount, or any ERC-4337-compatible wallet).
+- A **smart contract account** address (SimpleAccount, a modular NethereumAccount, or any ERC-4337-compatible wallet). A modular account needs `.WithErc7579Execution()` on the handler.
 - A **signer key** (`EthECKey`, or any `IAccountSigningService` for hardware/KMS/WebAuthn) that the smart account accepts for validation.
 - A **bundler** — an `IAccountAbstractionBundlerService`, typically `AccountAbstractionBundlerService` talking to a real bundler's JSON-RPC endpoint.
 - The **EntryPoint contract address** for your target chain — use `EntryPointAddresses.Latest` (v0.9) or `V08`; `V06`/`V07` throw `NotSupportedException` (see [Send a UserOperation](guide-send-useroperation#entrypoint-versions)).
@@ -62,8 +62,8 @@ using Nethereum.Web3;
 
 var accountKey = EthECKey.GenerateKey();
 
-// accountAddress + factoryConfig come from your account factory service (e.g. SimpleAccountFactoryService
-// or NethereumAccountFactoryService) — see Deploy a Smart Account for the full derivation.
+// accountAddress + factoryConfig come from your SimpleAccountFactoryService — see Deploy a Smart Account for the full derivation.
+// FactoryConfig is for SimpleAccountFactory only; a NethereumAccount is created through IAAClient.Configure / CreateAccountAsync.
 string accountAddress = "0xYourSmartAccountAddress";
 var factoryConfig = new FactoryConfig(factoryAddress: "0xYourFactoryAddress", owner: accountKey.GetPublicAddress(), salt: 0);
 
@@ -176,7 +176,7 @@ var receipt = await erc20Service.TransferRequestAndWaitForReceiptAsync(recipient
 
 The handler fills in usable `PaymasterVerificationGasLimit`/`PaymasterPostOpGasLimit` values from the bundler's own estimate automatically — you don't need to set them yourself.
 
-If the paymaster requires signed data (a verifying paymaster), provide a `PaymasterConfig` with a data provider callback that receives the partially-built `UserOperation` and returns the paymaster data bytes:
+If the paymaster requires signed data (a verifying paymaster), provide a `PaymasterConfig` with a data provider callback that receives the `UserOperation` after gas estimation has filled its gas limits and returns the paymaster data bytes:
 
 ```csharp
 handler.WithPaymaster(new PaymasterConfig(
@@ -188,7 +188,7 @@ handler.WithPaymaster(new PaymasterConfig(
     }));
 ```
 
-The data provider runs after gas estimation, once the UserOperation's final gas values are known — a verifying paymaster typically signs over those values, so it must see the completed operation, not the partially-built one passed to `WithPaymaster`. This lets a paymaster sponsor even a zero-balance, not-yet-deployed account end to end, since neither the account nor the caller pays for gas.
+The data provider runs after gas estimation, once the UserOperation's final gas values are known — a verifying paymaster typically signs over those values, so it must see the completed operation. This lets a paymaster sponsor even a zero-balance, not-yet-deployed account end to end, since neither the account nor the caller pays for gas.
 
 `WithPaymaster` also has a simpler overload for static data: `WithPaymaster(paymasterAddress, paymasterData)`. See [Batching and Paymasters](guide-batching-and-paymasters) for a deeper walkthrough of paymaster configuration — both the static-data and `PaymasterConfig` data-provider paths shown above are exercised end to end (real bundler estimate, real EntryPoint, sponsored execution) by Nethereum's own test suite.
 

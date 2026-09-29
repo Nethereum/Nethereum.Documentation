@@ -55,7 +55,7 @@ All three services start automatically as hosted services. Each tracks its own p
 ```json
 {
   "TokenLogProcessing": {
-    "BlockchainUrl": "http://localhost:8545",
+    "RpcUrl": "http://localhost:8545",
     "NumberOfBlocksToProcessPerRequest": 1000,
     "MinimumNumberOfConfirmations": 0,
     "ReorgBuffer": 10,
@@ -66,10 +66,10 @@ All three services start automatically as hosted services. Each tracks its own p
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `BlockchainUrl` | required | JSON-RPC endpoint |
+| `RpcUrl` | required | JSON-RPC endpoint |
 | `NumberOfBlocksToProcessPerRequest` | 1000 | Blocks per `eth_getLogs` batch |
 | `MinimumNumberOfConfirmations` | 0 | Blocks behind head before processing |
-| `ReorgBuffer` | 10 | Re-check recent blocks for reorgs |
+| `ReorgBuffer` | 0 | Re-check recent blocks for reorgs |
 | `ContractAddresses` | null | Filter to specific tokens (null = all) |
 
 Progress is tracked in the `tokenblockprogress` table.

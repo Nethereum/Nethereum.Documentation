@@ -42,6 +42,9 @@ Add these namespaces to your code:
 ```csharp
 using Nethereum.AccountAbstraction.ERC7579;
 using Nethereum.AccountAbstraction.ERC7579.Modules;
+using Nethereum.AccountAbstraction.ERC7579.Modules.SocialRecovery;
+using Nethereum.AccountAbstraction.ERC7579.Modules.SmartSession;
+using Nethereum.AccountAbstraction.Contracts.Modules.SmartSessions.SmartSession.ContractDefinition;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 ```
@@ -105,7 +108,7 @@ var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(config);
 You can also build the config with fluent methods:
 
 ```csharp
-var config = new OwnableValidatorConfig(validatorAddress)
+var config = new OwnableValidatorConfig { ModuleAddress = validatorAddress }
     .WithOwner(owner1)
     .WithOwner(owner2)
     .WithOwner(owner3)
@@ -116,7 +119,7 @@ The shortcut method works here too:
 
 ```csharp
 var receipt = await accountService.InstallOwnableValidatorAndWaitForReceiptAsync(
-    validatorAddress, threshold: 2, owner1, owner2, owner3);
+    validatorAddress, threshold: 2, new[] { owner1, owner2, owner3 });
 ```
 
 After installation, any UserOperation must include valid signatures from at least 2 of the 3 owners.
@@ -167,7 +170,7 @@ var moduleConfig = new WebAuthnValidatorConfig(webAuthnValidatorAddress, thresho
 var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(moduleConfig);
 ```
 
-A dedicated WebAuthn/passkey guide — covering credential creation and signing UserOperations with a passkey — is coming. For now, see the `Nethereum.AccountAbstraction.WebAuthn` package for `WebAuthnValidatorModule`, `WebAuthnValidatorConfig`, and the `IAAClient` extensions that attach an account signed by a passkey.
+See the [WebAuthn Passkeys](guide-webauthn-passkeys) guide for credential creation and signing UserOperations with a passkey, and the `Nethereum.AccountAbstraction.WebAuthn` package for `WebAuthnValidatorModule`, `WebAuthnValidatorConfig`, and the `IAAClient` extensions that attach an account signed by a passkey.
 
 ## Install an Executor
 
@@ -196,7 +199,7 @@ Session keys let you grant temporary, scoped permissions to a key without giving
 
 ### Create a Basic Session
 
-Start with `SmartSessionConfig` to define a session tied to a session validator. The salt is a 32-byte value, not a `BigInteger`:
+Start with `SmartSessionConfig` to define a session tied to a session validator. The salt is a 32-byte value; `Create` takes a `byte[]`, and `WithSalt` also accepts a `BigInteger`:
 
 ```csharp
 var sessionModuleAddress = "0x6666666666666666666666666666666666666666";
@@ -291,14 +294,14 @@ var generatedSession = await sessionKeyManager.GenerateSessionKeyAsync(accountAd
 // Mark it as registered after on-chain installation
 await sessionKeyManager.MarkRegisteredAsync(generatedSession.Key);
 
-// Retrieve the best (most recently registered) session key for an account
+// Retrieve the best session key for an account: the active one currently inside its ValidAfter/ValidUntil window with the latest ValidUntil
 var bestKey = await sessionKeyManager.GetBestSessionKeyAsync(accountAddress);
 
 // Remove a session key when it's no longer needed
 await sessionKeyManager.RemoveSessionKeyAsync(generatedSession.Key);
 ```
 
-The manager tracks key states (generated, registered, expired) and `GetBestSessionKeyAsync` returns the most suitable active key for a given account. Use this to build session key rotation or expiry workflows in your application.
+The manager stores each generated key as inactive until `MarkRegisteredAsync` flips `IsActive`, and `GetBestSessionKeyAsync` returns the active key currently inside its `ValidAfter`/`ValidUntil` window with the latest `ValidUntil`. Use this to build session key rotation or expiry workflows in your application.
 
 ## Attaching Modules: At Creation vs. After Deployment
 

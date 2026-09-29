@@ -91,8 +91,8 @@ var balance = await erc1155.BalanceOfQueryAsync("0xOwner", 1); // token ID 1
 
 // Batch balance query
 var balances = await erc1155.BalanceOfBatchQueryAsync(
-    new[] { "0xOwner1", "0xOwner2" },
-    new[] { new System.Numerics.BigInteger(1), new System.Numerics.BigInteger(2) });
+    new System.Collections.Generic.List<string> { "0xOwner1", "0xOwner2" },
+    new System.Collections.Generic.List<System.Numerics.BigInteger> { 1, 2 });
 
 // Token URI
 var uri = await erc1155.UriQueryAsync(1);
@@ -141,7 +141,7 @@ Verify signatures from smart contract wallets that haven't been deployed yet:
 
 ```csharp
 var isValid = await web3.Eth.ERC6492
-    .IsValidSignatureQueryAsync(contractAddress, messageHash, signature);
+    .IsValidSignatureAsync(signerAddress, hashBytes, signatureBytes);
 ```
 
 ## EIP-3009: Transfer With Authorization (Gasless Transfers)
@@ -181,12 +181,14 @@ var signature = await signer.SignWithPrivateKeyAsync(
 
 // 3. Verify the payment (off-chain)
 var service = new X402TransferWithAuthorisation3009Service(
-    facilitatorPrivateKey, rpcEndpoints, tokenAddresses, chainIds, tokenNames, tokenVersions);
+    facilitatorPrivateKey, clientsByChainId);
 var result = await service.VerifyPaymentAsync(paymentPayload, requirements);
 
 // 4. Settle on-chain
 var settlement = await service.SettlePaymentAsync(paymentPayload, requirements);
 ```
+
+`clientsByChainId` is a `Dictionary<int, IClient>` of RPC clients keyed by chain ID. The token address, name and version come from the payment requirements.
 
 ### X402 ReceiveWithAuthorization
 
@@ -201,7 +203,7 @@ var signature = await signer.SignReceiveWithPrivateKeyAsync(
     authorization, "USDC", "2", chainId, usdcAddress, payerPrivateKey);
 
 var service = new X402ReceiveWithAuthorisation3009Service(
-    receiverPrivateKey, rpcEndpoints, tokenAddresses, chainIds, tokenNames, tokenVersions);
+    receiverPrivateKey, clientsByChainId);
 var settlement = await service.SettlePaymentAsync(paymentPayload, requirements);
 ```
 
@@ -258,11 +260,12 @@ Read raw contract storage slots using `StorageUtil` for Solidity mapping key cal
 
 ```csharp
 using Nethereum.Contracts.ContractStorage;
+using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 
 // Calculate the storage key for mapping(address => ...) at slot 0
-var storageKey = StorageUtil.CalculateMappingAddressStorageKey(
-    "0xOwnerAddress", 0);
+var storageKey = new HexBigInteger(
+    StorageUtil.CalculateMappingAddressStorageKeyAsBigInteger("0xOwnerAddress", 0));
 
 // Read the raw storage value
 var storageValue = await web3.Eth.GetStorageAt

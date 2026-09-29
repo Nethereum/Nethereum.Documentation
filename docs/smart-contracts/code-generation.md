@@ -9,7 +9,7 @@ description: Generate typed C# contract services, DTOs, Unity requests, MUD tabl
 
 :::tip The Simple Way
 ```bash
-Nethereum.Generator.Console generate from-abi -abi MyContract.abi -o Generated
+Nethereum.Generator.Console generate from-abi -abi MyContract.abi -o Generated -ns MyProject.Contracts
 ```
 One command generates typed C# classes for deployment, functions, events, errors, and a full service class.
 :::
@@ -78,14 +78,11 @@ Nethereum.Generator.Console generate from-config \
   -r .
 ```
 
-Or use the provided script:
+Or use the provided script, which is in the Nethereum repository's `scripts/` folder:
 
 ```powershell
 # PowerShell (builds + generates)
 .\scripts\generate-csharp-from-forge.ps1 -Build
-
-# Bash
-./scripts/generate-csharp-from-forge.sh -b
 ```
 
 ### Generate from Project
@@ -178,7 +175,6 @@ A single contract can produce multiple output types:
 | `MudTables` | Table schema classes from `mud.config.ts` | MUD World framework |
 | `MudExtendedService` | Extended service with MUD state access | MUD systems |
 | `BlazorPageService` | Razor component with form bindings | Blazor Server/WASM |
-| `NetStandardLibrary` | Complete .csproj + class library | Standalone NuGet packages |
 
 Multiple generator types can target the same contract:
 
@@ -346,7 +342,7 @@ var receipt = await service.TransferRequestAndWaitForReceiptAsync(
 ### Events
 
 ```csharp
-var transferEvent = service.GetTransferEvent();
+var transferEvent = web3.Eth.GetEvent<TransferEventDTO>(contractAddress);
 var filter = transferEvent.CreateFilterInput(
     BlockParameter.CreateEarliest(), BlockParameter.CreateLatest());
 var events = await transferEvent.GetAllChangesAsync(filter);

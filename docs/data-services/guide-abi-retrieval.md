@@ -59,11 +59,11 @@ var abiInfo = await storage.GetABIInfoAsync(
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"); // USDC
 
 Console.WriteLine($"Contract: {abiInfo.ContractName}");
-Console.WriteLine($"Functions: {abiInfo.FunctionABIs.Count}");
-Console.WriteLine($"Events: {abiInfo.EventABIs.Count}");
+Console.WriteLine($"Functions: {abiInfo.ContractABI.Functions.Length}");
+Console.WriteLine($"Events: {abiInfo.ContractABI.Events.Length}");
 ```
 
-The returned `ABIInfo` object contains the contract name, a list of `FunctionABI` definitions, and a list of `EventABI` definitions. From here you can decode any transaction or log that targets this contract.
+The returned `ABIInfo` object contains the contract name and a `ContractABI` with arrays of `FunctionABI` and `EventABI` definitions. From here you can decode any transaction or log that targets this contract.
 
 ## Choosing a factory preset
 
@@ -104,7 +104,7 @@ This is equivalent to `CreateDefault`, but you could remove or reorder any of th
 
 ## Finding functions and events from selectors
 
-When you have raw transaction input data or log topics and need to figure out what they mean, use the selector-based lookup methods. These work even when the full ABI is not available, falling back to the 4Byte signature databases.
+When you have raw transaction input data or log topics and need to figure out what they mean, use the selector-based lookup methods. The address-based overloads look only in the contract's full ABI (and, for proxies, its implementation ABIs) and return `null` when no ABI is found. To resolve a selector through the 4Byte signature databases without an ABI, use the signature-only overloads or the batch methods.
 
 To identify which function a transaction is calling, pass the full input data (the 4-byte selector plus encoded parameters):
 
@@ -139,7 +139,7 @@ var errorAbi = await storage.FindErrorABIAsync(
     "0x08c379a0"); // Error(string) selector
 ```
 
-All three methods follow the same fallback chain: they first try to find the selector in the full ABI (if cached), then fall through to the signature databases.
+All three methods return `null` when the contract's ABI (or its proxy implementation's ABI) does not contain the selector; they do not fall through to the signature databases.
 
 ## Batch lookups
 
@@ -248,7 +248,7 @@ using Nethereum.DataServices.FourByteDirectory;
 var fourByte = new FourByteDirectoryService();
 
 var result = await fourByte.GetFunctionSignatureByHexSignatureAsync("0xa9059cbb");
-foreach (var sig in result.Results)
+foreach (var sig in result.Signatures)
     Console.WriteLine(sig.TextSignature); // "transfer(address,uint256)"
 ```
 
@@ -301,6 +301,7 @@ Register the database context and repository in your DI container:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
+using Nethereum.DataServices.Sourcify.Database;
 using Nethereum.Sourcify.Database;
 
 services.AddDbContext<SourcifyDbContext>(options =>
@@ -317,7 +318,7 @@ var repo = serviceProvider.GetRequiredService<ISourcifyRepository>();
 var sig = await repo.GetSignatureByHash4Async(new byte[] { 0xa9, 0x05, 0x9c, 0xbb });
 Console.WriteLine(sig?.SignatureText); // "transfer(address,uint256)"
 
-// Full-text search across all known signatures
+// Substring search across known signatures (returns at most 100 results)
 var results = await repo.SearchSignaturesAsync("approve");
 ```
 
@@ -337,9 +338,9 @@ The sync is incremental (using ETags), so subsequent runs only download new data
 
 **Rate limits on Etherscan.** Free Etherscan API keys are limited to 5 requests per second. If you are processing blocks with many transactions, use `CreateWithSourcifyOnly` for the main lookup chain and fall back to Etherscan only when Sourcify misses. Better yet, use the local Sourcify database for high-throughput workloads.
 
-**Unverified contracts return partial results.** When a contract is not verified on either Sourcify or Etherscan, the composite storage falls through to the 4Byte signature databases. These return function signatures (e.g., `transfer(address,uint256)`) but not parameter names or the full contract ABI. Your code should handle `null` returns from `GetABIInfoAsync` gracefully.
+**Unverified contracts return partial results.** When a contract is not verified on either Sourcify or Etherscan, `GetABIInfoAsync` returns `null`, and the address-based selector lookups return `null` too. The 4Byte signature databases are reached through the signature-only overloads and the batch methods; they return function signatures (e.g., `transfer(address,uint256)`) but not parameter names or the full contract ABI. Your code should handle `null` returns from `GetABIInfoAsync` gracefully.
 
-**Proxy contracts need special handling.** The `SourcifyABIInfoStorage` automatically resolves proxy contracts (UUPS, Transparent Proxy) and returns the implementation ABI. However, the Etherscan provider returns the proxy's ABI (which is usually just `fallback()` and `upgradeTo()`). If you are using `CreateWithEtherscanOnly`, you may need to resolve the implementation address manually.
+**Proxy contracts need special handling.** The `SourcifyABIInfoStorage` detects proxy contracts (UUPS, Transparent Proxy) and records their implementation addresses in `ABIInfo.ProxyImplementationAddresses`; the composite storage then fetches and caches the implementation ABIs. However, the Etherscan provider returns the proxy's ABI (which is usually just `fallback()` and `upgradeTo()`). If you are using `CreateWithEtherscanOnly`, you may need to resolve the implementation address manually.
 
 **Cache is in-memory by default.** The built-in cache (`ABIInfoInMemoryStorage`) does not persist across application restarts. For long-running services, consider the local Sourcify database or implement your own `IABIInfoStorage` backed by Redis or a database.
 

@@ -111,7 +111,7 @@ Think of it as a spectrum from "no restriction on this one action" (`SudoPolicy`
 
 ## SudoPolicy: Unconstrained Within the Scope
 
-`SudoPolicy.checkAction`/`checkUserOpPolicy` always return `VALIDATION_SUCCESS` — no arguments are inspected at all (`contracts/lib/smartsessions/contracts/external/policies/SudoPolicy.sol`). This is proven directly against a deployed `SudoPolicy` contract:
+`SudoPolicy.checkAction`/`checkUserOpPolicy` always return `VALIDATION_SUCCESS` — no arguments are inspected at all (`contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/policies/SudoPolicy.sol`). This is proven directly against a deployed `SudoPolicy` contract:
 
 ```csharp
 // Given: Deploy SudoPolicy
@@ -141,13 +141,17 @@ Assert.Equal(BigInteger.Zero, result);
 `UniActionPolicy` is the tool for "this session may call this one function, and here's what its arguments must look like." Configure it with `UniActionPolicyBuilder`:
 
 ```csharp
+using Nethereum.ABI;
 using Nethereum.AccountAbstraction.ERC7579.Modules.SmartSession;
 
 // A DCA bot may call swap() on ONE router, up to 100 (token-unit) worth of value per call.
 var maxSwapValue = BigInteger.Parse("100000000");
 
+var capBytes = new IntType("uint256").Encode(maxSwapValue);
+
 var policyData = new UniActionPolicyBuilder()
     .WithValueLimit(maxSwapValue)
+    .WithMaxValue(offset: 0, maxValue: capBytes)
     .Build();
 
 var session = new SmartSessionConfig()
@@ -163,7 +167,7 @@ var session = new SmartSessionConfig()
 
 (Adapted from `UseCase4_AutomatedDCA_RecurringBuySession`, `tests/Nethereum.AccountAbstraction.IntegrationTests/Modules/SmartSession/SmartSessionUseCaseTests.cs`.)
 
-`WithValueLimit` caps the native-token `value` sent with the call — it's checked unconditionally by `UniActionPolicy.checkAction` (`require(value <= config.valueLimitPerUse, ...)`, `contracts/lib/smartsessions/contracts/external/policies/UniActionPolicy.sol`) even if you add no argument rules at all. For calldata arguments, add up to 16 `ParamRule`s, each comparing one 32-byte word at a fixed offset into the call's argument data against a reference value:
+`WithValueLimit` caps the native-token `value` sent with the call — it's checked unconditionally by `UniActionPolicy.checkAction` (`require(value <= config.valueLimitPerUse, ...)`, `contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/policies/UniActionPolicy.sol`) but `checkAction` also reverts with `PolicyNotInitialized` when the policy has no `ParamRule`s at all, so a `UniActionPolicy` needs at least one. For calldata arguments, add up to 16 `ParamRule`s, each comparing one 32-byte word at a fixed offset into the call's argument data against a reference value:
 
 ```csharp
 var policyInitData = new UniActionPolicyBuilder()
@@ -173,7 +177,7 @@ var policyInitData = new UniActionPolicyBuilder()
     .Build();
 ```
 
-The offset is into the **argument data**, not the raw calldata — argument 0 starts right after the 4-byte selector, argument 1 at byte 32, and so on (`UniActionPolicyBuilder.WithEqualityCheck`/`WithMaxValue`/`WithMinValue`, `ERC7579/Modules/SmartSession/UniActionPolicyBuilder.cs`; the offset semantics are `UniActionLib.check`'s `data[4 + rule.offset : 4 + rule.offset + 32]`, `contracts/lib/smartsessions/contracts/external/policies/UniActionPolicy.sol`). `WithLimitedUsage` additionally tracks cumulative spend across calls — the same idea `ERC20SpendingLimitPolicy` implements specifically for ERC-20 `transfer`/`approve`/`transferFrom`, generalized to any argument of any function. A function with **no arguments at all** — like `count()` in the tip above — cannot be scoped by `UniActionPolicy`: its `checkAction` requires at least one configured `ParamRule` and unconditionally reads 32 bytes of argument data to evaluate it, so it reverts on a truly zero-argument call. That's exactly why the demo app scopes `count()` with `SudoPolicy` instead and reserves `UniActionPolicy` for `gasWaster(uint256 repeat, string)`, which has an argument to cap (`PoliciesViewModel.cs`, doc comment on `PoliciesViewModel`).
+The offset is into the **argument data**, not the raw calldata — argument 0 starts right after the 4-byte selector, argument 1 at byte 32, and so on (`UniActionPolicyBuilder.WithEqualityCheck`/`WithMaxValue`/`WithMinValue`, `ERC7579/Modules/SmartSession/UniActionPolicyBuilder.cs`; the offset semantics are `UniActionLib.check`'s `data[4 + rule.offset : 4 + rule.offset + 32]`, `contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/policies/UniActionPolicy.sol`). `WithLimitedUsage` additionally tracks cumulative spend across calls — the same idea `ERC20SpendingLimitPolicy` implements specifically for ERC-20 `transfer`/`approve`/`transferFrom`, generalized to any argument of any function. A function with **no arguments at all** — like `count()` in the tip above — cannot be scoped by `UniActionPolicy`: its `checkAction` requires at least one configured `ParamRule` and unconditionally reads 32 bytes of argument data to evaluate it, so it reverts on a truly zero-argument call. That's exactly why the demo app scopes `count()` with `SudoPolicy` instead and reserves `UniActionPolicy` for `gasWaster(uint256 repeat, string)`, which has an argument to cap (`PoliciesViewModel.cs`, doc comment on `PoliciesViewModel`).
 
 ## Session Lifecycle: Enable → Use → Out-of-Policy Rejection
 
@@ -259,11 +263,11 @@ catch (Exception ex)
 
 (`PoliciesViewModel.TryOutOfPolicyActionAsync`; asserted end-to-end by `Given_a_scoped_session_key_When_exceeding_the_UniActionPolicy_cap_Then_it_is_rejected`, which checks `vm.OutOfPolicyRejected == true` — the same session key that can call `count()`/`gasWaster(<=3)` genuinely cannot exceed the cap, `PoliciesViewModelTests.cs`.)
 
-Mechanically: `UniActionPolicy.checkAction` returns `VALIDATION_FAILED` when a `ParamRule` doesn't hold (`contracts/lib/smartsessions/contracts/external/policies/UniActionPolicy.sol`). `SmartSession.validateUserOp` calls every attached policy through `PolicyLib.callPolicy`, which treats a failed result as fatal — it reverts with `ISmartSession.PolicyViolation(permissionId, policy)` rather than returning a soft failure (`contracts/lib/smartsessions/contracts/lib/PolicyLib.sol:157`, `ISmartSession.sol:46`). That revert happens during UserOperation **validation**, so the call never executes — no partial state change, no gas spent on the action itself. `ERC20SpendingLimitPolicy.checkAction` follows the identical contract: it returns `VALIDATION_FAILED` the moment `alreadySpent + amount > spendingLimit` (`contracts/lib/smartsessions/contracts/external/policies/ERC20SpendingLimitPolicy.sol`) — a spending-limit session and a `UniActionPolicy`-scoped session fail the same way, for the same reason: whichever action policy you attach, "out of policy" always resolves to `PolicyViolation`, never a quiet partial success.
+Mechanically: `UniActionPolicy.checkAction` returns `VALIDATION_FAILED` when a `ParamRule` doesn't hold (`contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/policies/UniActionPolicy.sol`). `SmartSession.validateUserOp` calls every attached policy through `PolicyLib.callPolicy`, which treats a failed result as fatal — it reverts with `ISmartSession.PolicyViolation(permissionId, policy)` rather than returning a soft failure (`contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/lib/PolicyLib.sol:157`, `ISmartSession.sol:46`). That revert happens during UserOperation **validation**, so the call never executes — no partial state change, no gas spent on the action itself. `ERC20SpendingLimitPolicy.checkAction` follows the identical contract: it returns `VALIDATION_FAILED` the moment `alreadySpent + amount > spendingLimit` (`contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/policies/ERC20SpendingLimitPolicy.sol`) — a spending-limit session and a `UniActionPolicy`-scoped session fail the same way, for the same reason: whichever action policy you attach, "out of policy" always resolves to `PolicyViolation`, never a quiet partial success.
 
 ### Revoke
 
-A session's authority ends when the account calls `SmartSession.removeSession(permissionId)` — a self-call exactly like `enableSessions`, generated as `SmartSessionService.RemoveSessionRequestAsync(byte[] permissionId)` (`Contracts/Modules/SmartSessions/SmartSession/SmartSessionService.gen.cs`; the contract implementation clears every policy and the session validator entry for that `permissionId`, `contracts/lib/smartsessions/contracts/core/SmartSessionBase.sol:333`). Route it through the account exactly like the "enable" self-call above — `smartSession.UseAccountAbstraction(account, aaClient)` then `RemoveSessionRequestAndWaitForReceiptAsync(permissionId)`. No test in this codebase currently exercises a live revoke-then-reject round trip end-to-end; the method itself and its on-chain effect are verified directly from `SmartSessionBase.sol`, not from a tagged doc example.
+A session's authority ends when the account calls `SmartSession.removeSession(permissionId)` — a self-call exactly like `enableSessions`, generated as `SmartSessionService.RemoveSessionRequestAsync(byte[] permissionId)` (`Contracts/Modules/SmartSessions/SmartSession/SmartSessionService.gen.cs`; the contract implementation clears every policy and the session validator entry for that `permissionId`, `contracts/src/Nethereum.AccountAbstraction/modules/smartsessions/core/SmartSessionBase.sol:333`). Route it through the account exactly like the "enable" self-call above — `smartSession.UseAccountAbstraction(account, aaClient)` then `RemoveSessionRequestAndWaitForReceiptAsync(permissionId)`. No test in this codebase currently exercises a live revoke-then-reject round trip end-to-end; the method itself and its on-chain effect are verified directly from `SmartSessionBase.sol`, not from a tagged doc example.
 
 **This on-chain call is the only thing that actually revokes authority.** `SessionKeyManager`'s `ValidAfter`/`ValidUntil` (see [Modular Accounts](guide-modular-accounts#manage-session-keys)) are bookkeeping in *your* application only — `SessionKeyManager.RemoveSessionKeyAsync` deletes a local record, it does not touch the chain. A session key your app has "forgotten" but never revoked on-chain can still sign valid UserOperations for as long as its policies allow.
 

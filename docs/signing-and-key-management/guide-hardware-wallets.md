@@ -38,7 +38,7 @@ dotnet add package Nethereum.Signer.Trezor
 Trezor requires an `ITrezorPromptHandler` — but which callbacks the device actually invokes depends on the model:
 
 - **Trezor One** — PIN entry happens in your app. The device shows a scrambled numpad layout; the user types the positions in your UI. `GetPinAsync()` is called.
-- **Trezor Model T / Safe 3 / Safe 5** — PIN is entered on the device touchscreen. `GetPinAsync()` is never called.
+- **Trezor Model T / Safe 3** — PIN is entered on the device touchscreen.
 - **All models** — `ButtonAckAsync()` is called whenever the device requests physical confirmation (e.g., "Confirm transaction"). `GetPassphraseAsync()` is called if the user has enabled a passphrase (25th word).
 
 You must implement all three methods regardless of which model your users have — the handler must be ready for any device:
@@ -85,7 +85,8 @@ var promptHandler = new ConsolePinHandler();
 var trezorBroker = NethereumTrezorManagerBrokerFactory.Create(
     promptHandler, loggerFactory);
 
-var signer = new TrezorExternalSigner(trezorBroker.TrezorManager, index: 0);
+var trezorManager = await trezorBroker.WaitForFirstTrezorAsync();
+var signer = new TrezorExternalSigner(trezorManager, index: 0);
 var externalAccount = new ExternalAccount(signer, chainId: 1);
 await externalAccount.InitialiseAsync();
 
@@ -110,8 +111,8 @@ The user sees the transaction details on the Trezor screen and must physically c
 ```csharp
 var receipt = await web3.Eth.GetEtherTransferService()
     .TransferEtherAndWaitForReceiptAsync(toAddress, 0.1m,
-        maxPriorityFeePerGas: 2,
-        maxFeePerGas: 30);
+        maxPriorityFee: 2000000000,
+        maxFeePerGas: 30000000000);
 ```
 
 ### Sign a Personal Message
@@ -153,7 +154,7 @@ var permit = new Permit
     Deadline = BigInteger.Parse("1000000000000")
 };
 
-var signature = await signer.SignTypedDataAsync(typedData);
+var signature = await signer.SignTypedDataAsync(typedData, permit);
 ```
 
 For hash-based EIP-712 signing (when the device firmware doesn't support interactive mode), use the fallback:
@@ -168,15 +169,15 @@ var signature = await signer.SignTypedDataHashAsync(
 Derive different accounts by changing the index. Each index maps to a different address on the same BIP-32 derivation path (`m/44'/60'/0'/0/x`):
 
 ```csharp
-var signer0 = new TrezorExternalSigner(trezorBroker.TrezorManager, index: 0);
-var signer1 = new TrezorExternalSigner(trezorBroker.TrezorManager, index: 1);
+var signer0 = new TrezorExternalSigner(trezorManager, index: 0);
+var signer1 = new TrezorExternalSigner(trezorManager, index: 1);
 ```
 
 ### Custom Derivation Path
 
 ```csharp
 var signer = new TrezorExternalSigner(
-    trezorBroker.TrezorManager,
+    trezorManager,
     customPath: "m/44'/60'/1'/0",
     index: 0);
 ```
@@ -220,12 +221,14 @@ dotnet add package Nethereum.Signer.Ledger
 ### Connect and Get Address
 
 ```csharp
-using Nethereum.Signer.Ledger;
+using Nethereum.Ledger;
+using Ledger.Net;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 
 var ledgerBroker = NethereumLedgerManagerBrokerFactory.CreateWindowsHidUsb();
-var signer = new LedgerExternalSigner(ledgerBroker.LedgerManager, index: 0);
+var ledgerManager = (LedgerManager)await ledgerBroker.WaitForFirstDeviceAsync();
+var signer = new LedgerExternalSigner(ledgerManager, index: 0);
 
 var externalAccount = new ExternalAccount(signer, chainId: 1);
 await externalAccount.InitialiseAsync();
@@ -247,15 +250,15 @@ var receipt = await web3.Eth.GetEtherTransferService()
 ```csharp
 var receipt = await web3.Eth.GetEtherTransferService()
     .TransferEtherAndWaitForReceiptAsync(toAddress, 0.1m,
-        maxPriorityFeePerGas: 2,
-        maxFeePerGas: 30);
+        maxPriorityFee: 2000000000,
+        maxFeePerGas: 30000000000);
 ```
 
 ### Multiple Accounts
 
 ```csharp
-var signer0 = new LedgerExternalSigner(ledgerBroker.LedgerManager, index: 0);
-var signer1 = new LedgerExternalSigner(ledgerBroker.LedgerManager, index: 1);
+var signer0 = new LedgerExternalSigner(ledgerManager, index: 0);
+var signer1 = new LedgerExternalSigner(ledgerManager, index: 1);
 ```
 
 ### Legacy Derivation Path
@@ -264,7 +267,7 @@ Ledger Live uses `m/44'/60'/0'/0/x` (default). For the older Ledger/Electrum pat
 
 ```csharp
 var signer = new LedgerExternalSigner(
-    ledgerBroker.LedgerManager, index: 0, legacyPath: true);
+    ledgerManager, index: 0, legacyPath: true);
 // Uses: m/44'/60'/0'
 ```
 
@@ -272,7 +275,7 @@ var signer = new LedgerExternalSigner(
 
 ```csharp
 var signer = new LedgerExternalSigner(
-    ledgerBroker.LedgerManager, index: 0,
+    ledgerManager, index: 0,
     customPath: "m/44'/60'/1'/0");
 ```
 
@@ -293,7 +296,7 @@ var signer = new LedgerExternalSigner(
 
 **Key difference for EIP-712:** Trezor shows the user each typed data field on the device screen (e.g., "Spender: 0xbBbB...", "Value: 1000000000000000000"). Ledger signs the hash of the encoded data without displaying the individual fields — the user confirms a hash, not the human-readable data. If your application relies on EIP-712 permits or off-chain orders, Trezor provides a better user experience.
 
-**Key difference for setup:** Ledger is simpler to integrate — no prompt handler interface to implement. PIN and passphrase are handled entirely on the physical device. For Trezor, you must implement `ITrezorPromptHandler` — but note that newer Trezor models (Model T, Safe 3, Safe 5) handle PIN on their touchscreen, so `GetPinAsync()` is only called for the Trezor One. You still need the handler for `ButtonAckAsync()` and `GetPassphraseAsync()` on all models.
+**Key difference for setup:** Ledger is simpler to integrate — no prompt handler interface to implement. PIN and passphrase are handled entirely on the physical device. For Trezor, you must implement `ITrezorPromptHandler` — but note that newer Trezor models (Model T, Safe 3) handle PIN on their touchscreen. You still need the handler for `ButtonAckAsync()` and `GetPassphraseAsync()` on all models.
 
 ## How ExternalAccount Works
 

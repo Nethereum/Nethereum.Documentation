@@ -32,14 +32,14 @@ Nethereum provides a complete pipeline for crawling blockchain data, persisting 
 ## Quick Start — Process Event Logs
 
 ```csharp
-var processor = web3.Processing.Logs.CreateProcessor<TransferEventDTO>(
+var processor = web3.Processing.Logs.CreateProcessorForContracts<TransferEventDTO>(
+    contractAddresses: new[] { contractAddress },
     action: log =>
     {
         Console.WriteLine($"Transfer: {log.Event.From} -> {log.Event.To}, Amount: {log.Event.Value}");
         return Task.CompletedTask;
     },
-    minimumBlockConfirmations: 12,
-    contractAddresses: new[] { contractAddress }
+    minimumBlockConfirmations: 12
 );
 
 await processor.ExecuteAsync(

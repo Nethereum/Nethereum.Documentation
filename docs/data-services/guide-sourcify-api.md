@@ -34,7 +34,7 @@ No API key is required — Sourcify is free and open.
 
 ## Sourcify V2 API
 
-The `SourcifyApiServiceV2` provides direct access to Sourcify's verification database. Unlike the composite `SourcifyABIInfoStorage` from the [ABI Retrieval guide](guide-abi-retrieval), this gives you the full contract response including compilation metadata, source code, bytecode transformations, and proxy resolution.
+The `SourcifyApiServiceV2` provides direct access to Sourcify's verification database. Unlike the `SourcifyABIInfoStorage` provider from the [ABI Retrieval guide](guide-abi-retrieval), this gives you the full contract response including compilation metadata, source code, bytecode transformations, and proxy resolution.
 
 ### Contract Lookup
 
@@ -297,6 +297,7 @@ For production applications that cannot tolerate external API latency or rate li
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
+using Nethereum.DataServices.Sourcify.Database;
 using Nethereum.Sourcify.Database;
 
 services.AddDbContext<SourcifyDbContext>(options =>
@@ -354,7 +355,7 @@ See the [Nethereum.Sourcify.Database](nethereum-sourcify-database) package refer
 
 **Multiple signature matches are common.** The 4Byte database may return several signatures for the same selector — different functions can have the same 4-byte prefix. When decoding, prefer signatures that match the parameter count from your calldata length.
 
-**Proxy contracts are resolved automatically** by `SourcifyABIInfoStorage` (the composite provider from [ABI Retrieval](guide-abi-retrieval)). When using `SourcifyApiServiceV2` directly, you get the contract at the address you specify — resolve the implementation address yourself if needed.
+**Proxy implementations are tracked automatically**: `SourcifyABIInfoStorage` records `ProxyImplementationAddresses` and the composite storage from [ABI Retrieval](guide-abi-retrieval) fetches the implementation ABIs. When using `SourcifyApiServiceV2` directly, you get the contract at the address you specify — resolve the implementation address yourself if needed.
 
 **No rate limits, but be respectful.** Sourcify is a free public good. For high-throughput workloads (block explorers, indexers), use the Parquet exports and local database instead of hitting the API per-contract.
 

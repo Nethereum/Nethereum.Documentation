@@ -53,10 +53,10 @@ var accountAddress = "0xYourSmartAccountAddress";
 var bundlerService = new AccountAbstractionBundlerService(
     new Nethereum.JsonRpc.Client.RpcClient(new Uri("http://localhost:4337")));
 
-// myTokenService is any code-generated service extending ContractWeb3ServiceBase
-// (e.g. web3.Eth.ERC20.GetContractService(tokenAddress))
-// factoryConfig comes from your account factory (see Deploy a Smart Account) - omit once the account is deployed
-var handler = myTokenService.ChangeContractHandlerToAA(
+// Built-in services (web3.Eth.ERC20, ERC721, ...) use SwitchToAccountAbstraction; your own code-generated ContractWeb3ServiceBase services use ChangeContractHandlerToAA with the same arguments
+// factoryConfig (SimpleAccountFactory only; a NethereumAccount is created through IAAClient.CreateAccountAsync) comes from your account factory (see Deploy a Smart Account) - omit once the account is deployed
+var myTokenService = web3.Eth.ERC20.GetContractService(tokenAddress);
+var handler = myTokenService.SwitchToAccountAbstraction(
     accountAddress,
     accountKey,
     bundlerService,

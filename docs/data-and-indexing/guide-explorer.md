@@ -112,8 +112,7 @@ AppHost (Aspire Orchestrator)
     ├── Connects to PostgreSQL for indexed data
     ├── Full explorer with token pages, MUD browser, EVM debugger
     ├── EIP-6963 browser wallet integration
-    ├── Token and Contract REST API endpoints
-    └── Pre-configured with dev account for write operations
+    └── Token and Contract REST API endpoints
 ```
 
 ### AppHost wiring
@@ -183,6 +182,14 @@ builder.Services.AddTokenPostgresRepositories(connectionString);
 // MUD support with normalised SQL queries
 builder.Services.AddDbContext<MudPostgresStoreRecordsDbContext>(options =>
     options.UseNpgsql(connectionString).UseLowerCaseNamingConvention());
+builder.Services.AddScoped<IMudStoreRecordsDbSets>(sp =>
+    sp.GetRequiredService<MudPostgresStoreRecordsDbContext>());
+builder.Services.AddTransient<INormalisedTableQueryService>(sp =>
+{
+    var conn = new NpgsqlConnection(connectionString);
+    var logger = sp.GetService<ILogger<NormalisedTableQueryService>>();
+    return new NormalisedTableQueryService(conn, logger);
+});
 
 // RPC URL resolved from Aspire service discovery
 var devchainUrl = builder.Configuration["services:devchain:http:0"]
@@ -387,11 +394,21 @@ Returns `503` if token repositories are not configured.
 
 ## MUD Browser Setup
 
-To enable the MUD World browser, register the MUD PostgreSQL context alongside the explorer:
+To enable the MUD World browser, register the MUD PostgreSQL context, the `IMudStoreRecordsDbSets` alias and the normalised table query service alongside the explorer:
 
 ```csharp
 builder.Services.AddDbContext<MudPostgresStoreRecordsDbContext>(options =>
     options.UseNpgsql(connectionString).UseLowerCaseNamingConvention());
+
+builder.Services.AddScoped<IMudStoreRecordsDbSets>(sp =>
+    sp.GetRequiredService<MudPostgresStoreRecordsDbContext>());
+
+builder.Services.AddTransient<INormalisedTableQueryService>(sp =>
+{
+    var conn = new NpgsqlConnection(connectionString);
+    var logger = sp.GetService<ILogger<NormalisedTableQueryService>>();
+    return new NormalisedTableQueryService(conn, logger);
+});
 ```
 
 The MUD browser shows deployed World contracts, their table schemas, and individual records with raw, decoded, and normalised SQL views.

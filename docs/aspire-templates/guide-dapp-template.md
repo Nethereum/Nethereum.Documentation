@@ -13,11 +13,12 @@ If the [DevChain template](guide-devchain-template) gives you the infrastructure
 
 ## What You'll Build
 
-The template creates a solution with 9 projects spanning the entire development stack:
+The template creates a solution with 10 projects spanning the entire development stack:
 
 | Project | Role |
 |---------|------|
 | **AppHost** | Aspire orchestrator — wires all services together |
+| **ServiceDefaults** | Shared Aspire defaults: OpenTelemetry, health checks, service discovery |
 | **DevChain** | Local Ethereum node (JSON-RPC, EIP-1559, debug tracing) |
 | **Indexer** | Background worker indexing blocks, transactions, tokens into PostgreSQL |
 | **Explorer** | Blazor blockchain explorer with contract interaction and ABI decoding |
@@ -76,7 +77,7 @@ The Aspire dashboard opens at `https://localhost:17178`. All 6 services start up
 Open the **WebApp** URL from the Aspire dashboard. The Token Interaction page walks you through the full ERC-20 lifecycle:
 
 1. **Connect your wallet** — click "Connect Wallet" in the header (MetaMask or any EIP-6963 wallet)
-2. **Switch to the DevChain** — if you're on the wrong chain, click "Switch to DevChain" (MetaMask will prompt to add the network)
+2. **Switch to the DevChain** — if you're on the wrong chain, click "Switch to `<ProjectName>` DevChain" (MetaMask will prompt to add the network)
 3. **Deploy a token** — set name, symbol, initial supply, and click Deploy
 4. **Mint tokens** — send new tokens to any address
 5. **Transfer tokens** — move tokens between addresses

@@ -87,7 +87,7 @@ var typedData = new TypedData<Domain>
 };
 ```
 
-The `Domain` class is built into `Nethereum.ABI.EIP712` and supports the standard EIP-712 domain fields: `Name`, `Version`, `ChainId`, `VerifyingContract`, and `Salt`.
+The `Domain` class supports `Name`, `Version`, `ChainId` and `VerifyingContract`; use `DomainWithSalt` (adds a `byte[] Salt`, EIP-712 `bytes32`) when the domain needs a salt.
 
 ## Sign and Recover
 
@@ -288,7 +288,7 @@ The domain separator uniquely identifies your contract and chain. Typical fields
 | `Version` | Schema version | `"1"` |
 | `ChainId` | EIP-155 chain ID | `1` (mainnet), `137` (Polygon) |
 | `VerifyingContract` | Address of the contract that verifies the signature | `"0xCcCC..."` |
-| `Salt` | Optional disambiguation value | (rarely used) |
+| `Salt` | Optional disambiguation value | (`DomainWithSalt` only; rarely used) |
 
 ## Playground
 

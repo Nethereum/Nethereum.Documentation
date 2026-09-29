@@ -10,8 +10,8 @@ description: Deploy contracts to deterministic addresses using CREATE2 with Neth
 :::tip The Simple Way
 ```csharp
 var create2 = web3.Eth.Create2DeterministicDeploymentProxyService;
-var address = create2.CalculateCreate2Address(deployment, salt);
-var receipt = await create2.DeployContractRequestAndWaitForReceiptAsync(deployment, salt);
+var address = create2.CalculateCreate2Address(deployment, proxyAddress, salt);
+var receipt = await create2.DeployContractRequestAndWaitForReceiptAsync(deployment, proxyAddress, salt);
 ```
 Predict the address, then deploy — same address on every chain with the same salt.
 :::
@@ -87,8 +87,8 @@ var result = await create2Service
         proxyAddress,
         salt);
 
-Console.WriteLine($"Deployed to: {result.ContractAddress}");
-Console.WriteLine($"Transaction: {result.TransactionHash}");
+Console.WriteLine($"Deployed to: {result.Address}");
+Console.WriteLine($"Transaction: {result.TransactionReceipt.TransactionHash}");
 ```
 
 ## Deploy the Proxy Itself
@@ -96,8 +96,10 @@ Console.WriteLine($"Transaction: {result.TransactionHash}");
 If the deterministic deployment proxy isn't deployed on your chain yet:
 
 ```csharp
+var proxyDeployment = await create2Service
+    .GenerateEIP155DeterministicDeploymentAsync();
 var proxyAddress = await create2Service
-    .DeployProxyAndGetContractAddressAsync();
+    .DeployProxyAndGetContractAddressAsync(proxyDeployment);
 
 Console.WriteLine($"Proxy deployed at: {proxyAddress}");
 ```
@@ -118,12 +120,12 @@ var deployment = await create2Service
     .GenerateEIP155DeterministicDeploymentAsync();
 ```
 
-This creates a deployment that is specific to the current chain, producing a different proxy address per chain but with a deterministic result on each chain.
+Signs the proxy deployment transaction (EIP-155, chain ID included) with the connected account at the given nonce (default 0). The proxy address is derived from that account's address and nonce, so using the same account and nonce on every chain gives the same proxy address.
 
 ## Key Types
 
 - `Create2DeterministicDeploymentProxyService` -- main service accessible via `web3.Eth.Create2DeterministicDeploymentProxyService`
-- `Create2ContractDeploymentTransactionResult` -- result containing `ContractAddress` and `TransactionHash`
+- `Create2ContractDeploymentTransactionResult` (`Address`, `TransactionHash`, `AlreadyDeployed`) and `Create2ContractDeploymentTransactionReceiptResult` (`Address`, `TransactionReceipt`, `AlreadyDeployed`)
 - `ContractUtils.CalculateCreate2Address()` -- low-level address calculation utility
 
 ## Common Patterns
@@ -133,7 +135,7 @@ This creates a deployment that is specific to the current chain, producing a dif
 | Predict address | `create2Service.CalculateCreate2Address<T>(deployment, proxy, salt)` |
 | Check if deployed | `create2Service.HasContractAlreadyDeployedAsync(address)` |
 | Deploy contract | `create2Service.DeployContractRequestAndWaitForReceiptAsync<T>(deployment, proxy, salt)` |
-| Deploy proxy | `create2Service.DeployProxyAndGetContractAddressAsync()` |
+| Deploy proxy | `create2Service.DeployProxyAndGetContractAddressAsync(deployment)` |
 | Check proxy exists | `create2Service.HasProxyBeenDeployedAsync(proxyAddress)` |
 | EIP-155 deployment | `create2Service.GenerateEIP155DeterministicDeploymentAsync()` |
 ## Next Steps

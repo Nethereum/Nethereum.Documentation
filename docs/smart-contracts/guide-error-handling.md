@@ -13,7 +13,9 @@ try {
     var receipt = await service.TransferRequestAndWaitForReceiptAsync(transfer);
 } catch (SmartContractCustomErrorRevertException ex) {
     if (ex.IsCustomErrorFor<InsufficientBalanceError>())
+    {
         var error = ex.DecodeError<InsufficientBalanceError>();
+    }
 }
 ```
 Catch `SmartContractCustomErrorRevertException`, then decode the typed error.

@@ -66,7 +66,7 @@ Both templates accept these parameters:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--NethereumVersion` | `6.0.4` | Nethereum NuGet package version |
+| `--NethereumVersion` | `6.1.0` | Nethereum NuGet package version |
 | `--ChainId` | `31337` | Chain ID for the DevChain node |
 | `--AspireVersion` | `13.1.1` | .NET Aspire SDK and hosting package version |
 
@@ -77,7 +77,7 @@ Both templates accept these parameters:
 | Guide | What You'll Learn |
 |---|---|
 | [DevChain Template](guide-devchain-template) | Install the template pack, create a DevChain project, run it, and explore the Aspire dashboard, Explorer, and Indexer |
-| [dApp Template](guide-dapp-template) | Create a full-stack dApp with 9 projects, understand the architecture, and run the complete stack |
+| [dApp Template](guide-dapp-template) | Create a full-stack dApp with 10 projects, understand the architecture, and run the complete stack |
 
 ### Solidity Development
 

@@ -239,7 +239,7 @@ Every property on `BundlerConfig`, with its default, verified against source:
 | `ReceiptLogLookbackBlocks` | `BigInteger` | `10,000` | How many blocks back `eth_getUserOperationReceipt` scans EntryPoint logs when the mempool no longer knows the operation (0 scans from genesis) |
 | `StrictValidation` | `bool` | `true` | Enforce ERC-4337 validation rules |
 | `SimulateValidation` | `bool` | `true` | Simulate UserOperations before accepting into the mempool |
-| `UnsafeMode` | `bool` | `false` | Skip validations entirely — testing/development only |
+| `UnsafeMode` | `bool` | `false` | Skips only the reputation (ban/throttle) check on `SendUserOperationAsync` (and only when an `IReputationService` is injected); UserOperations are still validated. Relax validation with `StrictValidation` / `SimulateValidation` / `EnableERC7562Validation`. Testing only |
 | `EnableERC7562Validation` | `bool` | `false` | Enable trace-based opcode/storage validation per ERC-7562 |
 | `MinStake` | `BigInteger` | `1 ETH` (`1_000_000_000_000_000_000`) | Minimum stake for entities to use staked-only opcodes (e.g. `BALANCE`, `SELFBALANCE`) |
 | `MinUnstakeDelaySec` | `uint` | `86,400` (24 hours) | Minimum unstake delay for staked entities |
@@ -280,12 +280,12 @@ The bundler supports several validation modes you combine depending on your secu
 
 **EnableERC7562Validation** (default `false`) adds trace-based opcode validation per ERC-7562: the bundler traces the validation phase and rejects operations using forbidden opcodes (like `ORIGIN` or `GASPRICE`) or disallowed storage access. Enable it for any bundler accepting operations from untrusted accounts.
 
-**UnsafeMode** (default `false`) disables validation entirely — every UserOperation is accepted without checks. Use it only for local development, never for anything that submits real transactions.
+**UnsafeMode** (default `false`) skips only the reputation (ban/throttle) check on `SendUserOperationAsync`; every UserOperation is still validated. To relax validation use `StrictValidation`, `SimulateValidation` and `EnableERC7562Validation`. Local development only.
 
 ```csharp
-// Development: skip everything for speed
+// Development: relax validation for speed
 var devConfig = BundlerConfig.CreateAppChainConfig(entryPoint, beneficiary);
-devConfig.UnsafeMode = true;
+devConfig.SimulateValidation = false;
 
 // Public testnet: full validation with ERC-7562 opcode checks
 var testnetConfig = BundlerConfig.CreateStandardConfig(entryPoint, beneficiary);
@@ -294,7 +294,7 @@ testnetConfig.EnableERC7562Validation = true;
 
 ## Reputation and Staking
 
-ERC-4337's reputation system protects the bundler from denial-of-service attacks: entities (factories, paymasters, aggregators) whose UserOperations repeatedly fail on-chain have their reputation reduced, and low-reputation entities are throttled or banned. `BundlerService` tracks this automatically; the config knobs above (`MinStake`, `MinUnstakeDelaySec`, `WhitelistedAddresses`, `BlacklistedAddresses`) tune it:
+ERC-4337's reputation system protects the bundler from denial-of-service attacks: entities (factories, paymasters, aggregators) whose UserOperations repeatedly fail on-chain have their reputation reduced, and low-reputation entities are throttled or banned. `BundlerService` tracks this automatically when an `IReputationService` is injected; the config knobs above (`MinStake`, `MinUnstakeDelaySec`, `WhitelistedAddresses`, `BlacklistedAddresses`) tune it:
 
 ```csharp
 var config = BundlerConfig.CreateProductionConfig(entryPoint, beneficiary);
@@ -323,7 +323,7 @@ config.AutoBundleIntervalMs = 0; // Timer disabled
 var result = await bundlerService.ExecuteBundleAsync();
 ```
 
-**UnsafeMode in production** — `UnsafeMode = true` skips all validation, so malicious or malformed UserOperations are bundled and waste gas. Use it only for local development.
+**UnsafeMode in production** — `UnsafeMode = true` lets banned or throttled senders, factories and paymasters through the reputation check. Use it only for local development.
 
 ## Next Steps
 

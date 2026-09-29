@@ -121,7 +121,7 @@ var txns = await etherscan.Accounts.GetAccountTransactionsAsync(
     "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
     page: 1,
     offset: 10,
-    sort: "desc");
+    sort: EtherscanResultSort.Descending);
 
 foreach (var tx in txns.Result)
     Console.WriteLine($"  {tx.Hash} — {tx.Value} Wei to {tx.To}");
@@ -130,11 +130,11 @@ foreach (var tx in txns.Result)
 Internal transactions (contract-to-contract calls):
 
 ```csharp
-var internal = await etherscan.Accounts.GetAccountInternalTransactionsAsync(
+var internalTxns = await etherscan.Accounts.GetAccountInternalTransactionsAsync(
     "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
     page: 1,
     offset: 10,
-    sort: "desc");
+    sort: EtherscanResultSort.Descending);
 ```
 
 ### Token Transfers
@@ -191,9 +191,9 @@ Console.WriteLine($"Compiler: {info.CompilerVersion}");
 The source code response can also contain compilation metadata that can be deserialized:
 
 ```csharp
-if (sourceResponse.Result.ContainsSourceCodeCompilationMetadata())
+if (info.ContainsSourceCodeCompilationMetadata())
 {
-    var metadata = sourceResponse.Result.DeserialiseCompilationMetadata();
+    var metadata = info.DeserialiseCompilationMetadata();
     var localSource = metadata.GetLocalSourceCode(info.ContractName);
 }
 ```

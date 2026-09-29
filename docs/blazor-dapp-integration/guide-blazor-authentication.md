@@ -40,11 +40,15 @@ using Nethereum.Blazor;
 using Nethereum.Blazor.Siwe;
 using Nethereum.Siwe;
 using Nethereum.Siwe.Core;
+using Nethereum.Siwe.Authentication;
 using Nethereum.UI;
 using Microsoft.AspNetCore.Components.Authorization;
 
-builder.Services.AddSingleton<NethereumSiweAuthenticatorService>();
-builder.Services.AddSingleton<ISessionStorage, SessionStorageService>();
+builder.Services.AddSingleton<ISessionStorage, InMemorySessionNonceStorage>();
+builder.Services.AddScoped<SelectedEthereumHostProviderService>();
+builder.Services.AddScoped<NethereumSiweAuthenticatorService>();
+builder.Services.AddScoped<IAccessTokenService, LocalStorageAccessTokenService>();
+builder.Services.AddScoped<IUserService<User>, YourUserService>();
 
 builder.Services.AddScoped<AuthenticationStateProvider,
     SiweAuthenticationServerStateProvider<User, SiweMessage>>();
@@ -95,7 +99,7 @@ For WebAssembly apps, the SIWE signature is sent to a REST API that returns a JW
 
 ### REST API (Server)
 
-The API generates nonces and validates signatures:
+The API generates nonces and validates signatures. Token issuance (JWT) is application code; `GenerateJwt` below stands for your own implementation:
 
 ```csharp
 using Nethereum.Siwe;
@@ -103,20 +107,20 @@ using Nethereum.Siwe.Core;
 
 app.MapGet("/api/siwe/nonce", () =>
 {
-    var nonce = SiweMessageService.GenerateNonce();
+    var nonce = RandomNonceBuilder.GenerateNewNonce();
     return Results.Ok(new { nonce });
 });
 
 app.MapPost("/api/siwe/verify", async (SiweVerifyRequest request,
-    SiweJwtAuthorisationService jwtService) =>
+    ISessionStorage sessionStorage) =>
 {
     var siweMessage = SiweMessageParser.Parse(request.Message);
-    var validUser = SiweMessageService.IsMessageSignatureValid(
-        request.Message, request.Signature);
+    var validUser = await new SiweMessageService(sessionStorage)
+        .IsMessageSignatureValid(siweMessage, request.Signature);
 
     if (!validUser) return Results.Unauthorized();
 
-    var token = jwtService.GenerateToken(siweMessage.Address);
+    var token = GenerateJwt(siweMessage.Address);
     return Results.Ok(new { token });
 });
 ```
@@ -126,15 +130,12 @@ app.MapPost("/api/siwe/verify", async (SiweVerifyRequest request,
 ```csharp
 using Nethereum.Blazor.Siwe;
 using Nethereum.Siwe.Authentication;
-using Microsoft.AspNetCore.Components.Authorization;
 
 builder.Services.AddSingleton<IAccessTokenService, LocalStorageAccessTokenService>();
-builder.Services.AddScoped<AuthenticationStateProvider,
-    SiweAuthenticationWasmStateProvider>();
 builder.Services.AddAuthorizationCore();
 ```
 
-`SiweAuthenticationWasmStateProvider` stores the JWT in `localStorage` via `LocalStorageAccessTokenService`. On page reload, it reads the token and restores the authentication state.
+`LocalStorageAccessTokenService` stores the access token in `localStorage`. The WASM `AuthenticationStateProvider` that calls the REST API and restores the state on page reload (`SiweAuthenticationWasmStateProvider`) is part of the external Nethereum SIWE template, not a Nethereum package.
 
 ## Protecting Routes
 
@@ -170,6 +171,7 @@ Or inline with `<AuthorizeView>`:
 Implement `IEthereumUserService` to restrict access based on token holdings:
 
 ```csharp
+using Nethereum.Siwe.UserServices;
 using Nethereum.UI;
 
 public class NFTGateService : IEthereumUserService
@@ -183,7 +185,7 @@ public class NFTGateService : IEthereumUserService
         _requiredNftContract = requiredNftContract;
     }
 
-    public async Task<bool> IsUserValidAsync(string address)
+    public async Task<bool> IsUserAddressRegistered(string address)
     {
         var web3 = await _provider.GetWeb3Async();
         var erc721 = web3.Eth.ERC721.GetContractService(_requiredNftContract);
@@ -198,8 +200,8 @@ The built-in `ERC721BalanceEthereumUserService` does this out of the box -- regi
 ```csharp
 builder.Services.AddSingleton<IEthereumUserService>(sp =>
     new ERC721BalanceEthereumUserService(
-        sp.GetRequiredService<IEthereumHostProvider>(),
-        "0xYourNFTContractAddress"));
+        "0xYourNFTContractAddress",
+        "https://your-rpc-url"));
 ```
 
 ## Smart Contract Wallet Support
@@ -210,7 +212,7 @@ builder.Services.AddSingleton<IEthereumUserService>(sp =>
 - **ERC-1271** -- on-chain `isValidSignature` for deployed smart contract wallets
 - **ERC-6492** -- pre-deployment signature validation for counterfactual smart accounts
 
-This is handled transparently. No additional configuration is needed.
+ERC-1271 and ERC-6492 validation only runs when `SiweMessageService` is constructed with a `web3ForERC1271Validation` instance; without it only EOA signatures are verified.
 
 ## Full Starter Template
 

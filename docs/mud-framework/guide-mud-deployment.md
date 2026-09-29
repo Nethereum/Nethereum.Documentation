@@ -116,7 +116,7 @@ await app.RegisterNamespaceRequestAndWaitForReceiptAsync();
 
 ## Step 5: Batch Register All Tables
 
-The `TablesServices` base class collects all table services registered in the constructor. `BatchRegisterAllTablesRequestAndWaitForReceiptAsync` registers every table's schema on-chain in a single batch call through the World's `BatchCallSystem`:
+The derived tables class populates `TableServices` (a `List<ITableServiceBase>`); `BatchRegisterAllTablesRequestAndWaitForReceiptAsync` iterates that list and registers every table's schema on-chain in a single batch call through the World's `BatchCallSystem`:
 
 ```csharp
 var receipt = await app.Tables.BatchRegisterAllTablesRequestAndWaitForReceiptAsync();
@@ -183,7 +183,7 @@ var registerReceipt = await app.Systems
 If your systems use bytecode libraries, pass them so the CREATE2 address calculation is correct:
 
 ```csharp
-var libraries = new[] { new ByteCodeLibrary("LibraryName", libraryAddress) };
+var libraries = new[] { ByteCodeLibrary.CreateFromPath("path/to/MyLibrary.sol", "LibraryName", libraryAddress) };
 
 var deployResults = await app.Systems
     .DeployAllCreate2ContractSystemsRequestAndWaitForReceiptAsync(

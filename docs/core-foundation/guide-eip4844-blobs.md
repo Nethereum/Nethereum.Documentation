@@ -7,7 +7,7 @@ description: Send and read EIP-4844 blob transactions — encode data to blobs, 
 
 # EIP-4844: Blob Transactions
 
-EIP-4844 (proto-danksharding) introduces a new transaction type (0x03) that carries large data blobs alongside the transaction. Blobs are 128 KB each (up to 6 per block) and are stored temporarily on the consensus layer. This is the primary mechanism for L2 rollups to post data to L1 at reduced cost.
+EIP-4844 (proto-danksharding) introduces a new transaction type (0x03) that carries large data blobs alongside the transaction. Blobs are 128 KB each (6 per block on Cancun; fork-dependent, `HardforkConfig.MaxBlobsPerBlock`, 21 on Amsterdam) and are stored temporarily on the consensus layer. This is the primary mechanism for L2 rollups to post data to L1 at reduced cost.
 
 ## Quick Start — Send a Blob Transaction
 
@@ -119,7 +119,7 @@ var decoded = BlobEncoder.DecodeBlobs(blobs.Select(b => b.Blob).ToList());
 | Blob size | 131,072 bytes (128 KB) |
 | Field elements per blob | 4,096 |
 | Usable bytes per blob | 126,976 |
-| Max blobs per block | 6 |
+| Max blobs per block | 6 on Cancun; fork-dependent (`HardforkConfig.MaxBlobsPerBlock`, 21 on Amsterdam) |
 | KZG commitment size | 48 bytes |
 | KZG proof size | 48 bytes |
 | Versioned hash prefix | 0x01 |

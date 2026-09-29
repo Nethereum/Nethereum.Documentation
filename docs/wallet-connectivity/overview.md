@@ -28,7 +28,7 @@ All providers share the same interface — `GetWeb3Async()`, `EnableProviderAsyn
 
 | Package | Purpose |
 |---------|---------|
-| `Nethereum.UI` | Defines `IEthereumHostProvider`, `SelectedEthereumHostProviderService`, `EthereumAuthenticationStateProvider`, and `NethereumHostProvider` (development provider) |
+| `Nethereum.UI` | Defines `IEthereumHostProvider`, `SelectedEthereumHostProviderService`, and `NethereumHostProvider` (development provider). `EthereumAuthenticationStateProvider` lives in `Nethereum.Blazor` |
 
 ## Guides
 

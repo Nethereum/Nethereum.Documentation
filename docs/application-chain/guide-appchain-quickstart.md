@@ -28,7 +28,7 @@ That's it. Full EVM, JSON-RPC, WebSocket subscriptions — standard Ethereum int
 
 ```bash
 # Install the CLI tool
-dotnet tool install Nethereum.AppChain.Server
+dotnet tool install --global Nethereum.AppChain.Server
 
 # For programmatic usage
 dotnet add package Nethereum.AppChain.Sequencer
@@ -51,7 +51,7 @@ nethereum-appchain \
   --enable-devp2p-serve
 ```
 
-This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces blocks every 1000ms. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options. `--enable-devp2p-serve` makes the sequencer advertise `eth`/`snap` over DevP2P so followers have a peer to dial — see [Launch a Follower](#launch-a-follower) below.
+This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces a block every 1000ms, but only when transactions are pending unless `--allow-empty-blocks` is set. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options. `--enable-devp2p-serve` makes the sequencer advertise `eth`/`snap` over DevP2P so followers have a peer to dial — see [Launch a Follower](#launch-a-follower) below.
 
 Key CLI options for the sequencer:
 
@@ -212,7 +212,7 @@ From there, register namespaces and tables using your MUD-generated namespace an
 ## Common Gotchas
 
 - **Same genesis = same chain** — sequencer and followers must use the same genesis owner address and chain ID, otherwise they produce different genesis blocks and can't sync.
-- **Block time = 0 is not on-demand** — use `--block-time 0` for the fastest interval-based production, but for true on-demand (block only when transactions arrive), use `AppChainBuilder.WithOnDemandBlocks()` programmatically.
+- **`--block-time` must be positive** — `--block-time 0` is rejected in interval block production (the CLI default). The default is 1000 ms, and blocks are produced only when transactions are pending unless `--allow-empty-blocks` is set; for instant on-demand blocks, use `AppChainBuilder.WithOnDemandBlocks()` programmatically.
 - **RocksDB is the default** — the CLI uses RocksDB at `./appchain-data` unless you pass `--in-memory`. For development without persistence, add `--in-memory`.
 - **Port conflicts** — the sequencer defaults to 8546 (not 8545 like Geth). Use `--port` to change it.
 

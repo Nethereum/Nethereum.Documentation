@@ -74,7 +74,7 @@ Every state change on Ethereum happens through a transaction. Sending ETH, calli
 | Access List (Type 1) | EIP-2930 | Adds access list for gas discounts on storage |
 | EIP-1559 (Type 2) | EIP-1559 | `maxFeePerGas` + `maxPriorityFeePerGas` (current default) |
 | Blob (Type 3) | EIP-4844 | Carries blob data for L2 rollups |
-| Set Code (Type 7) | EIP-7702 | Delegates EOA to smart contract code |
+| Set Code (Type 4) | EIP-7702 | Delegates EOA to smart contract code |
 
 Nethereum automatically uses EIP-1559 (Type 2) transactions when the network supports it.
 

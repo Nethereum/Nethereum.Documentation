@@ -19,7 +19,7 @@ var app = new AppNamespace(web3, worldAddress);
 await app.Systems.Game.MoveRequestAndWaitForReceiptAsync(new MoveFunction { X = 10, Y = 20 });
 
 // Read a table
-var player = await app.Tables.Player.GetTableRecordAsync(new PlayerKey { Address = addr });
+var player = await app.Tables.Player.GetTableRecordAsync(new PlayerTableRecord.PlayerKey { Address = addr });
 ```
 Systems, tables, gas, nonce, World routing — all handled through the namespace.
 :::
@@ -173,7 +173,7 @@ Configure code generation in `.nethereum-gen.multisettings`:
 Run the generator using one of three methods:
 
 - **VS Code**: Install the [Nethereum Solidity extension](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity), right-click `.nethereum-gen.multisettings` → "Generate Nethereum code"
-- **.NET CLI**: `Nethereum.Generator.Console generate from-config --config path/to/.nethereum-gen.multisettings`
+- **.NET CLI**: `Nethereum.Generator.Console generate from-config -cfg path/to/.nethereum-gen.multisettings`
 - **Node.js**: Use the JavaScript generator package for Node.js build pipelines
 
 ## Generated Table Services
@@ -253,6 +253,7 @@ public class AppTables : TablesServices
     {
         Player = new PlayerTableService(web3, contractAddress);
         GameConfig = new GameConfigTableSingletonService(web3, contractAddress);
+        TableServices = new List<ITableServiceBase> { Player, GameConfig };
     }
 }
 
@@ -266,6 +267,7 @@ public class AppSystems : SystemsServices
     {
         Game = new GameSystemService(web3, contractAddress);
         Trade = new TradeSystemService(web3, contractAddress);
+        SystemServices = new List<ISystemService> { Game, Trade };
     }
 }
 

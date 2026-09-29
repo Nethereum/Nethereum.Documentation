@@ -31,7 +31,7 @@ dotnet add package Nethereum.CoreChain.RocksDB    # RocksDB backend
 
 ## Storage Interfaces
 
-CoreChain defines six storage interfaces that every chain implementation uses. Whether you're running a DevChain, AppChain, or building something custom, these are the data access contracts:
+CoreChain defines five storage interfaces, plus `ITrieNodeStore` (from `Nethereum.Merkle.Patricia`), that every chain implementation uses. Whether you're running a DevChain, AppChain, or building something custom, these are the data access contracts:
 
 | Interface | What It Stores |
 |-----------|---------------|
@@ -50,13 +50,14 @@ The in-memory backend stores everything in `ConcurrentDictionary` structures. Da
 
 ```csharp
 using Nethereum.CoreChain.Storage.InMemory;
+using Nethereum.Merkle.Patricia.Storage;
 
 var blockStore = new InMemoryBlockStore();
 var txStore = new InMemoryTransactionStore(blockStore);
 var receiptStore = new InMemoryReceiptStore();
 var logStore = new InMemoryLogStore();
 var stateStore = new InMemoryStateStore();
-var trieNodeStore = new InMemoryTrieNodeStore();
+var trieNodeStore = new InMemoryContentNodeStore();
 ```
 
 Note that `InMemoryTransactionStore` takes a reference to `blockStore` — it needs to look up block hashes when querying transactions by block number.
@@ -117,14 +118,7 @@ var appChain = new AppChain(config,
     logStore, stateStore, trieNodeStore);
 ```
 
-Or via the builder:
-
-```csharp
-var chain = await new AppChainBuilder("MyChain", 420420)
-    .WithOperator(privateKey)
-    .WithStorage(StorageType.RocksDb, "./chaindata")
-    .BuildAsync();
-```
+The builder is in-memory only; for RocksDB construct `AppChain` from the `RocksDb*` stores shown above, or run the CLI.
 
 ### Dependency Injection
 
@@ -172,32 +166,29 @@ var options = new RocksDbStorageOptions
 {
     DatabasePath = "./chaindata",
 
-    // Read cache — increase for read-heavy workloads (default: 128MB)
-    BlockCacheSize = 256 * 1024 * 1024,
+    // Read cache — increase for read-heavy workloads (default: 1 GiB)
+    BlockCacheSize = 2048L * 1024 * 1024,
 
-    // Write buffer — increase for write-heavy workloads (default: 64MB)
-    WriteBufferSize = 128 * 1024 * 1024,
+    // Total write buffer across column families — increase for write-heavy workloads (default: 3 GiB)
+    DbWriteBufferSize = 4096L * 1024 * 1024,
 
-    // Number of write buffers before flush (default: 3)
-    MaxWriteBufferNumber = 4,
-
-    // Background compaction threads (default: 4)
+    // Background compaction threads (default: 8)
     MaxBackgroundCompactions = 8,
 
     // Background flush threads (default: 2)
     MaxBackgroundFlushes = 4,
 
-    // Bloom filter bits per key — higher = more memory, faster lookups (default: 10)
-    BloomFilterBitsPerKey = 10,
+    // Open file handle limit (default: 10000)
+    MaxOpenFiles = 10000,
 
-    // Enable RocksDB internal statistics (adds overhead)
+    // Enable RocksDB internal statistics (adds overhead; default: false)
     EnableStatistics = false
 };
 ```
 
 **Guidelines:**
 - **Read-heavy** (followers serving queries): increase `BlockCacheSize`
-- **Write-heavy** (sequencer producing blocks): increase `WriteBufferSize` and `MaxWriteBufferNumber`
+- **Write-heavy** (sequencer producing blocks): increase `DbWriteBufferSize`
 - **Many concurrent readers**: increase `MaxBackgroundCompactions` based on CPU cores
 - **SSD vs HDD**: SSDs benefit from higher parallelism; HDDs need lower compaction threads to avoid thrashing
 
@@ -209,19 +200,20 @@ The state store supports snapshots for EVM execution rollback — this is how bl
 var stateStore = new RocksDbStateStore(manager);
 
 // Take snapshot before block execution
-var snapshotId = await stateStore.TakeSnapshotAsync();
+var snapshot = await stateStore.CreateSnapshotAsync();
 
 try
 {
     // Execute transactions (modifies state)
     // ...
 
-    // Commit on success — snapshot is discarded
+    // Commit on success
+    await stateStore.CommitSnapshotAsync(snapshot);
 }
 catch
 {
     // Revert on failure — state returns to snapshot point
-    await stateStore.RevertToSnapshotAsync(snapshotId);
+    await stateStore.RevertSnapshotAsync(snapshot);
 }
 ```
 
@@ -236,7 +228,7 @@ You typically don't call this directly — the `BlockProducer` and `TransactionP
 | **Memory usage** | Grows with chain size | Bounded by cache settings |
 | **Use case** | Tests, demos, short-lived chains | Production, long-running chains |
 | **CLI flag** | `--in-memory` | `--db-path ./chaindata` (default) |
-| **Builder method** | Default | `.WithStorage(StorageType.RocksDb, path)` |
+| **Builder method** | Default | Not supported (wire `RocksDb*` stores into `new AppChain(...)`) |
 
 For development, start with in-memory and switch to RocksDB when you need persistence. The storage interfaces guarantee your application code doesn't change.
 

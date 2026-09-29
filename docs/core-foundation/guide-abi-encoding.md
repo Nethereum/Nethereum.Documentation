@@ -273,7 +273,7 @@ var abi = @"[{""constant"":false,""inputs"":[{""name"":""a"",""type"":""uint256"
 
 var des = new ABIJsonDeserialiser();
 var contract = des.DeserialiseContract(abi);
-// contract.Functions.Length == 2, contract.Events.Length == 1
+// contract.Functions.Length == 1, contract.Events.Length == 1
 ```
 
 ---
@@ -284,7 +284,7 @@ EIP-712 defines a standard for signing structured data — used for gasless toke
 
 The `Eip712TypedDataEncoder` handles encoding, hashing, and domain separator computation.
 
-### Signing a Simple Typed Message
+### Encoding and Hashing a Simple Typed Message
 
 ```csharp
 using Nethereum.ABI.EIP712;
@@ -312,8 +312,8 @@ var message = new Mail { Contents = "Hello Bob!" };
 
 // Encode and hash
 var encoder = Eip712TypedDataEncoder.Current;
-var encoded = encoder.EncodeAndHashTypedData(message,
-    new TypedData<Domain> { Domain = domain, PrimaryType = "Mail" });
+var typedData = encoder.GenerateTypedData(message, domain, "Mail");
+var encoded = encoder.EncodeAndHashTypedData(message, typedData);
 ```
 
 ### ERC-2612 Permit (Gasless Token Approval)

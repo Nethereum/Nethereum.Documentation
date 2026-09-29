@@ -12,7 +12,7 @@ MUD tables are the data layer of the enhanced diamond pattern — typed records 
 :::tip The Simple Way
 ```csharp
 var playerService = new PlayerTableService(web3, worldAddress);
-var player = await playerService.GetTableRecordAsync(new PlayerKey { Address = addr });
+var player = await playerService.GetTableRecordAsync(new PlayerTableRecord.PlayerKey { Address = addr });
 ```
 Read and write typed table records through generated services — encoding, World routing, gas, and nonce are automatic.
 :::
@@ -125,7 +125,7 @@ var allPlayers = await playerService.GetTableRecordsAsync(repository);
 
 ## Predicate Queries
 
-The `TablePredicateBuilder` provides a fluent API for filtering table records by key values. This is particularly useful when querying records from a repository:
+The `TablePredicateBuilder` provides a fluent API for filtering table records by key values. Predicates run against `StoredRecordRestApiClient` or an EF Core or PostgreSQL repository (not `InMemoryTableRepository`):
 
 ```csharp
 var builder = playerService.CreateTablePredicateBuilder();
@@ -149,7 +149,7 @@ var predicate = builder
     .Expand();
 ```
 
-The predicate is translated to the repository's query language — for `InMemoryTableRepository` it filters in-memory, and for EF Core or PostgreSQL repositories it generates SQL WHERE clauses.
+For `InMemoryTableRepository` predicates are not supported (filter `AllRecords` with LINQ); the REST client and EF Core/PostgreSQL repositories translate them (the EF Core and PostgreSQL repositories generate SQL WHERE clauses).
 
 ## Change Tracking
 
@@ -174,7 +174,7 @@ var changeSet = repository.GetAndClearChangeSet();
 repository.StopTracking();
 ```
 
-The `InMemoryChangeSet` contains lists of set and deleted records, which you can then submit to the World contract — for example, by building multicall inputs from the changes.
+The `InMemoryChangeSet` exposes `Upserted` and `Deleted` dictionaries (keyed by table, then by record key) of `StoredRecord`s, and `GetTableRecordChanges<TTableRecord>()` returns them as typed `Upserted`/`Deleted` lists. You can then submit to the World contract — for example, by building multicall inputs from the changes.
 
 ## System Call Multicall
 
@@ -208,7 +208,7 @@ var record = new PlayerTableRecord
     Values = new PlayerTableRecord.PlayerValue { Score = 100, Name = "Alice" }
 };
 
-var encodedValues = record.Values.GetEncodeValues();
+var encodedValues = record.GetEncodeValues();
 // encodedValues.StaticData — fixed-size fields (uint256, address, etc.)
 // encodedValues.EncodedLengths — lengths of dynamic fields
 // encodedValues.DynamicData — variable-size fields (string, bytes, arrays)

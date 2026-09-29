@@ -109,7 +109,6 @@ All account creation ViewModels implement `IAccountCreationViewModel` and are re
 | `MnemonicAccountCreationViewModel` | vpn_key | 1 | Generate or import 12/24-word BIP39 seed phrases |
 | `PrivateKeyAccountCreationViewModel` | key | 2 | Import raw private keys (hex, with/without 0x) |
 | `ViewOnlyAccountCreationViewModel` | visibility | 3 | Watch addresses without signing capability |
-| `SmartContractAccountCreationViewModel` | smart_toy | 4 | Add smart contract wallet addresses (multisig, AA) |
 
 **MnemonicAccountCreationViewModel** — The most feature-rich creation screen:
 - Generate 12 or 24-word mnemonics (`GenerateMnemonicAsync`, `GenerateMnemonic24Async`)
@@ -132,11 +131,6 @@ All account creation ViewModels implement `IAccountCreationViewModel` and are re
 - Ethereum address input with checksum validation
 - Label assignment
 - Cannot sign — `GetAccountAsync()` throws
-
-**SmartContractAccountCreationViewModel**:
-- Contract address input
-- Label assignment
-- For multisig wallets, AA contracts, proxy wallets
 
 ### Account Detail Screens
 
@@ -165,7 +159,6 @@ All detail ViewModels implement `IAccountDetailsViewModel` and are registered wi
 | `MnemonicListViewModel` | List all mnemonics in vault |
 | `VaultMnemonicAccountViewModel` | Individual mnemonic display with derived accounts |
 | `MnemonicDetailsViewModel` | Show mnemonic info and all derived accounts |
-| `MnemonicAccountEditorViewModel` | Editor for mnemonic vault entries |
 
 ### Dashboard & Plugin System
 
@@ -179,8 +172,8 @@ The wallet dashboard is composed of plugins. Each plugin implements `IDashboardP
 | `HoldingsPluginViewModel` | holdings | 15 | account_balance_wallet | Token portfolio |
 | `NetworkManagementPluginViewModel` | network_management | 20 | language | Network management |
 | `ContactListPluginViewModel` | contacts | 50 | contacts | Saved addresses |
-| `TokenTransferPluginViewModel` | (transfer) | — | — | Quick token transfer |
-| `CreateAccountPluginViewModel` | (create) | — | — | Account creation wizard |
+| `TokenTransferPluginViewModel` | token-transfer | — | — | Quick token transfer |
+| `CreateAccountPluginViewModel` | create-account | — | — | Account creation wizard |
 
 Plugins are registered with `IDashboardPluginRegistry`:
 
@@ -315,7 +308,7 @@ The dashboard resolves all `IDashboardPluginViewModel` instances and renders the
 
 ## Registry System
 
-The wallet uses four registries to map ViewModels to UI components:
+The wallet uses five registries to map ViewModels to UI components:
 
 ### IAccountCreationRegistry
 Maps account types to creation ViewModels and Blazor components:
@@ -323,7 +316,6 @@ Maps account types to creation ViewModels and Blazor components:
 registry.Register<MnemonicAccountCreationViewModel, MnemonicAccountCreation>();
 registry.Register<PrivateKeyAccountCreationViewModel, PrivateKeyAccountCreation>();
 registry.Register<ViewOnlyAccountCreationViewModel, ViewOnlyAccountCreation>();
-registry.Register<SmartContractAccountCreationViewModel, SmartContractAccountCreation>();
 ```
 
 ### IAccountDetailsRegistry

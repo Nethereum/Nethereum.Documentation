@@ -125,7 +125,7 @@ On the **producer** side you need the two serve flags so followers have somethin
 |------|---------|
 | `--enable-devp2p-serve` | Serve `eth`/`snap` over RLPx DevP2P so snap-sync followers can cold-sync from this node |
 | `--devp2p-serve-port` / `--listen-port` | DevP2P listen port (default `30403`) |
-| `--node-key-file` | Persist the producer's node identity so its enode stays the same — followers reference it in `--follow-peer` |
+| `--node-key-file` | Persist the producer's node identity so its enode stays the same — followers reference it in `--follow-peer` (default: `<db-path>/nodekey`, created on first run) |
 
 ## Independent State Verification
 
@@ -181,7 +181,7 @@ You can also just query the follower over JSON-RPC (`eth_blockNumber`) and compa
 
 - **The producer must serve DevP2P.** A follower waits for a *snap-capable* peer. If the producer was not launched with `--enable-devp2p-serve`, the follower finds no peer to sync from, logs an error after the wait timeout, and stops. This is the most common "my follower does nothing" cause.
 - **`--follow-peer` takes an enode, not an HTTP URL.** It is `enode://<node-id>@<host>:<port>`, pointing at the producer's DevP2P port (default `30403`), not its JSON-RPC port (`8546`). The two are different ports.
-- **Pin the producer's identity.** An enode contains the node's public key. If the producer generates a fresh key on every start, its enode changes and your `--follow-peer` value goes stale. Launch the producer with `--node-key-file` (or `--node-key-hex`) so its enode is stable.
+- **Pin the producer's identity.** An enode contains the node's public key. If the producer generates a fresh key on every start, its enode changes and your `--follow-peer` value goes stale (by default the key is persisted to `<db-path>/nodekey`). Launch the producer with `--node-key-file` (or `--node-key-hex`) so its enode is stable.
 - **Same genesis, or no sync.** The follower must use the same `--chain-id`, `--genesis-owner-address`, and `--sequencer-address` as the producer. These addresses are pre-funded at genesis, so different values produce a different genesis block and the chains cannot reconcile.
 - **In-memory means re-sync on restart.** With `--in-memory`, a follower keeps no state on disk and re-syncs from scratch every time it starts. Use `--db-path` (RocksDB, the default) for anything long-running — see the [Storage guide](guide-appchain-storage).
 

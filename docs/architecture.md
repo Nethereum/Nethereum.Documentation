@@ -115,14 +115,14 @@ Also in this section: `Nethereum.Util.Rest`, `Nethereum.BigInteger.N351`, `Nethe
 graph TD
     HDWallet["Nethereum.HDWallet"] --> Signer["Nethereum.Signer"]
     EIP712["Nethereum.Signer.EIP712"] --> Signer
-    KeyStore["Nethereum.KeyStore"] --> Signer
+    KeyStore["Nethereum.KeyStore"] --> Hex["Nethereum.Hex"]
 
     Ledger["Nethereum.Signer.Ledger"] --> Signer
     Trezor["Nethereum.Signer.Trezor"] --> Signer
     AWS["Nethereum.Signer.AWSKeyManagement"] --> Signer
     Azure["Nethereum.Signer.AzureKeyVault"] --> Signer
 
-    BLS["Nethereum.Signer.Bls"] --> Model["Nethereum.Model"]
+    BLS["Nethereum.Signer.Bls"]
     BLSHerumi["Nethereum.Signer.Bls.Herumi"] --> BLS
 
     Signer --> Model
@@ -136,11 +136,11 @@ graph TD
 graph TD
     Contracts["Nethereum.Contracts<br/><i>Built-in: ERC20, ERC721, ERC1155,<br/>ERC165, ERC1271, ERC6492, ENS,<br/>EIP3009, ERC2535 Diamond</i>"]
     Generator["Nethereum.Generator.Console"] --> Generators["Nethereum.Generators"]
-    Autogen["Nethereum.Autogen"] --> Generators
+    Autogen["Nethereum.Autogen.ContractApi"]
 
     Contracts --> ABI["Nethereum.ABI"]
-    Contracts --> Web3["Nethereum.Web3"]
-    Generators --> ABI
+    Web3["Nethereum.Web3"] --> Contracts
+    Contracts --> RPC["Nethereum.RPC"]
 
     style Contracts fill:#1b4332,stroke:#2d6a4f,color:#fff
 ```
@@ -262,7 +262,7 @@ graph TD
     StorePG["...Store.Postgres"] --> EFCore
     StoreSQL["...Store.SqlServer"] --> EFCore
     StoreLite["...Store.Sqlite"] --> EFCore
-    TokenPG["Nethereum.BlockchainStorage<br/>.Token.Postgres"] --> EFCore
+    TokenPG["Nethereum.BlockchainStorage<br/>.Token.Postgres"] --> BP
 
     Explorer["Nethereum.Explorer"] --> BP
     Explorer --> EFCore
@@ -311,14 +311,13 @@ graph TD
     BlazorTrezor["Nethereum.Wallet<br/>.UI.Components.Blazor.Trezor"] --> BlazorUI
 
     Blazor["Nethereum.Blazor"] --> Web3["Nethereum.Web3"]
-    BlazorSolidity["Nethereum.Blazor.Solidity"] --> Blazor
-    EIP6963["Nethereum.EIP6963WalletInterop"] --> Blazor
+    BlazorSolidity["Nethereum.Blazor.Solidity"] --> Web3
+    Blazor --> EIP6963["Nethereum.EIP6963WalletInterop"]
     Metamask["Nethereum.Metamask"] --> Web3
     MetamaskBlazor["Nethereum.Metamask.Blazor"] --> Metamask
     MetamaskBlazor --> Blazor
     WC["Nethereum.WalletConnect"] --> Web3
-    Reown["Nethereum.Reown.AppKit.Blazor"] --> WC
-    Reown --> Blazor
+    Reown["Nethereum.Reown.AppKit.Blazor"] --> Web3
 ```
 
 **MAUI:**
@@ -334,7 +333,7 @@ graph TD
 
 ```mermaid
 graph TD
-    Unity["Nethereum.Unity"] --> Web3["Nethereum.Web3"]
+    Unity["Nethereum.Unity"] --> Contracts["Nethereum.Contracts"]
     UnityEIP6963["Nethereum.Unity.EIP6963"] --> Unity
     UnityMetamask["Nethereum.Unity.Metamask"] --> Unity
 ```
@@ -358,11 +357,11 @@ graph TD
 
 ```mermaid
 graph TD
-    LightClient["Nethereum.Consensus.LightClient"] --> CSSZ["Nethereum.Consensus.SSZ"]
-    CSSZ --> SSZ["Nethereum.SSZ"]
-    BeaconChain["Nethereum.BeaconChain"] --> CSSZ
-    LightClient --> BLSHerumi["Nethereum.Signer.Bls.Herumi"]
-    BLSHerumi --> BLS["Nethereum.Signer.Bls"]
+    LightClient["Nethereum.Consensus.LightClient"] --> CSSZ["Nethereum.Consensus.Ssz"]
+    CSSZ --> SSZ["Nethereum.Ssz"]
+    BeaconChain["Nethereum.Beaconchain"] --> CSSZ
+    LightClient --> BLS["Nethereum.Signer.Bls"]
+    BLSHerumi["Nethereum.Signer.Bls.Herumi"] --> BLS
     ChainState["Nethereum.ChainStateVerification"] --> LightClient
 ```
 

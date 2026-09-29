@@ -33,7 +33,7 @@ Find the right guide and packages for your task. Each row links to a how-to guid
 | **[Validate and checksum Ethereum addresses](core-foundation/guide-address-utils)** | `Nethereum.Web3` |
 | **[RLP encode and decode data](core-foundation/guide-rlp-encoding)** | `Nethereum.Web3` |
 | **[Choose an RPC transport (HTTP, WebSocket, IPC, System.Text.Json)](core-foundation/guide-rpc-transport)** | `Nethereum.Web3` |
-| **[Stream real-time data (new blocks, pending txns, event logs)](core-foundation/guide-realtime-streaming)** | `Nethereum.JsonRpc.WebSocketStreamingClient` + `Nethereum.RPC.Reactive` |
+| **[Stream real-time data (new blocks, pending txns, event logs)](core-foundation/guide-realtime-streaming)** | `Nethereum.JsonRpc.WebSocketClient` + `Nethereum.RPC.Reactive` |
 
 > **Quick start**: Install `Nethereum.Web3` and follow the [First Project](./getting-started/first-project) guide. See the [Core Foundation](./core-foundation/overview) section.
 

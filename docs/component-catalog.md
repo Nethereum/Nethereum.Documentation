@@ -81,7 +81,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Verify ETH balances without trusting RPC](consensus-light-client/guide-verified-state) | `Nethereum.ChainStateVerification` + `Nethereum.Consensus.LightClient` |
 | [Track finalized beacon headers](consensus-light-client/guide-light-client) | `Nethereum.Consensus.LightClient` + [`Nethereum.Signer.Bls.Herumi`](signing-and-key-management/nethereum-signer-bls-herumi) |
 | [Verify storage proofs and contract code](consensus-light-client/guide-verified-state) | `Nethereum.ChainStateVerification` |
-| Calculate Merkle proofs and state roots | [`Nethereum.Merkle`](consensus-and-cryptography/nethereum-merkle) + [`Nethereum.Merkle.Patricia`](consensus-and-cryptography/nethereum-merkle-patricia) |
+| Calculate Merkle proofs and state roots | [`Nethereum.Merkle`](core-foundation/nethereum-merkle) + [`Nethereum.Merkle.Patricia`](core-foundation/nethereum-merkle-patricia) |
 | **Mainnet Follower** | |
 | [Run a mainnet follower](mainnet-follower/guide-mainnet-follower) | [`Nethereum.MainnetChain`](mainnet-follower/nethereum-mainnetchain) |
 | **AppChains (Preview)** | |
@@ -89,7 +89,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Configure RocksDB persistent storage](application-chain/guide-appchain-storage) | [`Nethereum.CoreChain.RocksDB`](mainnet-follower/nethereum-corechain-rocksdb) (Preview) |
 | [Sync follower nodes and verify state](application-chain/guide-appchain-sync) | [`Nethereum.DevP2P.Sync`](devp2p/nethereum-devp2p-sync) |
 | Use System.Text.Json / AOT-friendly RPC | [`Nethereum.JsonRpc.SystemTextJsonRpcClient`](json-rpc-transport/nethereum-jsonrpc-systemtextjsonrpcclient) |
-| Stream real-time data via WebSocket subscriptions | [`Nethereum.JsonRpc.WebSocketStreamingClient`](json-rpc-transport/nethereum-jsonrpc-websocketstreamingclient) |
+| Stream real-time data via WebSocket subscriptions | [`Nethereum.JsonRpc.WebSocketClient`](json-rpc-transport/nethereum-jsonrpc-websocketclient) + `Nethereum.RPC.Reactive` |
 
 ---
 
@@ -118,7 +118,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | [Nethereum.JsonRpc.SystemTextJsonRpcClient](json-rpc-transport/nethereum-jsonrpc-systemtextjsonrpcclient) | HTTP JSON-RPC client (System.Text.Json, AOT-friendly) |
 | [Nethereum.JsonRpc.IpcClient](json-rpc-transport/nethereum-jsonrpc-ipcclient) | IPC client (Windows named pipes, Unix domain sockets) |
 | [Nethereum.JsonRpc.WebSocketClient](json-rpc-transport/nethereum-jsonrpc-websocketclient) | WebSocket JSON-RPC client |
-| [Nethereum.JsonRpc.WebSocketStreamingClient](json-rpc-transport/nethereum-jsonrpc-websocketstreamingclient) | Streaming WebSocket for `eth_subscribe` / `eth_unsubscribe` |
+| [Nethereum.JsonRpc.WebSocketStreamingClient](json-rpc-transport/nethereum-jsonrpc-websocketstreamingclient) | Observable (Rx) handlers for eth_subscribe and request/response calls over an IStreamingClient |
 
 ### Signing & Key Management
 
@@ -155,7 +155,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 
 | Package | Description |
 |---|---|
-| [Nethereum.EVM](evm-simulator/nethereum-evm) | Full EVM simulator: all opcodes through Prague, tracing, debugging |
+| [Nethereum.EVM](evm-simulator/nethereum-evm) | Full EVM simulator: all opcodes, hardfork rules from Frontier through Amsterdam, tracing, debugging |
 
 ### Mainnet Follower
 
@@ -170,7 +170,7 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Package | Description |
 |---|---|
 | [Nethereum.DevP2P](devp2p/nethereum-devp2p) | RLPx transport + discv4/discv5/DNS discovery + peering |
-| [Nethereum.DevP2P.Sync](devp2p/nethereum-devp2p-sync) | eth/68 + snap/1 sync engine (backfill, snap state, heal, serving handlers) |
+| [Nethereum.DevP2P.Sync](devp2p/nethereum-devp2p-sync) | eth/68–71 + snap/1 (snap/2 for block-access-list sync) sync engine (backfill, snap state, heal, serving handlers) |
 
 ### DevChain
 
@@ -278,20 +278,20 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 
 | Package | Description |
 |---|---|
-| [Nethereum.Merkle](consensus-and-cryptography/nethereum-merkle) | Merkle tree implementations (standard, incremental, frontier) |
-| [Nethereum.Merkle.Patricia](consensus-and-cryptography/nethereum-merkle-patricia) | Modified Merkle Patricia Trie |
-| [Nethereum.Ssz](consensus-and-cryptography/nethereum-ssz) | Simple Serialize (SSZ) encoding |
+| [Nethereum.Merkle](core-foundation/nethereum-merkle) | Merkle tree implementations (standard, incremental, frontier) |
+| [Nethereum.Merkle.Patricia](core-foundation/nethereum-merkle-patricia) | Modified Merkle Patricia Trie |
+| [Nethereum.Ssz](consensus-light-client/nethereum-ssz) | Simple Serialize (SSZ) encoding |
 | [Nethereum.Signer.Bls.Herumi](signing-and-key-management/nethereum-signer-bls-herumi) | BLS signatures via Herumi |
 
 ### Consensus Light Client
 
 | Package | Description |
 |---|---|
-| [Nethereum.Consensus.LightClient](consensus-and-cryptography/nethereum-consensus-lightclient) | Beacon chain light client: sync committee tracking, header verification, finality proofs |
+| [Nethereum.Consensus.LightClient](consensus-light-client/nethereum-consensus-lightclient) | Beacon chain light client: sync committee tracking, header verification, finality proofs |
 | [Nethereum.ChainStateVerification](data-and-indexing/nethereum-chainstateverification) | Verified state queries: account balances, storage proofs, contract code without trusting RPC |
 | [Nethereum.Beaconchain](consensus-light-client/nethereum-beaconchain) | Beacon Chain REST API client |
-| [Nethereum.Consensus.Ssz](consensus-and-cryptography/nethereum-consensus-ssz) | Consensus-layer SSZ type serialization |
-| [Nethereum.SSZ](consensus-and-cryptography/nethereum-ssz) | Simple Serialize (SSZ) encoding |
+| [Nethereum.Consensus.Ssz](consensus-light-client/nethereum-consensus-ssz) | Consensus-layer SSZ type serialization |
+| [Nethereum.SSZ](consensus-light-client/nethereum-ssz) | Simple Serialize (SSZ) encoding |
 
 ### Client Extensions
 
@@ -307,8 +307,10 @@ Nethereum provides **130+ packages** covering the full Ethereum development stac
 | Target | Scope |
 |---|---|
 | netstandard 2.0, net451, net461, net6.0, net8.0, net9.0, net10.0 | Core libraries |
-| net8.0, net10.0 | CoreChain, AppChain, Server components |
-| net6.0--net10.0 | Blazor UI |
+| net8.0, net9.0, net10.0 | CoreChain, CoreChain.RocksDB, DevChain, DevP2P |
+| net8.0, net10.0 | AppChain, AccountAbstraction |
+| net10.0 | DevChain.Server, AppChain.Server, Explorer |
+| net6.0–net10.0 | Blazor UI |
 | net461, net472, netstandard 2.1 | Unity |
 
 Individual package READMEs with full API documentation are available in each section of the sidebar, alongside the relevant guides and overviews.

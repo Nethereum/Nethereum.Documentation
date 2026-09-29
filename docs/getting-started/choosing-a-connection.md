@@ -104,12 +104,13 @@ Popular options:
 Persistent connection that supports real-time event streaming via `eth_subscribe`.
 
 ```csharp
+using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
 using Nethereum.RPC.Reactive.Eth.Subscriptions;
 using Nethereum.Web3;
 
 // Basic Web3 connection over WebSocket
-var web3 = new Web3("wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID");
+var web3 = new Web3(new WebSocketClient("wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID"));
 
 // Streaming subscriptions for real-time events
 using var wsClient = new StreamingWebSocketClient("wss://mainnet.infura.io/ws/v3/YOUR_PROJECT_ID");
@@ -125,7 +126,7 @@ await subscription.SubscribeAsync();
 
 **When to use**: Real-time dashboards, event monitoring, applications that need instant notifications.
 
-**Install**: `dotnet add package Nethereum.RPC.Reactive`
+**Install**: `dotnet add package Nethereum.JsonRpc.WebSocketClient` and `dotnet add package Nethereum.RPC.Reactive`
 
 ## Decision Flowchart
 

@@ -63,7 +63,7 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 | Section | What You'll Find |
 |---|---|
 | **[Getting Started](/docs/getting-started/installation)** | Install, create a project, send your first transaction |
-| **[What Do You Want to Do?](/docs/what-do-you-want-to-do)** | 44 use cases mapped to guides and packages |
+| **[What Do You Want to Do?](/docs/what-do-you-want-to-do)** | over 130 use cases mapped to guides and packages |
 | **[Architecture Map](/docs/architecture)** | How 134 packages are layered and relate to each other |
 | **[Component Catalog](/docs/component-catalog)** | Every package with descriptions, READMEs, and links |
 

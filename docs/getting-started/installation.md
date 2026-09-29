@@ -70,8 +70,6 @@ This creates a complete Aspire-orchestrated development environment with:
 - **PostgreSQL** — database for blockchain data storage
 - **Blockchain indexer** — crawls and stores blocks, transactions, and logs
 - **Blazor explorer** — web-based blockchain explorer with ABI-decoded contract interaction
-- **Account abstraction bundler** — ERC-4337 UserOperation bundler
-- **Load test generator** — automated transaction load testing
 
 All components are wired together and start with a single `dotnet run`. See the [DevChain section](/docs/devchain/overview) for details.
 
@@ -100,7 +98,7 @@ Or add directly to `Packages/manifest.json`:
     }
   ],
   "dependencies": {
-    "com.nethereum.unity": "4.19.2"
+    "com.nethereum.unity": "5.0.0"
   }
 }
 ```
@@ -126,7 +124,9 @@ For WebGL builds using async/await, you need the [WebGLThreadingPatcher](https:/
 | Target | Scope |
 |---|---|
 | netstandard 2.0, net451, net461, net6.0, net8.0, net9.0, net10.0 | Core libraries |
-| net8.0, net10.0 | CoreChain, AppChain, Server components |
+| net8.0, net9.0, net10.0 | CoreChain, CoreChain.RocksDB, DevChain, DevP2P |
+| net8.0, net10.0 | AppChain, AccountAbstraction |
+| net10.0 | DevChain.Server, AppChain.Server, Explorer |
 | net6.0–net10.0 | Blazor UI |
 | net461, net472, netstandard 2.1 | Unity |
 

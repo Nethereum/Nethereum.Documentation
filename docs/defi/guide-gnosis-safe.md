@@ -109,7 +109,7 @@ var execTx = await safeService.BuildTransactionAsync(
 var receipt = await safeService.ExecTransactionRequestAndWaitForReceiptAsync(execTx);
 ```
 
-The `BuildTransactionAsync` method fetches the current Safe nonce, creates the EIP-712 typed data hash, signs it with each provided key and concatenates the signatures via `GetCombinedSignaturesInOrder`, which sorts them by signature hex string (the Safe contract requires ascending signer-address order, so this helper does not by itself guarantee a valid order), and returns a ready-to-submit `ExecTransactionFunction`.
+The `BuildTransactionAsync` method fetches the current Safe nonce, creates the EIP-712 typed data hash, signs it with each provided key and concatenates the signatures via `GetCombinedSignaturesInOrder`, which orders them by ascending signer address as the Safe contract requires, and returns a ready-to-submit `ExecTransactionFunction`.
 
 ## Multi-Signature Workflow
 
@@ -168,7 +168,7 @@ var signatures = new List<GnosisSafeService.SafeSignature>
 var combinedSignatures = safeService.GetCombinedSignaturesInOrder(signatures);
 ```
 
-`GetCombinedSignaturesInOrder` sorts the signatures by their hex string and concatenates them. Safe requires ascending signer-address order, so verify the resulting order for your owners.
+`GetCombinedSignaturesInOrder` sorts the signatures by ascending signer address (each `SafeSignature.Address`), converts them to Safe V format and concatenates them, which is the order the Safe contract requires.
 
 ## MultiSend: Batch Multiple Actions
 

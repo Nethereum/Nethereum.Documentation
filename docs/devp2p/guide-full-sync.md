@@ -81,14 +81,14 @@ Notice the archive cursor (`bundle.Metadata.GetLastFetchedBody()`) does **not** 
 
 ## Consuming blocks as a stream: `IBlockSource`
 
-A follower doesn't call the backfiller directly in most cases — it consumes an `IBlockSource`, a chain-agnostic abstraction that streams blocks and reports when the source diverges from what was previously seen (a reorg or a bad peer). Two DevP2P-backed implementations exist:
+A follower doesn't call the backfiller directly in most cases — it consumes an `IBlockSource`, a chain-agnostic abstraction that streams blocks and reports when the source diverges from what was previously seen (a reorg or a bad peer). Two DevP2P-backed implementations work together:
 
 - **`DevP2PBlockSource`** — a multi-peer source (built on the pool + scheduler) that a follower pulls from, reporting chain breaks so the caller can auto-rewind.
-- **`PushedBlockSource`** — accepts blocks pushed to it (e.g. from a broadcast peer bridge) rather than pulling.
+- **`FollowingBlockSource`** — wraps a pull source such as `DevP2PBlockSource`; when the pull source runs out it waits for a peer to announce a higher head (`PeerPoolManager.PeerHeadAdvanced`) and pulls again, so the follower stays at the tip without blocks being pushed to it.
 
 **Source:** `src/Nethereum.DevP2P.Sync/README.md` — "Fetch pipeline (Phase 1)" (`DevP2PBlockSource`).
 
-> **Follow-up (untested example):** `IBlockSource`, `DevP2PBlockSource`, and `PushedBlockSource` are named in the README's type table (role description only, no method signature block), and `IBlockSource` itself is defined in `Nethereum.CoreChain` rather than either DevP2P README. No `[NethereumDocExample]`-tagged test covers constructing or streaming from either implementation. A concrete `StreamAsync`/reorg-handling example is a follow-up — do not treat the interface shape above as guaranteed stable without checking `src/Nethereum.CoreChain/Sync/IBlockSource.cs` directly.
+> **Follow-up (untested example):** `IBlockSource`, `DevP2PBlockSource`, and `FollowingBlockSource` are named in the README's type table (role description only, no method signature block), and `IBlockSource` itself is defined in `Nethereum.CoreChain` rather than either DevP2P README. No `[NethereumDocExample]`-tagged test covers constructing or streaming from either implementation. A concrete `StreamAsync`/reorg-handling example is a follow-up — do not treat the interface shape above as guaranteed stable without checking `src/Nethereum.CoreChain/Sync/IBlockSource.cs` directly.
 
 ## What happens on a reorg
 
@@ -110,7 +110,7 @@ Phase 1 validates the parent-hash chain as it fetches, so a peer serving a block
 | Fill a bounded, known range of blocks | `ParallelBlockBackfiller.BackfillAsync(start, end, ct)` |
 | Fill bodies/receipts over headers already in the store | `BackfillAsync(start, end, headersFromStore: true, ct)` |
 | Keep the live tip fed without waiting on history | `TipBandBodyFollowService.RunAsync` |
-| Consume blocks as a stream with reorg handling | `IBlockSource` (`DevP2PBlockSource` pulling, or `PushedBlockSource` for a push model) |
+| Consume blocks as a stream with reorg handling | `IBlockSource` (`DevP2PBlockSource` pulling, wrapped in `FollowingBlockSource` to follow the tip) |
 | Lay the header skeleton itself, backward from a trusted tip | `BackwardBlockWalker` |
 
 Full API reference (`BlockTaskQueue` tuning, `IPeerRequestWorker`): see the [Nethereum.DevP2P.Sync reference](./nethereum-devp2p-sync).

@@ -10,8 +10,6 @@ format: md
 # Nethereum.Wallet.UI.Components.Maui
 
 > **NuGet**: [`Nethereum.Wallet.UI.Components.Maui`](https://www.nuget.org/packages/Nethereum.Wallet.UI.Components.Maui/) | **Source**: [`src/Nethereum.Wallet.UI.Components.Maui/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Wallet.UI.Components.Maui)
-# Nethereum.Wallet.UI.Components.Maui
-
 Cross-platform MAUI integration package providing platform-specific storage implementations and Blazor WebView hosting for Nethereum wallet components on mobile and desktop applications.
 
 ## Package Information
@@ -436,7 +434,7 @@ public static MauiAppBuilder AddNethereumWalletMauiComponents(
 
 **Storage Services** (Lines 57-61):
 ```csharp
-IEncryptionStrategy -> BouncyCastleAes256EncryptionStrategy (Singleton)
+IEncryptionStrategy -> Aes256GcmEncryptionStrategy (Singleton)
 IWalletVaultService -> MauiSecureStorageWalletVaultService (Singleton)
 IWalletStorageService -> MauiPreferencesWalletStorageService (Singleton)
 IWalletConfigurationService -> InMemoryWalletConfigurationService (Singleton)

@@ -230,7 +230,19 @@ const PACKAGE_CATEGORY = {
   'Nethereum.Consensus.Ssz': 'consensus-light-client',
   'Nethereum.Quorum': 'client-extensions',
   'Nethereum.RPC.Extensions': 'core-foundation',
+  'Nethereum.Parity': 'client-extensions',
+  'Nethereum.Parity.Reactive': 'client-extensions',
+  'Nethereum.Rsk': 'client-extensions',
+  'Nethereum.StandardTokenEIP20': 'smart-contracts',
+  'Nethereum.StandardNonFungibleTokenERC721': 'smart-contracts',
+  'Nethereum.ABI.ABIInfoSqliteStorage': 'data-services',
+  'Nethereum.EngineApi.Hosting': 'mainnet-follower',
+  'Nethereum.Wallet.Trezor': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Avalonia': 'wallet-sdk',
+  'Nethereum.ZkProofs.Snarkjs': 'zk-proofs',
 };
+
+const NOT_PUBLISHED = new Set(['Nethereum.HybridWebView']);
 
 // Generate a URL-friendly slug from a package name
 function toSlug(pkg) {
@@ -331,6 +343,7 @@ const packageData = [];
 for (const entry of entries) {
   if (!entry.isDirectory()) continue;
   if (!entry.name.startsWith('Nethereum.')) continue;
+  if (NOT_PUBLISHED.has(entry.name)) continue;
 
   const readmePath = path.join(srcDir, entry.name, 'README.md');
   if (!fs.existsSync(readmePath)) continue;

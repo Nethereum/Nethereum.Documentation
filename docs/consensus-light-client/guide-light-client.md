@@ -201,7 +201,7 @@ This returns `null` if the block number is not in the history window (the most r
 
 ### Staleness Detection
 
-The provider monitors how fresh its headers are. If too much time passes without an update, the headers become stale.
+The provider monitors how fresh its headers are. A header is stale when its own timestamp is older than the threshold, however recently the store was updated.
 
 ```csharp
 var trustedProvider = new TrustedHeaderProvider(lightClient);

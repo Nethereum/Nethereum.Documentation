@@ -10,6 +10,8 @@ format: md
 # Nethereum.ChainStateVerification
 
 > **NuGet**: [`Nethereum.ChainStateVerification`](https://www.nuget.org/packages/Nethereum.ChainStateVerification/) | **Source**: [`src/Nethereum.ChainStateVerification/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.ChainStateVerification)
+# Nethereum.ChainStateVerification
+
 **Nethereum.ChainStateVerification** provides verified execution-state primitives using cryptographic proofs rooted in consensus-layer light client state. It enables trustless querying of account balances, storage, code, and nonces with merkle proof verification against finalized or optimistic headers.
 
 ## Overview
@@ -59,7 +61,7 @@ Ethereum stores state in a Merkle Patricia Trie:
 - **Proof** provides branch from root to specific value
 - **Verification** validates proof matches root
 
-Located in `TrieProofVerifier.cs:13-49`
+Located in `TrieProofVerifier.cs:13-52`
 
 ## Core Components
 
@@ -115,7 +117,7 @@ public VerifiedStateService(
 
 ### TrieProofVerifier
 
-Verifies Merkle Patricia Trie proofs. Located in `TrieProofVerifier.cs:13-49`.
+Verifies Merkle Patricia Trie proofs. Located in `TrieProofVerifier.cs:13-52`.
 
 **Methods:**
 - `VerifyAccountProof(byte[] stateRoot, AccountProof accountProof)` - Verifies account proof against state root
@@ -467,7 +469,7 @@ catch (InvalidOperationException ex) when (ex.Message.Contains("proof"))
 }
 ```
 
-From: `VerifiedStateService.cs:84-86, TrieProofVerifier.cs:22-25, 40-43`
+From: `VerifiedStateService.cs:84-86, TrieProofVerifier.cs:22-25, 43-46`
 
 ### Example 10: Integration with Light Client
 

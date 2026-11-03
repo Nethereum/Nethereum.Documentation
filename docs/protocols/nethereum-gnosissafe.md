@@ -202,15 +202,15 @@ public static string ConvertSignatureStringToGnosisVFormat(string signatureStrin
 
 **Signature Ordering:**
 
-Gnosis Safe requires signatures to be ordered by signer address. `GetCombinedSignaturesInOrder` sorts the signatures by their hex string, so verify the resulting order for your owners.
+Gnosis Safe requires signatures to be ordered by ascending signer address. `GetCombinedSignaturesInOrder` sorts the signatures by each `SafeSignature.Address`, converts them to Safe V format and concatenates them.
 
 ```csharp
-// ExtendedGnosisSafeService.cs:258-268
+// ExtendedGnosisSafeService.cs:258-269
 public byte[] GetCombinedSignaturesInOrder(IEnumerable<SafeSignature> signatures)
 {
-    var signaturesFormatted = signatures.Select(
-        x => ConvertSignatureStringToGnosisVFormat(x.Signature)).ToList();
-    var orderedSignatures = signaturesFormatted.OrderBy(x => x.ToLower());
+    var orderedSignatures = signatures
+        .OrderBy(x => x.Address.ToLowerInvariant(), System.StringComparer.Ordinal)
+        .Select(x => ConvertSignatureStringToGnosisVFormat(x.Signature));
     var fullSignatures = "0x";
     foreach (var signature in orderedSignatures)
     {
@@ -622,7 +622,7 @@ var modules = await safeService.GetModulesPaginatedQueryAsync(
 2. **Nonce Assignment**: Safe nonce is automatically fetched and assigned
 3. **EIP-712 Hash**: Transaction data is hashed according to EIP-712 standard
 4. **Signature Collection**: Each owner signs the hash with their private key
-5. **Signature Ordering**: Safe requires signatures ordered by signer address (ascending); `GetCombinedSignaturesInOrder` sorts by signature hex string, so verify the order for your owners
+5. **Signature Ordering**: Safe requires signatures ordered by signer address (ascending); `GetCombinedSignaturesInOrder` sorts by each `SafeSignature.Address`, so set `Address` on every signature you pass in
 6. **V Value Conversion**: V values are offset by +4 for Gnosis Safe compatibility
 7. **Execution**: execTransaction is called with combined ordered signatures
 

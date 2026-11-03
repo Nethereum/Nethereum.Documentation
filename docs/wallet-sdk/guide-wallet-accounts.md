@@ -39,12 +39,12 @@ public interface IWalletAccount
 
 ## WalletVault
 
-`WalletVault` holds all accounts, mnemonics, and hardware device references. It serialises to JSON and encrypts with AES-256 via `IEncryptionStrategy`.
+`WalletVault` holds all accounts, mnemonics, and hardware device references. It serialises to JSON and encrypts with AES-256-GCM via `IEncryptionStrategy`.
 
 ### Create and Populate a Vault
 
 ```csharp
-var encryption = new BouncyCastleAes256EncryptionStrategy();
+var encryption = new Aes256GcmEncryptionStrategy();
 var vault = new WalletVault(encryption);
 
 var mnemonic = Bip39.GenerateMnemonic(12);

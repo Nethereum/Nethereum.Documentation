@@ -180,7 +180,7 @@ This reads from the EntryPoint's `UserOperationEvent` logs, not just the mempool
 
 ## Embedded Bundler for Testing
 
-`Nethereum.AccountAbstraction.Bundler.InProcess`'s `InProcessBundlerHost` is a **testing convenience**, not a production hosting option: it spins up an in-process `DevChainNode` (no external geth, no Docker) alongside a `BundlerService` wired with EntryPoint `simulateValidation` on and `UnsafeMode` off (ERC-7562 opcode/storage validation is opt-in and off by default here), so an integration test gets a realistic bundler with zero infrastructure. Because deploying the EntryPoint needs a chain first, bring-up is two phases — start the chain, deploy your contracts, then wire the bundler to the EntryPoint you just deployed:
+`Nethereum.AccountAbstraction.Bundler.InProcess`'s `InProcessBundlerHost` is a **testing convenience**, not a production hosting option: it spins up an in-process `DevChainNode` (no external geth, no Docker) alongside a `BundlerService` wired with EntryPoint `simulateValidation` on and `UnsafeMode` off (ERC-7562 opcode/storage validation is on by default; pass `enableErc7562Validation: false` to turn it off), so an integration test gets a realistic bundler with zero infrastructure. Because deploying the EntryPoint needs a chain first, bring-up is two phases — start the chain, deploy your contracts, then wire the bundler to the EntryPoint you just deployed:
 
 ```csharp
 using Nethereum.AccountAbstraction.Bundler.InProcess;
@@ -240,19 +240,19 @@ Every property on `BundlerConfig`, with its default, verified against source:
 | `StrictValidation` | `bool` | `true` | Enforce ERC-4337 validation rules |
 | `SimulateValidation` | `bool` | `true` | Simulate UserOperations before accepting into the mempool |
 | `UnsafeMode` | `bool` | `false` | Skips only the reputation (ban/throttle) check on `SendUserOperationAsync` (and only when an `IReputationService` is injected); UserOperations are still validated. Relax validation with `StrictValidation` / `SimulateValidation` / `EnableERC7562Validation`. Testing only |
-| `EnableERC7562Validation` | `bool` | `false` | Enable trace-based opcode/storage validation per ERC-7562 |
+| `EnableERC7562Validation` | `bool` | `true` | Enable trace-based opcode/storage validation per ERC-7562 |
 | `MinStake` | `BigInteger` | `1 ETH` (`1_000_000_000_000_000_000`) | Minimum stake for entities to use staked-only opcodes (e.g. `BALANCE`, `SELFBALANCE`) |
 | `MinUnstakeDelaySec` | `uint` | `86,400` (24 hours) | Minimum unstake delay for staked entities |
 | `MaxUnstakedSenderMempoolCount` | `int` | `4` | Maximum UserOperations from a single unstaked sender allowed in the mempool at once (UREP-010); a sender meeting `MinStake`/`MinUnstakeDelaySec` is exempt |
 | `WhitelistedAddresses` | `HashSet<string>` | empty | Addresses exempt from reputation checks |
 | `BlacklistedAddresses` | `HashSet<string>` | empty | Addresses permanently rejected |
-| `MaxVerificationGas` | `int` | `1,500,000` | Ceiling on a UserOperation's `verificationGasLimit` during structural validation |
+| `MaxVerificationGas` | `int` | `500,000` | Ceiling on a UserOperation's `verificationGasLimit` during structural validation |
 | `ChainId` | `BigInteger?` | `null` (auto-detected) | Override chain ID; auto-detected from the node if left null |
 | `Hardfork` | `string` | unset (`null`) | Pins the hardfork EVM simulation runs under (gas estimation, ERC-7562 validation). Left unset, the bundler resolves the fork itself from the chain's own activation schedule at its current head — set this only to override that auto-detection |
 | `EnableBlsAggregation` | `bool` | `false` | Enable BLS signature aggregation for UserOperations |
 | `BlsAggregatorAddresses` | `string[]` | empty | Addresses of supported BLS aggregator contracts |
 
-The RpcServer host layer wraps these in its own `BundlerRpcServerConfig` (adding `Host`, `Port`, `RpcUrl`, `PrivateKey`, `Verbose`, `EnableDebugMethods`, and `RequireSigner`) and forwards those fields — other than the BLS pair (`EnableBlsAggregation`/`BlsAggregatorAddresses`), which the host config does not carry — to `BundlerConfig` via `ToBundlerConfig()`. One default differs: `BundlerRpcServerConfig.MaxVerificationGas` defaults to `10,000,000`, comfortably above the engine's own `1,500,000` default, so the shipped server is compliant with the eth-infinitism bundler-spec-tests suite out of the box. `RequireSigner` (default `true`) makes the standalone host fail fast at startup if no `PrivateKey` is configured — a bundler with no signer can never submit `handleOps` — set it `false` only for a read-only/validation-only deployment that never bundles.
+The RpcServer host layer wraps these in its own `BundlerRpcServerConfig` (adding `Host`, `Port`, `RpcUrl`, `PrivateKey`, `Verbose`, `EnableDebugMethods`, and `RequireSigner`) and forwards those fields — other than the BLS pair (`EnableBlsAggregation`/`BlsAggregatorAddresses`), which the host config does not carry — to `BundlerConfig` via `ToBundlerConfig()`. Both `BundlerRpcServerConfig.MaxVerificationGas` and the engine's `BundlerConfig.MaxVerificationGas` default to `500,000`, the ERC-7562 limit. Raise it for operations that need more: on Amsterdam an account-creating UserOperation needs about 1.6 million, and `BundlerRpcServerConfig.CreateAppChainConfig` sets 10,000,000. `RequireSigner` (default `true`) makes the standalone host fail fast at startup if no `PrivateKey` is configured — a bundler with no signer can never submit `handleOps` — set it `false` only for a read-only/validation-only deployment that never bundles.
 
 ### Configuration Presets
 
@@ -260,7 +260,7 @@ The RpcServer host layer wraps these in its own `BundlerRpcServerConfig` (adding
 
 | Preset | Use Case | StrictValidation | ERC-7562 | AutoBundle Interval | MinPriorityFee |
 |---|---|---|---|---|---|
-| `CreateAppChainConfig` | Private / app-specific chains | `false` | `false` | 1,000 ms | 0 |
+| `CreateAppChainConfig` | Private / app-specific chains | `false` | `true` | 1,000 ms | 0 |
 | `CreateStandardConfig` | Public testnets, staging | `true` | `true` | 10,000 ms | 1 Gwei |
 | `CreateProductionConfig` | Public mainnet | `true` | `true` | 10,000 ms | 1 Gwei + 1 ETH stake / 24h unstake delay |
 
@@ -278,7 +278,7 @@ The bundler supports several validation modes you combine depending on your secu
 
 **SimulateValidation** (default `true`) runs the UserOperation through the EntryPoint's `simulateValidation` before accepting it into the mempool, catching operations that would revert on-chain before they waste gas. Disable it only if you fully trust every submitter.
 
-**EnableERC7562Validation** (default `false`) adds trace-based opcode validation per ERC-7562: the bundler traces the validation phase and rejects operations using forbidden opcodes (like `ORIGIN` or `GASPRICE`) or disallowed storage access. Enable it for any bundler accepting operations from untrusted accounts.
+**EnableERC7562Validation** (default `true`) adds trace-based opcode validation per ERC-7562: the bundler traces the validation phase and rejects operations using forbidden opcodes (like `ORIGIN` or `GASPRICE`) or disallowed storage access. Enable it for any bundler accepting operations from untrusted accounts.
 
 **UnsafeMode** (default `false`) skips only the reputation (ban/throttle) check on `SendUserOperationAsync`; every UserOperation is still validated. To relax validation use `StrictValidation`, `SimulateValidation` and `EnableERC7562Validation`. Local development only.
 

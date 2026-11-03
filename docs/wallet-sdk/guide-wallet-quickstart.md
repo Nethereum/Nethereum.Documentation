@@ -27,7 +27,7 @@ using Nethereum.Wallet.UI.Components.Blazor.Extensions;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, Aes256GcmEncryptionStrategy>();
 builder.Services.AddSingleton<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddSingleton<IWalletConfigurationService, InMemoryWalletConfigurationService>();
 builder.Services.AddSingleton<Nethereum.Wallet.Storage.IWalletStorageService, LocalStorageWalletStorageService>();

@@ -211,10 +211,11 @@ From there, register namespaces and tables using your MUD-generated namespace an
 
 ## Common Gotchas
 
-- **Same genesis = same chain** — sequencer and followers must use the same genesis owner address and chain ID, otherwise they produce different genesis blocks and can't sync.
+- **Same genesis = same chain** — sequencer and followers must use the same genesis owner address and chain ID, otherwise they produce different genesis blocks and can't sync. A follower accepts only blocks signed by the key behind its `--sequencer-address`, so a chain created by 7.0 (unsigned blocks) must be re-created.
 - **`--block-time` must be positive** — `--block-time 0` is rejected in interval block production (the CLI default). The default is 1000 ms, and blocks are produced only when transactions are pending unless `--allow-empty-blocks` is set; for instant on-demand blocks, use `AppChainBuilder.WithOnDemandBlocks()` programmatically.
 - **RocksDB is the default** — the CLI uses RocksDB at `./appchain-data` unless you pass `--in-memory`. For development without persistence, add `--in-memory`.
-- **Port conflicts** — the sequencer defaults to 8546 (not 8545 like Geth). Use `--port` to change it.
+- **Port conflicts** — the sequencer defaults to 8546. Use `--port` to change it.
+- **RPC modules and hosts** — the RPC port serves `eth`, `net` and `web3` only; add `txpool`, `debug` or `admin` with `--rpc-modules eth,net,web3,admin`. A request whose `Host` header is not `localhost`, an IP address or the bind host is answered 403: list the name with `--rpc-vhosts` (for example behind a proxy or in a container). A browser WebSocket origin needs `--ws-origins`; a request body over 10 MiB is refused.
 
 ## Next Steps
 

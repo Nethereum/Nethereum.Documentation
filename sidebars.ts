@@ -205,6 +205,14 @@ const sidebars: SidebarsConfig = {
             'smart-contracts/guide-create2-deployment',
           ],
         },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'smart-contracts/nethereum-standardtokeneip20',
+            'smart-contracts/nethereum-standardnonfungibletokenerc721',
+          ],
+        },
       ],
     },
 
@@ -240,6 +248,7 @@ const sidebars: SidebarsConfig = {
             'protocols/nethereum-circles',
             'protocols/nethereum-siwe-core',
             'protocols/nethereum-siwe',
+            'protocols/nethereum-ens',
             'protocols/nethereum-privacypools',
             'protocols/nethereum-privacypools-circuits',
           ],
@@ -317,6 +326,7 @@ const sidebars: SidebarsConfig = {
             'mainnet-follower/nethereum-mainnetchain',
             'mainnet-follower/nethereum-mainnetchain-server',
             'mainnet-follower/nethereum-chainnode-hosting',
+            'mainnet-follower/nethereum-engineapi-hosting',
             'mainnet-follower/nethereum-corechain',
             {
               type: 'category',
@@ -662,6 +672,7 @@ const sidebars: SidebarsConfig = {
                 'wallet-sdk/nethereum-wallet-rpcrequests',
                 'wallet-sdk/nethereum-wallet-ui-components',
                 'wallet-sdk/nethereum-wallet-ui-components-trezor',
+                'wallet-sdk/nethereum-wallet-trezor',
               ],
             },
             {
@@ -671,6 +682,7 @@ const sidebars: SidebarsConfig = {
                 'wallet-sdk/nethereum-wallet-ui-components-blazor',
                 'wallet-sdk/nethereum-wallet-ui-components-blazor-trezor',
                 'wallet-sdk/nethereum-wallet-ui-components-maui',
+                'wallet-sdk/nethereum-wallet-ui-components-avalonia',
               ],
             },
             {
@@ -804,6 +816,7 @@ const sidebars: SidebarsConfig = {
             'data-services/nethereum-dataservices',
             'data-services/nethereum-sourcify-database',
             'data-services/nethereum-tokenservices',
+            'data-services/nethereum-abi-abiinfosqlitestorage',
           ],
         },
       ],
@@ -831,6 +844,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'zk-proofs/nethereum-zkproofs',
             'zk-proofs/nethereum-zkproofsverifier',
+            'zk-proofs/nethereum-zkproofs-snarkjs',
             'zk-proofs/nethereum-zkproofs-snarkjs-blazor',
             'zk-proofs/nethereum-zkproofs-rapidsnark',
             'zk-proofs/nethereum-circomwitnesscalc',
@@ -884,6 +898,9 @@ const sidebars: SidebarsConfig = {
             'client-extensions/nethereum-geth',
             'client-extensions/nethereum-besu',
             'client-extensions/nethereum-quorum',
+            'client-extensions/nethereum-parity',
+            'client-extensions/nethereum-parity-reactive',
+            'client-extensions/nethereum-rsk',
             'client-extensions/nethereum-did',
             'client-extensions/nethereum-did-ethrdid',
           ],
@@ -915,6 +932,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'application-chain/nethereum-appchain',
             'application-chain/nethereum-appchain-server',
+            'application-chain/nethereum-appchain-server-core',
             'application-chain/nethereum-appchain-sequencer',
             {
               type: 'category',
@@ -922,6 +940,8 @@ const sidebars: SidebarsConfig = {
               items: [
                 'application-chain/nethereum-appchain-policy',
                 'application-chain/nethereum-appchain-anchoring',
+                'application-chain/nethereum-appchain-anchoring-postgres',
+                'application-chain/nethereum-explorer-anchoring',
                 'application-chain/nethereum-consensus-clique',
               ],
             },

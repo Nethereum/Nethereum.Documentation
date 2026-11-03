@@ -354,7 +354,7 @@ When an ABI is found, it's cached in memory for subsequent requests. You can als
 | `POST` | `/api/contracts/{address}/abi` | Upload ABI (`{ "abi": "...", "name": "..." }`) |
 | `POST` | `/api/contracts/batch` | Batch upload (max 50 contracts) |
 
-POST endpoints validate the `X-Api-Key` header if `ApiKey` is configured. Rate limited to 100 requests per minute.
+POST endpoints require the `X-Api-Key` header to match `ApiKey`; with no `ApiKey` set they answer `401`. Rate limited to 100 requests per minute per client IP.
 
 ### Token API
 

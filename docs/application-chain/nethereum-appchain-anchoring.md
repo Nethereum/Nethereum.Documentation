@@ -10,6 +10,8 @@ format: md
 # Nethereum.AppChain.Anchoring
 
 > **NuGet**: [`Nethereum.AppChain.Anchoring`](https://www.nuget.org/packages/Nethereum.AppChain.Anchoring/) | **Source**: [`src/Nethereum.AppChain.Anchoring/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.AppChain.Anchoring)
+# Nethereum.AppChain.Anchoring
+
 > **PREVIEW** — APIs may change between releases.
 
 Anchors AppChain state to any EVM chain (L1 or L2). Commits state roots, block hashes, and optionally compressed block data or ZK proofs to an on-chain anchor contract.
@@ -228,6 +230,8 @@ if requiresProof: IVerifier.verify(proof, publicInputs)
 | 0 (NoProof) | address(0) | false | Nothing |
 | 1 (StarkHashOffChain) | StarkBlobCommitmentVerifier | false | Hash format |
 | 2 (SnarkOnChain) | a deployment-supplied `IVerifier` (e.g. `ZiskVerifierAdapter`) | true | Cryptographic proof |
+
+`ZiskVerifierAdapter` accepts a proof only for exactly 11 public inputs and 64 Zisk public values (8 bytes each). The first eight Zisk public values, 32-bit words each held in a 64-bit public, must hold `keccak256(abi.encodePacked(publicInputs))` (a proof without that commitment is refused), and the inputs must name the block the proof executed (block number, pre-state root, state root, parent hash and block hash). A wrong input count, a wrong public-values length or an input that is not the executed block reverts. `ZiskVerifier` (Zisk 1.3.1 PLONK, `Nethereum.AppChain.Anchoring.ZiskVerifier.ZiskVerifierService`) takes `bytes32` verification keys in `verifySnarkProof`; the adapter constructor still takes `uint64[4]` keys.
 
 Additional format verifiers for DA: `CalldataFormatVerifier`, `PipelinePayloadVerifier`, `CalldataStarkVerifier`.
 

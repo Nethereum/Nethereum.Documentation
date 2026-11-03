@@ -89,7 +89,7 @@ bool valid = await siweService.IsValidMessage(parsed, signature);
 2. **Session** — the message matches the one stored under its nonce
 3. **Signature** — the signer is recovered (or validated via ERC-1271/ERC-6492) and compared with `Address`
 
-It does not consult `IEthereumUserService`; call `IsUserAddressRegistered(parsed)` separately. If any check fails it returns `false`.
+It does not consult `IEthereumUserService`; call `IsUserAddressRegistered(parsed)` separately. If any check fails it returns `false`. When all pass, the nonce is removed from session storage, so a signed message signs in once.
 
 ## Session Management
 
@@ -109,7 +109,7 @@ public class RedisSessionStorage : ISessionStorage
 var siweService = new SiweMessageService(new RedisSessionStorage());
 ```
 
-To explicitly end a session (logout), call `InvalidateSession`:
+To end a session that `IsValidMessage` has not already consumed (for example a sign-in that was never completed), call `InvalidateSession`. After a successful `IsValidMessage` the entry is already gone, and `InMemorySessionNonceStorage` throws if you remove it again:
 
 ```csharp
 siweService.InvalidateSession(parsed);
@@ -161,7 +161,7 @@ var siweService = new SiweMessageService(
 bool valid = await siweService.IsMessageSignatureValid(parsed, signature);
 ```
 
-The service first tries standard `ecrecover`. If that fails (the recovered address doesn't match), it calls the contract's `isValidSignature(bytes32, bytes)` method per ERC-1271. It also supports [ERC-6492](https://eips.ethereum.org/EIPS/eip-6492) for counterfactual (not-yet-deployed) smart wallets.
+A 65-byte signature is first checked with standard `ecrecover`. Any other signature, or a 65-byte one whose recovered address does not match, goes to the contract's `isValidSignature(bytes32, bytes)` method per ERC-1271, and only when the node's chain id equals the message's `Chain ID`. It also supports [ERC-6492](https://eips.ethereum.org/EIPS/eip-6492) for counterfactual (not-yet-deployed) smart wallets.
 
 ## RECAP: Fine-Grained Capabilities (EIP-5573)
 
@@ -245,7 +245,7 @@ The default API paths are `authentication/newsiwemessage`, `authentication/authe
 
 | Method | Strategy | Use When |
 |---|---|---|
-| `Parse(text)` | Regex-based | Default — handles most real-world messages |
+| `Parse(text)` | Linear line parser, messages up to 64 KiB | Default — rejects malformed optional fields |
 | `ParseUsingAbnf(text)` | ABNF grammar | Strict EIP-4361 compliance validation |
 
 Both return a `SiweMessage` with all fields populated from the text. The ABNF parser is stricter about format compliance — use it when you need to reject messages that don't follow the spec exactly.

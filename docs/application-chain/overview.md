@@ -88,6 +88,7 @@ Follower Node (syncs and verifies)
 |---|---|---|
 | `Nethereum.AppChain` | Core chain abstraction, genesis, IAppChain interface | Preview |
 | `Nethereum.AppChain.Server` | HTTP/WS JSON-RPC server (CLI tool) | Preview |
+| `Nethereum.AppChain.Server.Core` | The reusable composition behind the AppChain server: configuration, `AppChainComposition.ComposeAsync`, `AppChainServerRunner.RunAsync`, the HTTP/WebSocket endpoints, health checks, metrics and the `admin_*` RPC handlers | Preview |
 | `Nethereum.AppChain.Sequencer` | Block production, transaction ordering, AppChainBuilder | Preview |
 | `Nethereum.CoreChain` | Storage interfaces, block production, RPC framework | Preview |
 | `Nethereum.CoreChain.RocksDB` | RocksDB persistent storage backend | Preview |
@@ -95,6 +96,7 @@ Follower Node (syncs and verifies)
 | `Nethereum.AppChain.Policy` | Governance, access control, merkle authorization | Preview |
 | `Nethereum.AppChain.Anchoring` | L1 state root commitment and verification | Preview |
 | `Nethereum.Consensus.Clique` | Clique Proof-of-Authority consensus engine | Preview |
+| `Nethereum.AppChain.Anchoring.Postgres` | EF Core / PostgreSQL persistence and background indexers for AppChain anchoring: the anchor-contract event index, per-chain summaries, and the cross-chain message index | Preview |
 
 ## Guides
 

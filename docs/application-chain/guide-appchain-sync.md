@@ -37,7 +37,7 @@ Followers are launched with the same CLI tool as producers:
 dotnet tool install --global Nethereum.AppChain.Server
 ```
 
-That single tool (`nethereum-appchain`) bundles the DevP2P sync engine. If you compose a node programmatically, the relevant packages are `Nethereum.AppChain.Server`, `Nethereum.DevP2P.Sync`, and `Nethereum.CoreChain`.
+That single tool (`nethereum-appchain`) bundles the DevP2P sync engine. If you compose a node programmatically, reference `Nethereum.AppChain.Server.Core` (it brings `Nethereum.DevP2P.Sync`, `Nethereum.ChainNode.Hosting` and `Nethereum.CoreChain.RocksDB`); `Nethereum.AppChain.Server` is the `nethereum-appchain` tool.
 
 You also need a producer that **serves** DevP2P. A producer only accepts follower connections when it is launched with `--enable-devp2p-serve` (it advertises `eth` and `snap` capabilities). See the [Quickstart](guide-appchain-quickstart) for launching one.
 
@@ -57,12 +57,12 @@ An AppChain producer and an AppChain follower are the **same server binary** in 
 Internally, `AppChainComposition.ComposeAsync` decides the role. A node **imports blocks** whenever its sync mode is not `None` (`AppChainServerConfig.ImportsBlocks`), and it **produces blocks** only when it holds a signing key (`ProducesBlocks`). When a node imports, the composition starts an `AppChainDevP2PFollower` in the background:
 
 ```csharp
-// AppChainComposition.ComposeAsync — the follower is launched when the node imports
+// AppChainComposition.ComposeAsync — the follower runs on the node's AppChainExecutionCore and chain write gate when the node imports
 if (imports)
 {
     _ = Task.Run(() => AppChainDevP2PFollower.RunAsync(
         config, chainNode, loggerFactory, CancellationToken.None,
-        cliqueEngine, forkChoice, mempoolReconciler));
+        core, chainWriteGate, forkChoice, mempoolReconciler));
 }
 ```
 
@@ -74,21 +74,24 @@ Because a follower is a DevP2P node, "which peer do I sync from?" is answered by
 
 ```csharp
 // AppChainDevP2PFollower.RunAsync
-var peer  = await WaitForSnapPeerAsync(node, ct);   // 1. dial + find a snap-capable producer
-var pivot = await ResolvePivotAsync(peer, ct);       // 2. read the producer's head header
-await SnapBootstrapAsync(node, pivot, ct);           // 3. snap-download state at the pivot
+var peer = await WaitForSnapPeerAsync(node, ct);  // 1. dial + find a snap-capable producer
+if (peer.PeerLatestBlock > SnapSyncOrchestrator.PivotTrailDistance)
+{
+    var pivot = await ResolvePivotAsync(peer, ct);   // 2. read the producer's head header
+    await SnapBootstrapAsync(node, pivot, ct);        // 3. snap-download state at the pivot
+}
 await ForwardExecuteAsync(node, ct);                 // 4. execute blocks + follow the head
 ```
 
 1. **Find a peer.** The follower dials the `--follow-peer` enode and waits (up to two minutes) for a peer that advertises `snap`. If the producer was not started with `--enable-devp2p-serve`, no such peer appears and the follower logs an error and stops.
 
-2. **Resolve the pivot.** It reads the producer's latest header — the block number, hash, and state root become the snap-sync pivot.
+2. **Resolve the pivot** (only when a snap bootstrap will run). It reads the producer's latest header — the block number, hash, and state root become the snap-sync pivot.
 
-3. **Snap bootstrap.** The follower runs `SnapSyncOrchestrator` to download the account and storage trie for the pivot state directly, instead of replaying history from genesis. This step is skipped when it isn't needed (for example, a node resuming with existing state) — the log line reports `ran` and a `SkipReason`.
+3. **Snap bootstrap.** When the producer's tip is further than the pivot trail distance from genesis, the follower runs `SnapSyncOrchestrator` to download the account and storage trie for the pivot state instead of replaying history. Within that distance (a fresh chain) it logs that the snap bootstrap was skipped and forward-executes from genesis. When it runs, the log line reports `ran` and `reason`.
 
 4. **Forward execute + follow.** From the pivot (or from genesis / the last stored block when no snap happened), the follower hands off to the shared `FollowerService`, which pulls missing blocks over DevP2P, executes each one, and then follows the chain head live.
 
-The block feed itself is the standard sync stack from `ChainNodeSyncStack`: a `DevP2PBlockSource` pulls headers and bodies to catch up, and a `PushedBlockSource` receives `NewBlock` announcements from the peer for the live tip. When pushed blocks are enabled (the AppChain default), the two are combined by `CatchUpThenFollowBlockSource` — catch up by pulling, then follow by listening.
+The block feed itself is the standard sync stack from `ChainNodeSyncStack`: a `DevP2PBlockSource` pulls headers and bodies, and `FollowingBlockSource` keeps pulling as the peer announces a higher head, so the follower catches up and then stays at the tip. Blocks are not pushed: the sequencer announces its head and the follower pulls.
 
 ## Launching a Follower
 
@@ -145,23 +148,22 @@ This is the mechanism behind the AppChain's public-verifiability promise: the pr
 
 ## Composing a Follower Programmatically
 
-For embedding, testing, or custom hosting, drive the same server code directly. Build an `AppChainServerConfig` (from CLI-style arguments or in code) and run it:
+For embedding, testing, or custom hosting, drive the same server code directly. Build an `AppChainServerConfig` in code and run it:
 
 ```csharp
 using Nethereum.AppChain.Server;
+using Nethereum.AppChain.Server.Configuration;
+using Nethereum.ChainNode.Hosting.Configuration;
 
-// Parse the same flags the CLI understands into a config object
-var config = AppChainCli.ParseConfig(new[]
-{
-    "--chain-id", "420420",
-    "--genesis-owner-address", ownerAddress,
-    "--sequencer-address", sequencerAddress,
-    "--follow-peer", producerEnode,
-    "--port", "8547",
-});
+var config = new AppChainServerConfig { ChainId = 420420 };
+config.Genesis.Owner.Address = ownerAddress;
+config.Consensus.Sequencer.Address = sequencerAddress;
+config.Node.Sync.Mode = SyncMode.ForwardExecute;
+config.Node.Sync.FollowPeerEnode = producerEnode;
+config.Node.Rpc.Port = 8547;
 
 // Runs storage, composition (which starts the DevP2P follower), and the JSON-RPC server
-await AppChainServerRunner.RunAsync(config);
+await AppChainServerRunner.RunAsync(config, cancellationToken);
 ```
 
 `AppChainServerRunner.RunAsync` calls `AppChainComposition.ComposeAsync`, which starts the `AppChainDevP2PFollower` for you when the node is in importing mode — you do not construct sync services by hand.

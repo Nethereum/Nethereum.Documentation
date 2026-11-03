@@ -10,8 +10,6 @@ format: md
 # Nethereum.Wallet.UI.Components.Blazor
 
 > **NuGet**: [`Nethereum.Wallet.UI.Components.Blazor`](https://www.nuget.org/packages/Nethereum.Wallet.UI.Components.Blazor/) | **Source**: [`src/Nethereum.Wallet.UI.Components.Blazor/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Wallet.UI.Components.Blazor)
-# Nethereum.Wallet.UI.Components.Blazor
-
 Production-ready Blazor component library providing complete Ethereum wallet UI for building decentralized applications. Implements platform-specific services for browser environments using MudBlazor Material Design components and browser localStorage for persistence.
 
 ## Package Information
@@ -61,7 +59,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddSingleton<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddSingleton<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, Aes256GcmEncryptionStrategy>();
 
 await builder.Build().RunAsync();
 ```
@@ -79,7 +77,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddScoped<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddScoped<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, Aes256GcmEncryptionStrategy>();
 
 var app = builder.Build();
 app.Run();
@@ -1027,7 +1025,7 @@ builder.Services.AddNethereumWalletUI();
 // Register storage services
 builder.Services.AddSingleton<IWalletVaultService, LocalStorageWalletVaultService>();
 builder.Services.AddSingleton<IWalletStorageService, LocalStorageWalletStorageService>();
-builder.Services.AddSingleton<IEncryptionStrategy, BouncyCastleAes256EncryptionStrategy>();
+builder.Services.AddSingleton<IEncryptionStrategy, Aes256GcmEncryptionStrategy>();
 
 // Configure wallet UI
 builder.Services.AddSingleton<INethereumWalletUIConfiguration>(sp =>

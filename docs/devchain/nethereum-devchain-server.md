@@ -10,8 +10,6 @@ format: md
 # Nethereum.DevChain.Server
 
 > **NuGet**: [`Nethereum.DevChain.Server`](https://www.nuget.org/packages/Nethereum.DevChain.Server/) | **Source**: [`src/Nethereum.DevChain.Server/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevChain.Server)
-# Nethereum.DevChain.Server
-
 A local Ethereum development node with JSON-RPC server. Similar to Hardhat Network or Anvil but built entirely in .NET. Supports EVM opcodes up to the Amsterdam hardfork.
 
 ## Overview
@@ -126,7 +124,7 @@ SQLite uses WAL journal mode for good read/write concurrency. In SQLite and Rock
 | |\  |  __/ |_| | | |  __/ | |  __/ |_| | | | | | |
 |_| \_|\___|\__|_| |_|\___|_|  \___|\__,_|_| |_| |_|
 
-              DevChain Server v7.0.0
+              DevChain Server v7.1.0
 
   RPC:        http://127.0.0.1:8545
   Chain ID:   31337

@@ -40,7 +40,7 @@ The startup banner shows all funded accounts with their addresses and private ke
 | |\  |  __/ |_| | | |  __/ | |  __/ |_| | | | | | |
 |_| \_|\___|\__|_| |_|\___|_|  \___|\__,_|_| |_| |_|
 
-              DevChain Server v7.0.0
+              DevChain Server v7.1.0
 
   RPC:        http://127.0.0.1:8545
   Chain ID:   31337

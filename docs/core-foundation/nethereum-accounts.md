@@ -10,8 +10,6 @@ format: md
 # Nethereum.Accounts
 
 > **NuGet**: [`Nethereum.Accounts`](https://www.nuget.org/packages/Nethereum.Accounts/) | **Source**: [`src/Nethereum.Accounts/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Accounts)
-# Nethereum.Accounts
-
 **Nethereum.Accounts** provides account management and transaction signing capabilities for Ethereum. It enables offline transaction signing, key management, and integration with external signers (hardware wallets, browser wallets, etc.).
 
 ## Features
@@ -143,6 +141,41 @@ var balance = await web3.Eth.GetBalance.SendRequestAsync(account.Address);
 
 **Use Case:** Monitoring wallets, read-only dashboards
 
+### BasicAccount (Node-Signed, No Password)
+
+Like `ManagedAccount`, sends via the node's `eth_sendTransaction` (the node signs), but for accounts the node already has unlocked/available without a `personal_` password - e.g. the default accounts on a local Anvil/Hardhat node. Cannot sign offline (`SignTransactionAsync`/`SignAuthorisationAsync` throw).
+
+```csharp
+using Nethereum.Web3;
+using Nethereum.Web3.Accounts.Basic;
+
+var account = new BasicAccount("0xACCOUNT_ADDRESS_ALREADY_AVAILABLE_ON_THE_NODE");
+var web3 = new Web3(account, "http://localhost:8545");
+
+var receipt = await web3.Eth.GetEtherTransferService()
+    .TransferEtherAndWaitForReceiptAsync("0xRECIPIENT_ADDRESS", 0.1m);
+```
+
+**Use Case:** Local dev/test nodes (Anvil, Hardhat) where accounts are pre-funded and unlocked by default
+
+*Source: `src/Nethereum.Accounts/Basic/BasicAccount.cs:8-35`, `src/Nethereum.Accounts/Basic/BasicAccountTransactionManager.cs:59-90`*
+
+### AccountAbstractionAccount (ERC-4337/ERC-7579 Smart Accounts)
+
+A `ViewOnlyAccount` (its address is a smart-contract account, not an EOA-derived address) paired with an explicit `IAccountSigningService` - typically the smart account's owner/signer key, used to authorise account-abstraction operations rather than raw EOA transactions.
+
+```csharp
+using Nethereum.Accounts.AccountAbstraction;
+using Nethereum.RPC.AccountSigning;
+
+IAccountSigningService accountSigningService = /* the smart account's signer, e.g. AccountSigningService wrapping an Account */;
+var account = new AccountAbstractionAccount("0xSMART_ACCOUNT_ADDRESS", accountSigningService);
+```
+
+**Use Case:** ERC-4337/ERC-7579 smart contract accounts (see `Nethereum.AccountAbstraction`)
+
+*Source: `src/Nethereum.Accounts/AccountAbstraction/AccountAbstractionAccount.cs:7-14`*
+
 ## Usage Examples
 
 ### Example 1: Complete Transfer with Account
@@ -250,13 +283,13 @@ Console.WriteLine($"Transaction hash: {txHash}");
 ```csharp
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
-using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Hex.HexTypes;
 
 var account = new Account("0xb5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7");
 
-// Sign a message
+// Sign a message. PersonalSign.SendRequestAsync only accepts byte[] or HexUTF8String - not string.
 string message = "Hello, Ethereum!";
-var signature = await account.AccountSigningService.PersonalSign.SendRequestAsync(message.ToHexUTF8());
+var signature = await account.AccountSigningService.PersonalSign.SendRequestAsync(new HexUTF8String(message));
 
 Console.WriteLine($"Message: {message}");
 Console.WriteLine($"Signature: {signature}");
@@ -268,7 +301,7 @@ Console.WriteLine($"Recovered address: {recoveredAddress}");
 Console.WriteLine($"Verified: {recoveredAddress.Equals(account.Address, StringComparison.OrdinalIgnoreCase)}");
 ```
 
-*Based on Nethereum integration tests*
+*Source: `src/Nethereum.RPC/AccountSigning/IEthPersonalSign.cs:15-16`*
 
 ### Example 5: EIP-712 Typed Data Signing
 
@@ -276,7 +309,7 @@ Console.WriteLine($"Verified: {recoveredAddress.Equals(account.Address, StringCo
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nethereum.ABI.FunctionEncoding.Attributes;
-using Nethereum.Signer.EIP712;
+using Nethereum.ABI.EIP712; // TypedData<T>, Domain, MemberDescriptionFactory live here, not Nethereum.Signer.EIP712
 
 // Define EIP-712 typed data
 [Struct("Person")]
@@ -301,20 +334,22 @@ var domain = new TypedData<Domain>
         VerifyingContract = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
     },
     PrimaryType = "Person",
-    Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(Domain), typeof(Person)),
-    Message = new Person
-    {
-        Name = "Alice",
-        Wallet = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
-    }
+    Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(Domain), typeof(Person))
 };
 
-// Sign typed data
-var signature = await account.AccountSigningService.SignTypedDataV4.SendRequestAsync(domain);
+// TypedDataRaw.Message is MemberValue[], not a plain POCO - set it through SetMessage<T>
+domain.SetMessage(new Person
+{
+    Name = "Alice",
+    Wallet = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+});
+
+// SignTypedDataV4.SendRequestAsync takes the serialised JSON string, not the TypedData object
+var signature = await account.AccountSigningService.SignTypedDataV4.SendRequestAsync(domain.ToJson());
 Console.WriteLine($"EIP-712 Signature: {signature}");
 ```
 
-*Based on Nethereum integration tests*
+*Source: `src/Nethereum.ABI/EIP712/TypedData.cs:17` (`SetMessage<T>`), `src/Nethereum.ABI/EIP712/TypedDataRawJsonConversion.cs:20` (`ToJson`), `src/Nethereum.RPC/AccountSigning/IEthSignTypedDataV4.cs:13` (`SendRequestAsync(string jsonMessage, ...)`)*
 
 ### Example 6: Multiple Accounts with Web3
 
@@ -610,19 +645,30 @@ The `InMemoryNonceService` uses a semaphore and local nonce tracking to guarante
 public class InMemoryNonceService : INonceService
 {
     public BigInteger CurrentNonce { get; set; } = -1;
+    public IClient Client { get; set; }
+    private readonly string _account;
     private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
     public bool UseLatestTransactionsOnly { get; set; } = false;
 
+    public InMemoryNonceService(string account, IClient client)
+    {
+        Client = client;
+        _account = account;
+    }
+
     public async Task<HexBigInteger> GetNextNonceAsync()
     {
-        await _semaphoreSlim.WaitAsync(); // 🔒 Lock to prevent concurrent access
+        if (Client == null) throw new NullReferenceException("Client not configured");
+        var ethGetTransactionCount = new EthGetTransactionCount(Client);
+        await _semaphoreSlim.WaitAsync().ConfigureAwait(false); // 🔒 Lock to prevent concurrent access
         try
         {
             var blockParameter = UseLatestTransactionsOnly
                 ? BlockParameter.CreateLatest()   // Only confirmed transactions
                 : BlockParameter.CreatePending(); // Including pending transactions
 
-            var nonce = await ethGetTransactionCount.SendRequestAsync(_account, blockParameter);
+            var nonce = await ethGetTransactionCount.SendRequestAsync(_account, blockParameter)
+                .ConfigureAwait(false);
 
             // 🎯 Key Logic: Ensure consecutive nonces
             if (nonce.Value <= CurrentNonce)
@@ -644,8 +690,23 @@ public class InMemoryNonceService : INonceService
             _semaphoreSlim.Release(); // 🔓 Unlock
         }
     }
+
+    public async Task ResetNonceAsync()
+    {
+        await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            CurrentNonce = -1;
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
+    }
 }
 ```
+
+*Source: `src/Nethereum.RPC/NonceServices/InMemoryNonceService.cs:14-73`*
 
 **Key Features:**
 
@@ -787,6 +848,8 @@ var receipt = await web3.Eth.GetEtherTransferService()
     .TransferEtherAndWaitForReceiptAsync(toAddress, amount);
 ```
 
+When `Web3`/`AccountSignerTransactionManager` allocates the nonce from `account.NonceService` and the node then rejects the raw transaction (an `RpcResponseException`), the manager calls `NonceService.ResetNonceAsync()` before rethrowing, so the next send takes the nonce the rejected one never used instead of leaving a gap. A transaction that carries an explicit `Nonce` is not reset. `SendBlobTransactionAsync` resets the same way when its nonce came from the service.
+
 ### Production Patterns
 
 #### Pattern 1: High-Throughput Transaction Sender
@@ -869,7 +932,7 @@ var txHash = await web3.Eth.Transactions.SendRawTransaction.SendRequestAsync(sig
 
 | Issue | Symptom | Solution |
 |-------|---------|----------|
-| **Nonce too low** | `replacement transaction underpriced` | Reset nonce: `await account.NonceService.ResetNonceAsync()` |
+| **Nonce too low** | `nonce too low` | Reset nonce: `await account.NonceService.ResetNonceAsync()` |
 | **Nonce too high** | Transaction stuck pending | Reset nonce or wait for previous transactions to confirm |
 | **Nonce gap** | Multiple transactions stuck | Send missing nonce transaction or reset nonce |
 | **Race condition** | Some transactions fail with same nonce | Use `InMemoryNonceService` |
@@ -893,17 +956,47 @@ You **need** nonce management when:
 - ✅ Distributed systems (multiple app instances using same account)
 - ✅ Batch transaction sending
 
+## Mnemonics and HD Derivation
+
+`Bip39` and `MinimalHDWallet` (namespace `Nethereum.Accounts.Bip32`) validate a BIP-39 mnemonic and derive Ethereum keys from it. A mnemonic is checked for a 12, 15, 18, 21 or 24 word count, English word-list membership and the checksum before a seed is derived; when validating, a mnemonic or passphrase longer than `Bip39.MaxInputLength` (4096) is refused (`validateMnemonic: false` skips the length check), and a derivation path deeper than `MinimalHDWallet.MaxDepth` (255) or with a malformed segment (empty, leading zero, over 10 digits, non-digit, index of 2^31 or more) throws `ArgumentException`.
+
+```csharp
+using Nethereum.Accounts.Bip32;
+
+var mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+bool valid = Bip39.IsValidMnemonic(mnemonic);
+Bip39.ValidateMnemonic(mnemonic);
+string canonical = Bip39.CanonicalMnemonic(mnemonic);
+
+var wallet = new MinimalHDWallet(mnemonic);
+string address = wallet.GetEthereumAddress(0);
+var key = wallet.GetKeyFromPath("m/44'/60'/0'/0/0");
+```
+
+The seed is derived from the canonical phrase (NFKD, lower-cased, whitespace collapsed), so a pasted phrase with capitals or stray whitespace gives the same seed and addresses as the clean phrase. A 7.0 phrase with capitals or extra whitespace therefore derives different addresses in 7.1; `Bip39.MnemonicToSeed(mnemonic, password, validateMnemonic: false)` keeps the 7.0 raw-NFKD derivation.
+
+A phrase that is not a valid BIP-39 mnemonic is refused by `new MinimalHDWallet(mnemonic)`. To derive from one anyway (for example a legacy wallet), pass `validateMnemonic: false`; `Bip39.IsNonStandardMnemonicForm` and `Bip39.IsLegacyUppercaseWordMnemonic` detect inputs whose normalization changes the seed:
+
+```csharp
+var legacy = new MinimalHDWallet("not a bip39 phrase at all", "", false);
+bool changesSeed = Bip39.IsNonStandardMnemonicForm("Abandon  abandon");
+bool legacyUppercase = Bip39.IsLegacyUppercaseWordMnemonic("TRUE FALSE abandon");
+```
+
 ## Message Signing
 
 ### Personal Sign (EIP-191)
 
+`PersonalSign.SendRequestAsync` only accepts `byte[]` or `HexUTF8String` - never pass a raw hex `string`.
+
 ```csharp
 var account = new Account(privateKey);
 
-// Sign UTF-8 message
+// Sign UTF-8 message - pass the raw UTF-8 bytes directly
 string message = "Sign this message";
 var signature = await account.AccountSigningService.PersonalSign.SendRequestAsync(
-    System.Text.Encoding.UTF8.GetBytes(message).ToHex(true)
+    System.Text.Encoding.UTF8.GetBytes(message)
 );
 
 // Verify
@@ -911,12 +1004,72 @@ var signer = new Nethereum.Signer.EthereumMessageSigner();
 var recoveredAddress = signer.EncodeUTF8AndEcRecover(message, signature);
 ```
 
+*Source: `src/Nethereum.RPC/AccountSigning/IEthPersonalSign.cs:15-16`*
+
 ### EIP-712 Typed Data
 
+`SignTypedDataV4.SendRequestAsync` takes the serialised JSON (`string jsonMessage`), not the `TypedData<TDomain>` object itself. Set the message with `SetMessage<T>(...)` (`TypedDataRaw.Message` is `MemberValue[]`, not a plain POCO you can assign to directly) and call `.ToJson()` before sending - or use the single-call `ToJson(message)` overload:
+
 ```csharp
-// Sign structured typed data
-var signature = await account.AccountSigningService.SignTypedDataV4.SendRequestAsync(typedData);
+using Nethereum.ABI.EIP712;
+
+// typedData built as in Example 5 (Domain/Types/PrimaryType set, Message left unset)
+typedData.SetMessage(new Person { Name = "Alice", Wallet = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" });
+var signature = await account.AccountSigningService.SignTypedDataV4.SendRequestAsync(typedData.ToJson());
+
+// Equivalent one-line form (sets the message and serialises together):
+var signature2 = await account.AccountSigningService.SignTypedDataV4.SendRequestAsync(
+    typedData.ToJson(new Person { Name = "Alice", Wallet = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" }));
 ```
+
+*Source: `src/Nethereum.ABI/EIP712/TypedData.cs:17`, `src/Nethereum.ABI/EIP712/TypedDataRaw.cs:15`, `src/Nethereum.ABI/EIP712/TypedDataRawJsonConversion.cs:20-29`, `src/Nethereum.RPC/AccountSigning/IEthSignTypedDataV4.cs:13`*
+
+## EIP-7702 Sponsored Authorisation
+
+`EIP7022SponsorAuthorisationService` lets a *sponsor* account pay the gas to delegate one or more *other* EOAs' code to a contract - the sponsored keys sign only the EIP-7702 authorisation tuple, never a transaction:
+
+```csharp
+using Nethereum.Accounts;
+using Nethereum.Signer;
+
+var sponsorAccount = new Account(sponsorPrivateKey, chainId: 1);
+var web3 = new Web3(sponsorAccount, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+
+var sponsorAuthorisationService = new EIP7022SponsorAuthorisationService(web3.TransactionManager, web3.Eth);
+
+var sponsoredKey = new EthECKey(sponsoredPrivateKey);
+var txHash = await sponsorAuthorisationService.AuthoriseSponsoredRequestAsync(sponsoredKey, delegateContractAddress);
+
+// Sponsor multiple sponsored keys to the same contract in one transaction
+var sponsoredKeys = new[] { new EthECKey(key1), new EthECKey(key2) };
+var batchReceipt = await sponsorAuthorisationService.AuthoriseBatchSponsoredRequestAndWaitForReceiptAsync(sponsoredKeys, delegateContractAddress);
+```
+
+`Web3.GetEIP7022SponsorAuthorisation()` builds this service directly from a `Web3` instance (`new EIP7022SponsorAuthorisationService(TransactionManager, Eth)`).
+
+*Source: `src/Nethereum.Accounts/EIP7022SponsorAuthorisationService.cs:28` (ctor), `:98` (`AuthoriseSponsoredRequestAsync`), `:113` (`AuthoriseBatchSponsoredRequestAndWaitForReceiptAsync`)*
+
+## EIP-4844 Blob Transactions
+
+`AccountSignerTransactionManager.SendBlobTransactionAsync` builds, signs, and sends a Type-3 (blob-carrying) transaction, computing KZG commitments/proofs via an `IBlobKzgProvider`. `CkzgOperations` (a ready-made `IBlobKzgProvider`) ships in the separate **Nethereum.EVM.Precompiles.Kzg** package - add it alongside Nethereum.Accounts to use blob transactions:
+
+```csharp
+using Nethereum.Accounts;
+using Nethereum.EVM.Precompiles.Kzg; // CkzgOperations : IBlobKzgProvider
+
+var account = new Account(privateKey, chainId: 1);
+var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR-PROJECT-ID");
+
+var kzg = new CkzgOperations();
+var blobData = System.Text.Encoding.UTF8.GetBytes("some data to publish as a blob");
+
+var txHash = await ((AccountSignerTransactionManager)web3.TransactionManager)
+    .SendBlobTransactionAsync(blobData, "0xRECIPIENT_ADDRESS", kzg);
+
+Console.WriteLine($"Blob transaction hash: {txHash}");
+```
+
+*Source: `src/Nethereum.Accounts/AccountSignerTransactionManager.cs`*
 
 ## Best Practices
 
@@ -964,7 +1117,7 @@ var signature = await account.AccountSigningService.SignTypedDataV4.SendRequestA
    var balance = await web3.Eth.GetBalance.SendRequestAsync(account.Address);
    if (balance.Value < requiredAmount)
    {
-       throw new InsufficientFundsException();
+       throw new InvalidOperationException("Insufficient balance");
    }
    ```
 
@@ -1059,7 +1212,9 @@ catch (Exception ex)
 - `string Password` - Password for node
 - `ITransactionManager TransactionManager` - ManagedAccountTransactionManager
 - `INonceService NonceService` - Optional nonce service
-- `IAccountSigningService AccountSigningService` - Signing service
+- `IAccountSigningService AccountSigningService` - **always `null`** (`private set`, never assigned), so `PersonalSign`/`SignTypedDataV4` through it are not available; `ManagedAccount` sends transactions through the node's `personal_sendTransaction` (`PersonalSignAndSendTransaction`)
+
+*Source: `src/Nethereum.Accounts/Managed/ManagedAccount.cs:34`*
 
 ### ExternalAccount Class
 
@@ -1101,6 +1256,52 @@ catch (Exception ex)
 - `string SignTransaction(TransactionInput transaction)` - Synchronous signing
 - `Task<HexBigInteger> GetNonceAsync(TransactionInput transaction)` - Get next nonce
 - `Task<Authorisation> SignAuthorisationAsync(Authorisation authorisation)` - Sign EIP-7702 authorization
+- `Task<string> SendBlobTransactionAsync(byte[] data, string to, IBlobKzgProvider kzg, HexBigInteger maxFeePerBlobGas = null, HexBigInteger value = null, string inputData = null)` - Build, sign, and send an EIP-4844 blob transaction
+
+### Bip39 and MinimalHDWallet Classes
+
+**Bip39 (static):**
+- `const int MaxInputLength = 4096`
+- `string GenerateMnemonic(int wordCount = 12)`, `string EntropyToMnemonic(byte[] entropy)`
+- `byte[] MnemonicToSeed(string mnemonic, string password = "")` - validates the mnemonic and derives from its canonical form
+- `byte[] MnemonicToSeed(string mnemonic, string password, bool validateMnemonic)` - `false` derives from the raw NFKD phrase and skips the length checks
+- `string NormalizeMnemonic(string mnemonic)` (NFKD, lower-cased, whitespace collapsed; bounded by `MaxInputLength`; no word-list or checksum check), `string CanonicalMnemonic(string mnemonic)` (validated and normalized)
+- `bool IsValidMnemonic(string mnemonic)`, `void ValidateMnemonic(string mnemonic)` - throws `ArgumentException`
+- `bool IsLegacyUppercaseWordMnemonic(string mnemonic)`, `bool IsNonStandardMnemonicForm(string mnemonic)`
+
+**MinimalHDWallet:**
+- `const int MaxDepth = 255`
+- `MinimalHDWallet(string mnemonic, string password = "")`, `MinimalHDWallet(string mnemonic, string password, bool validateMnemonic)`, `MinimalHDWallet(byte[] seed)`
+- `EthECKey GetKeyFromPath(string derivationPath)`, `EthECKey GetEthereumKey(int accountIndex)`, `string GetEthereumAddress(int index)`
+
+### BasicAccount Class
+
+**Constructors:**
+- `BasicAccount(string accountAddress)` - Create basic account
+- `BasicAccount(string accountAddress, BasicAccountTransactionManager transactionManager)` - With explicit transaction manager
+
+**Properties:**
+- `string Address` - Ethereum address
+- `ITransactionManager TransactionManager` - BasicAccountTransactionManager (sends via `eth_sendTransaction`; `SignTransactionAsync`/`SignAuthorisationAsync` throw)
+- `INonceService NonceService` - Optional nonce service
+- `IAccountSigningService AccountSigningService` - Signing service (`private set`; not assigned by default)
+
+### AccountAbstractionAccount Class
+
+**Constructor:**
+- `AccountAbstractionAccount(string smartAccountAddress, IAccountSigningService accountSigningService)` - Create smart-account wrapper (inherits `ViewOnlyAccount`; throws `ArgumentNullException` if `accountSigningService` is null)
+
+### EIP7022SponsorAuthorisationService Class
+
+**Constructor:**
+- `EIP7022SponsorAuthorisationService(ITransactionManager transactionManager, IEthApiService ethApiService)` - also obtainable via `web3.GetEIP7022SponsorAuthorisation()`
+
+**Key Methods:**
+- `Task<Authorisation> SignSponsoredAuthorisationAsync(EthECKey privateKeySponsoredAccount, string contractAddress, bool useUniversalZeroChainId = false, bool brandNewAccount = false)` - Sign only
+- `Task<string> AuthoriseSponsoredRequestAsync(EthECKey privateKeySponsoredAccount, string contractAddress, int topUpGas = 1000, bool useUniversalZeroChainId = false, bool brandNewAccount = false)` - Sign and send
+- `Task<TransactionReceipt> AuthoriseSponsoredRequestAndWaitForReceiptAsync(...)` - Sign, send, and wait for receipt
+- `Task<string> AuthoriseBatchSponsoredRequestAsync(EthECKey[] privateKeySponsoredAccounts, string contractAddress, ...)` - Batch multiple sponsored keys into one transaction
+- `Task<TransactionReceipt> AuthoriseBatchSponsoredRequestAndWaitForReceiptAsync(...)` - Batch, and wait for receipt
 
 ## Related Packages
 

@@ -15,11 +15,11 @@ Nethereum supports multiple JSON-RPC transports. Choose based on your platform, 
 |-----------|---------|----------|-----------|-----|----------|
 | HTTP (default) | `Nethereum.JsonRpc.RpcClient` | HTTP/HTTPS | No | No | General-purpose, server apps |
 | SystemTextJson HTTP | `Nethereum.JsonRpc.SystemTextJsonRpcClient` | HTTP/HTTPS | No | **Yes** | AOT, Native AOT, trimming |
-
-Nethereum provides two HTTP client packages because they serve different ecosystems: `Nethereum.JsonRpc.RpcClient` uses Newtonsoft.Json (the original, broadest compatibility); `Nethereum.JsonRpc.SystemTextJsonRpcClient` uses System.Text.Json (faster, AOT-compatible). Choose based on your deployment target.
 | WebSocket | `Nethereum.JsonRpc.WebSocketClient` | WS/WSS | **Yes** | No | Subscriptions, low latency |
 | WebSocket Streaming | `Nethereum.JsonRpc.WebSocketStreamingClient` | WS/WSS | **Yes** | No | Real-time event streams |
 | IPC | `Nethereum.JsonRpc.IpcClient` | Unix/Named pipe | No | No | Local node, lowest latency |
+
+Nethereum provides two HTTP client packages because they serve different ecosystems: `Nethereum.JsonRpc.RpcClient` uses Newtonsoft.Json (the original, broadest compatibility); `Nethereum.JsonRpc.SystemTextJsonRpcClient` uses System.Text.Json (faster, AOT-compatible). Choose based on your deployment target.
 
 ## HTTP Transport (Default)
 
@@ -37,7 +37,7 @@ var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_KEY");
 
 ## SystemTextJson HTTP Transport (AOT-Compatible)
 
-Drop-in replacement using `System.Text.Json`. Required for Native AOT and trimmed deployments. Requires .NET 7.0+.
+Drop-in replacement using `System.Text.Json`. Required for Native AOT and trimmed deployments. Requires .NET 9.0+.
 
 ```bash
 dotnet add package Nethereum.JsonRpc.SystemTextJsonRpcClient
@@ -74,7 +74,7 @@ var web3Full = new Web3(rpcClient);
 Use for Ethereum subscriptions (`eth_subscribe`) — new blocks, pending transactions, and event logs in real time.
 
 ```bash
-dotnet add package Nethereum.JsonRpc.WebSocketStreamingClient
+dotnet add package Nethereum.JsonRpc.WebSocketClient
 ```
 
 ```csharp
@@ -102,7 +102,7 @@ using Nethereum.Web3;
 var client = new IpcClient("/home/user/.ethereum/geth.ipc");
 
 // Windows
-var client = new IpcClient(@"\\.\pipe\geth.ipc");
+var ipcClient = new IpcClient(@"\\.\pipe\geth.ipc");
 
 var web3 = new Web3(client);
 ```
@@ -111,8 +111,14 @@ var web3 = new Web3(client);
 
 You can use a WebSocket connection for standard (non-subscription) RPC calls using observable handlers:
 
+```bash
+dotnet add package Nethereum.JsonRpc.WebSocketClient
+dotnet add package Nethereum.RPC.Reactive
+```
+
 ```csharp
 using Nethereum.JsonRpc.WebSocketStreamingClient;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.RPC.Reactive.Eth;
 
 var client = new StreamingWebSocketClient("wss://mainnet.infura.io/ws/v3/YOUR_KEY");
@@ -173,8 +179,8 @@ Console.WriteLine(Web3.Convert.FromWei(tokenBalance, 18));
 
 **Use SystemTextJson HTTP** when:
 - Targeting Native AOT or trimmed deployments
-- Running on .NET 7.0+ and want `System.Text.Json` consistency
-- Building Unity WebGL or Blazor WASM apps
+- Running on .NET 9.0+ and want `System.Text.Json` consistency
+- Building Blazor WASM apps
 
 **Use WebSocket** when:
 - You need `eth_subscribe` for new blocks or pending transactions

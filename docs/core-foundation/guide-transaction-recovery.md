@@ -22,19 +22,20 @@ The simplest case: you have a transaction hash and want to know who sent it.
 ```csharp
 using Nethereum.Web3;
 using Nethereum.Signer;
+using Nethereum.RPC.Eth.Mappers;
 
 var web3 = new Web3("http://localhost:8545");
 
 var tx = await web3.Eth.Transactions.GetTransactionByHash
     .SendRequestAsync("0xYOUR_TRANSACTION_HASH");
 
-var sender = TransactionVerificationAndRecovery
-    .GetSenderAddress(tx);
+var chainId = await web3.Eth.ChainId.SendRequestAsync();
+var sender = tx.ToSignedTransaction(chainId.Value).SignedTransaction.GetSenderAddress();
 
 Console.WriteLine("Sender: " + sender);
 ```
 
-`TransactionVerificationAndRecovery.GetSenderAddress` handles all transaction types (Legacy, EIP-1559, EIP-2930) and chain ID extraction automatically.
+`GetSenderAddress` handles all transaction types (Legacy, EIP-1559, EIP-2930); typed transactions need the chain ID, which is why it is passed to `ToSignedTransaction`.
 
 ## Understanding V, R, S
 
@@ -46,7 +47,7 @@ Every Ethereum transaction includes three signature components:
 These are visible on any transaction object returned by an RPC node:
 
 ```csharp
-Console.WriteLine("V: " + tx.V.Value);
+Console.WriteLine("V: " + tx.V);
 Console.WriteLine("R: " + tx.R);
 Console.WriteLine("S: " + tx.S);
 ```
@@ -63,6 +64,7 @@ The private key below is for local testing only. Never hardcode private keys in 
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.RPC.Eth.Mappers;
 using Nethereum.RPC.TransactionManagers;
 using Nethereum.Signer;
 
@@ -82,8 +84,9 @@ var txnHash = await web3.Eth.Transactions.SendRawTransaction
 var txFromChain = await web3.Eth.Transactions.GetTransactionByHash
     .SendRequestAsync(txnHash);
 
-var recoveredSender = TransactionVerificationAndRecovery
-    .GetSenderAddress(txFromChain);
+var chainId = await web3.Eth.ChainId.SendRequestAsync();
+var recoveredSender = txFromChain.ToSignedTransaction(chainId.Value)
+    .SignedTransaction.GetSenderAddress();
 
 Console.WriteLine("Original sender:  " + account.Address);
 Console.WriteLine("Recovered sender: " + recoveredSender);

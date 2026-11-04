@@ -145,8 +145,8 @@ var amounts = uniswap.Positions.LiquidityCalculator.GetAmountsForLiquidityByTick
     tickUpper,
     liquidity);
 
-var amount0 = amounts.Item1;
-var amount1 = amounts.Item2;
+var amount0 = amounts.Amount0;
+var amount1 = amounts.Amount1;
 ```
 
 ## Slippage and Price Impact Protection
@@ -158,14 +158,17 @@ var uniswap = web3.UniswapV4();
 // For exact input swaps (you know input, calculate min output)
 var tolerance = new BigDecimal(0.5m); // 0.5% slippage
 
-var minAmountOut = uniswap.Pricing.SlippageCalculator.CalculateMinimumAmountOut(
+// CalculateMinimumAmountOut returns a SlippageResult; the amount is on .AmountWithSlippage
+var minAmountOutResult = uniswap.Pricing.SlippageCalculator.CalculateMinimumAmountOut(
     expectedAmountOut,
     tolerance);
+var minAmountOut = minAmountOutResult.AmountWithSlippage;
 
 // For exact output swaps (you know output, calculate max input)
-var maxAmountIn = uniswap.Pricing.SlippageCalculator.CalculateMaximumAmountIn(
+var maxAmountInResult = uniswap.Pricing.SlippageCalculator.CalculateMaximumAmountIn(
     expectedAmountIn,
     tolerance);
+var maxAmountIn = maxAmountInResult.AmountWithSlippage;
 ```
 
 ### Calculate and Monitor Price Impact
@@ -173,18 +176,23 @@ var maxAmountIn = uniswap.Pricing.SlippageCalculator.CalculateMaximumAmountIn(
 var uniswap = web3.UniswapV4();
 var calculator = uniswap.Pricing.PriceImpactCalculator;
 
-// Calculate price impact percentage
-var priceImpact = calculator.CalculatePriceImpact(
-    inputAmount,
-    outputAmount,
-    midPrice);
+// Calculate price impact from the price before and after the swap.
+// Returns a PriceImpactResult with the percentage, classified level, message and a warning flag.
+var priceImpact = calculator.CalculatePriceImpact(priceBefore, priceAfter);
 
-// Classify impact level
-var impactLevel = calculator.ClassifyPriceImpact(priceImpact);
-// Returns: Low (<1%), Medium (1-3%), High (3-5%), Critical (>5%)
+Console.WriteLine($"Impact: {priceImpact.PriceImpactPercentage:F2}%");
+Console.WriteLine($"Level: {priceImpact.ImpactLevel}"); // Low (<1%), Medium (1-3%), High (3-5%), Critical (>5%)
+Console.WriteLine($"Message: {priceImpact.Message}");   // user-friendly explanation
+if (priceImpact.ShouldWarn)
+{
+    Console.WriteLine("Warning: price impact is high, consider reducing the trade size");
+}
 
-// Get user-friendly warning message
-var warning = calculator.GetPriceImpactWarning(impactLevel);
+// Classify a raw impact percentage on its own
+var impactLevel = calculator.GetPriceImpactLevel(priceImpact.PriceImpactPercentage);
+
+// Or compute the impact directly from pool reserves
+var impactFromReserves = calculator.CalculatePriceImpactFromReserves(amountIn, reserveIn, reserveOut);
 ```
 
 ## Pool Discovery and Caching
@@ -285,7 +293,7 @@ var receipt = await positionManager.ModifyLiquiditiesRequestAndWaitForReceiptAsy
         AmountToSend = Web3.Web3.Convert.ToWei(0.1m)
     });
 
-var tokenId = V4PositionReceiptHelper.GetMintedTokenId(receipt, UniswapAddresses.MainnetPositionManagerV4);
+var tokenId = receipt.GetMintedTokenId(UniswapAddresses.MainnetPositionManagerV4);
 ```
 
 ### Querying Position Information
@@ -587,6 +595,7 @@ if (!balanceResult.HasSufficientBalance)
 
 // Validate both tokens for liquidity operations
 var hasBalance = await uniswap.Accounts.Balances.ValidateBalancesForLiquidityAsync(
+    web3,
     token0,
     token1,
     owner,
@@ -596,13 +605,13 @@ var hasBalance = await uniswap.Accounts.Balances.ValidateBalancesForLiquidityAsy
 
 ## Example Test Files
 
-Complete working examples can be found in the test files:
-- **V4SwapExamples.cs** - Swap operations and Universal Router usage
-- **V4PriceAndQuoteExamples.cs** - Price calculations, slippage, and price impact
-- **V4HelperExamples.cs** - Token approvals, balance validation, and price services
-- **V4PoolCacheExamples.cs** - Pool discovery and caching strategies
-- **V4PositionExamples.cs** - Position management, liquidity operations, and atomic rebalancing
-```
+The snippets above are illustrative. Complete, runnable examples live in the external test
+project `Nethereum.Uniswap.Testing` in the [Nethereum.UniswapV2 repository](https://github.com/Nethereum/Nethereum.UniswapV2), covering:
+- Swap operations and Universal Router usage
+- Price calculations, slippage, and price impact
+- Token approvals, balance validation, and price services
+- Pool discovery and caching strategies
+- Position management, liquidity operations, and atomic rebalancing
 
 
 # Uniswap V3 / Permit 2 / V2Quoter
@@ -668,9 +677,13 @@ var permit = new PermitSingle()
     }
 };
 
-var permitService = new Permit2Service(web3, permit2);
-var signedPermit = await permitService.GetSinglePermitWithSignatureAsync(permit, new EthECKey(privateKey));
+var chainId = await web3.Eth.ChainId.SendRequestAsync();
+var signature = PermitSigner.SignPermitSingle(chainId.Value, permit2, permit, new EthECKey(privateKey));
 ```
+
+> **Note:** Permit2 signing uses `PermitSigner` from `Nethereum.Signer.EIP712.Permit2` (with the message
+> types in `Nethereum.ABI.EIP712.Permit2`), and Permit2 contract calls use the first-class
+> `web3.Eth.GetPermit2Service()` from `Nethereum.Contracts.Standards.Permit2`.
 
 ### Build and Execute Swap
 ```csharp
@@ -685,8 +698,8 @@ planner.AddCommand(new WrapEthCommand
 
 planner.AddCommand(new Permit2PermitCommand
 {
-    Permit = signedPermit.PermitRequest,
-    Signature = signedPermit.GetSignatureBytes()
+    Permit = permit,
+    Signature = signature.HexToByteArray()
 });
 
 planner.AddCommand(new V3SwapExactInCommand
@@ -727,15 +740,13 @@ catch (SmartContractCustomErrorRevertException e)
 
 ## Uniswap V2 ERC20 single path and multipath
 
-To enable hardhat.
-
-1. Go to the directory testchains\hardhat and run ```npm install```
-2. Configure your fork alchemy api key and block number in your Test settings https://github.com/Nethereum/Nethereum.UniswapV2/blob/main/Nethereum.Uniswap.Testing/appsettings.test.json#L6
-3. When you run your tests it will automatically launch hardhat and fork on the configured block number.
-
 ### Code example
 
 ```csharp
+using Nethereum.Uniswap.V2.UniswapV2Factory;
+using Nethereum.Uniswap.V2.UniswapV2Router02;
+using Nethereum.Uniswap.V2.UniswapV2Router02.ContractDefinition;
+
         [Fact]
         public async void ShouldBeAbleToGetThePairForDaiWeth()
         {
@@ -767,7 +778,7 @@ To enable hardhat.
             
             var deadline = DateTimeOffset.Now.AddMinutes(15).ToUnixTimeSeconds();
             
-            var swapEthForExactTokens = new Contracts.UniswapV2Router02.ContractDefinition.SwapExactETHForTokensFunction()
+            var swapEthForExactTokens = new SwapExactETHForTokensFunction()
             {
                 AmountOutMin = amounts[1],
                 Path = path,

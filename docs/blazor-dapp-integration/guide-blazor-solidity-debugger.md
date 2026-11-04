@@ -39,23 +39,34 @@ The Monaco editor is loaded from a CDN by the interop script.
 
 ## Debug a Transaction
 
-Point the `EvmDebugger` component at a transaction hash and a directory containing compiled Solidity artifacts:
+Replay the transaction with `IEvmDebugService.ReplayTransactionAsync` and pass the result to the `EvmDebugger` component through its `Session`, `IsRevert`, `HasSourceMaps`, `SourceFiles` and `FileContents` parameters:
 
 ```razor
 @using Nethereum.Blazor.Solidity.Components
+@using Nethereum.Blazor.Solidity.Services
+@inject IEvmDebugService DebugService
 
-<EvmDebugger TransactionHash="@txHash"
-             Web3="@web3"
-             ABIDirectory="@abiDir" />
+@if (replay?.Session != null)
+{
+    <EvmDebugger Session="replay.Session"
+                 IsRevert="replay.IsRevert"
+                 HasSourceMaps="replay.HasSourceMaps"
+                 SourceFiles="replay.SourceFiles"
+                 FileContents="replay.FileContents" />
+}
 
 @code {
     private string txHash = "0xabc123...";
-    private Nethereum.Web3.Web3 web3 = new("http://localhost:8545");
-    private string abiDir = "C:/project/out";
+    private EvmReplayResult replay;
+
+    protected override async Task OnInitializedAsync()
+    {
+        replay = await DebugService.ReplayTransactionAsync(txHash);
+    }
 }
 ```
 
-The `ABIDirectory` should point to the compiler output folder (Forge's `out/`, Hardhat's `artifacts/`, or `solc --combined-json` output). The debugger scans this directory to match deployed bytecode against compiled artifacts and load source maps.
+The service matches the deployed bytecode against compiled artifacts (Foundry-style `out/` artifacts and build-info files) to load source maps.
 
 ## How It Works
 

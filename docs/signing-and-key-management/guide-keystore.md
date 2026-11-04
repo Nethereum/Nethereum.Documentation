@@ -57,7 +57,7 @@ var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
     "password", privateKeyBytes, address);
 
 // Light: N=32 (fast — WASM, mobile, tests)
-var scryptParams = new ScryptParams { N = 32, R = 8, P = 6 };
+var scryptParams = new ScryptParams { Dklen = 32, N = 32, R = 8, P = 6 };
 var json = keyStoreService.EncryptAndGenerateKeyStoreAsJson(
     "password", privateKeyBytes, address, scryptParams);
 ```
@@ -93,8 +93,8 @@ var account = new Nethereum.Web3.Accounts.Account(privateKeyBytes, chainId: 1);
 <!-- tag:KeyStoreDocExampleTests:ShouldDetectKdfTypeInJson -->
 
 ```csharp
-var kdfType = KeyStoreKdfChecker.GetKdfType(json);
-// Returns "scrypt" or "pbkdf2"
+var kdfType = new KeyStoreKdfChecker().GetKeyStoreKdfType(json);
+// Returns KeyStoreKdfChecker.KdfType.scrypt or KeyStoreKdfChecker.KdfType.pbkdf2
 ```
 
 ## Default KeyStore Service

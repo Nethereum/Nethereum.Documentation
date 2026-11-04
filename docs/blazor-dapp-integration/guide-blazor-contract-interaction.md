@@ -44,22 +44,22 @@ Use `Nethereum.DataServices` to fetch a verified ABI by contract address:
 
 ```csharp
 using Nethereum.DataServices.Sourcify;
-using Nethereum.ABI.FunctionEncoding;
+using Nethereum.ABI.ABIDeserialisation;
 
-var sourcifyService = new SourcifyApiService();
-var abiJson = await sourcifyService.GetContractABIAsync(
-    chainId: 1, contractAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7");
+var sourcifyService = new SourcifyApiServiceV2();
+var abiJson = await sourcifyService.GetContractAbiAsync(
+    1, "0xdAC17F958D2ee523a2206206994597C13D831ec7");
 
-var contractAbi = new ContractABI(abiJson);
+var contractAbi = ABIDeserialiserFactory.DeserialiseContractABI(abiJson);
 ```
 
 ### From a JSON String
 
 ```csharp
-using Nethereum.ABI.Model;
+using Nethereum.ABI.ABIDeserialisation;
 
 var abiJson = "[{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]";
-var contractAbi = ABIDeserialiser.DeserialiseContract(abiJson);
+var contractAbi = ABIDeserialiserFactory.DeserialiseContractABI(abiJson);
 ```
 
 ## Calling Read Functions
@@ -67,7 +67,7 @@ var contractAbi = ABIDeserialiser.DeserialiseContract(abiJson);
 Use `DynamicQueryFunction` to call a view/pure function and display the result:
 
 ```razor
-@using Nethereum.Blazor.DynamicContract
+@using Nethereum.Blazor
 @using Nethereum.ABI.Model
 
 <DynamicQueryFunction FunctionABI="@selectedFunction"
@@ -90,7 +90,7 @@ The component renders input fields matching the function's parameters, a Query b
 ```razor
 <DynamicTransactionFunction FunctionABI="@transferFunction"
                             ContractAddress="@contractAddress"
-                            Web3="@web3" />
+                            HostProvider="@hostProviderService" />
 ```
 
 After submission, `DynamicReceiptDisplay` shows the transaction hash, status, gas used, and block number. If the transaction reverts, `DynamicErrorDisplay` decodes the revert reason or custom error using the ABI.
@@ -101,9 +101,12 @@ Combine the components to build a page that lets users pick any function from an
 
 ```razor
 @page "/contract/{Address}"
-@using Nethereum.Blazor.DynamicContract
+@using Nethereum.Blazor
 @using Nethereum.ABI.Model
+@using Nethereum.ABI.ABIDeserialisation
+@using Nethereum.UI
 @inject IEthereumHostProvider WalletProvider
+@inject SelectedEthereumHostProviderService hostProviderService
 
 <h3>Contract: @Address</h3>
 
@@ -122,7 +125,7 @@ Combine the components to build a page that lets users pick any function from an
     {
         <DynamicTransactionFunction FunctionABI="@func"
                                     ContractAddress="@Address"
-                                    Web3="@web3" />
+                                    HostProvider="@hostProviderService" />
     }
 }
 
@@ -139,15 +142,14 @@ Combine the components to build a page that lets users pick any function from an
         var abiJson = await LoadAbiForContract(Address);
         if (abiJson != null)
         {
-            contractAbi = ABIDeserialiser.DeserialiseContract(abiJson);
+            contractAbi = ABIDeserialiserFactory.DeserialiseContractABI(abiJson);
         }
     }
 
     private async Task<string> LoadAbiForContract(string address)
     {
-        var sourcify = new Nethereum.DataServices.Sourcify.SourcifyApiService();
-        return await sourcify.GetContractABIAsync(
-            chainId: 1, contractAddress: address);
+        var sourcify = new Nethereum.DataServices.Sourcify.SourcifyApiServiceV2();
+        return await sourcify.GetContractAbiAsync(1, address);
     }
 }
 ```

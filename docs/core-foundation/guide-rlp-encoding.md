@@ -43,7 +43,7 @@ byte[] valueBytes = value.ToBytesForRLPEncoding();
 byte[] encoded = RlpEncoder.EncodeElement(valueBytes);
 
 IRLPElement decoded = RlpEncoder.Decode(encoded);
-int decodedValue = decoded.RLPData.ToBigIntegerFromRLPDecoded().ToInt32();
+int decodedValue = decoded.RLPData.ToIntFromRLPDecoded();
 Console.WriteLine($"Decoded integer: {decodedValue}"); // 1024
 ```
 

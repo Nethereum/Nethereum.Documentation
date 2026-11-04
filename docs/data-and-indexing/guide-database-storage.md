@@ -87,7 +87,7 @@ All hosted services read from `BlockchainProcessing` in `appsettings.json`:
 {
   "BlockchainProcessing": {
     "BlockchainUrl": "http://localhost:8545",
-    "Name": "My Chain",
+    "Blockchain": "My Chain",
     "MinimumBlockConfirmations": 12,
     "FromBlock": null,
     "ToBlock": null,
@@ -143,7 +143,9 @@ If you need custom processing logic instead of the hosted services, use the repo
 
 ```csharp
 builder.Services.AddPostgresBlockchainStorage(connectionString);
-// This registers IBlockchainStoreRepositoryFactory and all individual repositories
+// This registers IBlockchainStoreRepositoryFactory, IBlockProgressRepositoryFactory, IChainStateRepositoryFactory,
+// and IBlockRepository, ITransactionRepository, ITransactionLogRepository, ITransactionVMStackRepository,
+// IContractRepository, IAddressTransactionRepository, IBlockProgressRepository and IChainStateRepository
 ```
 
 Then inject and use repositories:
@@ -170,9 +172,7 @@ public class MyProcessor
 
     public async Task ProcessBlockAsync(BlockWithTransactions block)
     {
-        await _blockRepo.UpsertBlockAsync(block.MapToStorageEntity());
-        foreach (var tx in block.Transactions)
-            await _txRepo.UpsertAsync(tx.MapToStorageEntity());
+        await _blockRepo.UpsertBlockAsync(block);
         await _progressRepo.UpsertProgressAsync(block.Number.Value);
     }
 }
@@ -182,14 +182,14 @@ public class MyProcessor
 
 | Interface | Key Methods |
 |-----------|------------|
-| `IBlockRepository` | `UpsertBlockAsync`, `FindByBlockNumberAsync`, `GetMaxBlockNumberAsync`, `MarkNonCanonicalAsync` |
-| `ITransactionRepository` | `UpsertAsync`, `FindByHashAsync`, `MarkNonCanonicalAsync` |
-| `ITransactionLogRepository` | `UpsertAsync`, `FindByTransactionHashAndIndexAsync`, `MarkNonCanonicalAsync` |
+| `IBlockRepository` | `UpsertBlockAsync`, `FindByBlockNumberAsync` |
+| `ITransactionRepository` | `UpsertAsync`, `FindByBlockNumberAndHashAsync`, `UpdateRevertReasonAsync` |
+| `ITransactionLogRepository` | `UpsertAsync`, `FindByTransactionHashAndLogIndexAsync` |
 | `IContractRepository` | `UpsertAsync`, `FindByAddressAsync` |
-| `IInternalTransactionRepository` | `UpsertAsync`, `FindByTransactionHashAsync` |
+| `IInternalTransactionRepository` | `UpsertAsync`, `GetByTransactionHashAsync`, `GetByAddressAsync`, `GetContractTransactionsInRangeAsync` |
 | `IBlockProgressRepository` | `UpsertProgressAsync`, `GetLastBlockNumberProcessedAsync` |
-| `IChainStateRepository` | `UpsertAsync`, `GetAsync` |
-| `IReorgHandler` | `HandleReorgAsync(fromBlock)` |
+| `IChainStateRepository` | `GetChainStateAsync`, `UpsertChainStateAsync` |
+| `IReorgHandler` | `MarkBlockRangeNonCanonicalAsync(fromBlock, toBlock)` |
 
 ### Wire with BlockchainProcessing
 
@@ -200,7 +200,7 @@ var web3 = new Web3("http://localhost:8545");
 var repoFactory = serviceProvider.GetRequiredService<IBlockchainStoreRepositoryFactory>();
 
 var processor = web3.Processing.Blocks.CreateBlockStorageProcessor(
-    repositoryFactory: repoFactory,
+    blockchainStorageFactory: repoFactory,
     minimumBlockConfirmations: 12,
     configureSteps: steps =>
     {
@@ -251,8 +251,8 @@ The service uses the `callTracer` to extract the full call tree for each transac
 | Block | (BlockNumber, Hash) | BlockNumber, Hash, ParentHash, (IsCanonical, BlockNumber) |
 | Transaction | (BlockNumber, Hash) | Hash, AddressFrom, AddressTo, NewContractAddress |
 | TransactionLog | (TransactionHash, LogIndex) | BlockNumber, Address, EventHash |
-| InternalTransaction | (TransactionHash, Index) | BlockNumber |
-| Contract | Address | -- |
+| InternalTransaction | (TransactionHash, TraceIndex) | BlockNumber |
+| Contract | -- | Name, Address (non-unique) |
 
 ---
 

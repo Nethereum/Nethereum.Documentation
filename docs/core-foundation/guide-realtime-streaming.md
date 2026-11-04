@@ -20,7 +20,7 @@ Both use [Reactive Extensions (Rx)](https://github.com/dotnet/reactive) for a un
 
 ```bash
 dotnet add package Nethereum.RPC.Reactive
-dotnet add package Nethereum.JsonRpc.WebSocketStreamingClient
+dotnet add package Nethereum.JsonRpc.WebSocketClient
 ```
 
 You need a WebSocket endpoint (starts with `wss://`). Most providers offer one — Infura, Alchemy, Ankr, or a local node with `--ws` enabled. For HTTP-only fallback, see [Polling-Based Streams](#polling-based-streams-http) below.
@@ -267,9 +267,7 @@ var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_KEY");
 ### Poll for New Blocks
 
 ```csharp
-var blockStream = web3.Eth.Blocks
-    .GetBlockWithTransactionsByNumber
-    .CreateObservable(intervalMs: 2000);
+var blockStream = web3.Eth.GetBlocksWithTransactions();
 
 blockStream.Subscribe(block =>
 {
@@ -277,7 +275,7 @@ blockStream.Subscribe(block =>
 });
 ```
 
-The polling interval controls the trade-off between latency and request volume. 2 seconds is reasonable for most use cases.
+The optional `poller` argument (default `Polling.DefaultPoller`, a 250 ms timer) controls how often the node is polled.
 
 ---
 
@@ -290,7 +288,7 @@ using System.Reactive.Linq;
 
 // Only blocks with gas usage above 15M (near-full blocks)
 subscription.GetSubscriptionDataResponsesAsObservable()
-    .Where(block => block.GasUsed > 15_000_000)
+    .Where(block => block.GasUsed.Value > 15_000_000)
     .Select(block => new { block.Number, block.GasUsed })
     .Subscribe(b => Console.WriteLine($"High-gas block: {b.Number}"));
 

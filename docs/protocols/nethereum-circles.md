@@ -2,7 +2,7 @@
 title: "Nethereum.Circles"
 sidebar_label: "Nethereum.Circles"
 sidebar_position: 100
-description: "Nethereum service library for interacting with [Circles](https://circles.garden/) UBI (Universal Basic Income) protocol contracts on Gnosis Chain."
+description: "Nethereum service library for interacting with Circles UBI (Universal Basic Income) protocol contracts on Gnosis Chain."
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Circles/README.md"
 format: md
 ---
@@ -161,7 +161,7 @@ foreach (var relation in trustRelations.Response)
 ## Dependencies
 
 - **Nethereum.Web3**: Core Web3 functionality
-- **Nethereum.GnosisSafe**: For Safe-based transaction execution (optional)
+- **Nethereum.GnosisSafe**: Optional companion package for Safe-based transaction execution (not a dependency of Nethereum.Circles)
 
 ## References
 

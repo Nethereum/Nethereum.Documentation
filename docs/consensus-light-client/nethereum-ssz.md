@@ -436,6 +436,9 @@ SszReader(ReadOnlySpan<byte> data)  // Creates reader over byte span (ref struct
 
 **Utility:**
 - `byte[] ReadRemaining()`: Read all remaining bytes
+- `int Remaining`: Number of bytes not yet read
+
+**Bounds:** a read past the end of the buffer throws `InvalidOperationException`. `ReadList<T>` throws `InvalidOperationException` when `count` is larger than `Remaining`, and `ReadVector` throws `ArgumentOutOfRangeException` for a negative `elementCount` or `elementSize` and `InvalidOperationException` when `elementCount * Math.Max(elementSize, 1)` is larger than `Remaining` (a zero `elementSize` counts as 1), so a declared count cannot allocate more than the buffer can hold.
 
 ### SszMerkleizer
 
@@ -521,7 +524,7 @@ Computes SHA-256 Merkle roots for SSZ types.
 **`bool VerifyProof(byte[] leaf, IList<byte[]> branch, int depth, int index, byte[] root)`**
 - Verify a Merkle proof against a known root
 - `leaf`: 32-byte leaf node to verify
-- `branch`: list of sibling hashes along the path (must contain at least `depth` entries)
+- `branch`: list of sibling hashes along the path (must contain exactly `depth` entries)
 - `depth`: number of levels in the proof
 - `index`: position of the leaf in the tree (bit flags determine left/right at each level)
 - `root`: expected 32-byte Merkle root

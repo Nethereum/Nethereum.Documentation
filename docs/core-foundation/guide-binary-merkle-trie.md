@@ -23,7 +23,7 @@ EIP-7864 proposes replacing Ethereum's Patricia Merkle Trie with a binary struct
 
 - **Smaller proofs** — binary branching (2 children) vs hexary (16 children) means fewer sibling hashes per proof
 - **Stem colocality** — account data, code, and storage for the same address share a 31-byte stem with 256 colocated values
-- **Faster hashing** — BLAKE3 is ~6x faster than Keccak-256
+- **Faster hashing** — BLAKE3 as an alternative to Keccak-256
 
 This library implements the full EIP-7864 specification for experimentation, testing, and tooling.
 
@@ -199,4 +199,4 @@ var blake3Trie = new BinaryTrie(new Blake3HashProvider());
 
 - [Nethereum.Merkle.Binary Package Reference](nethereum-merkle-binary) — Full API reference
 - [Nethereum.Merkle Package Reference](nethereum-merkle) — Standard and sparse Merkle trees
-- [Sparse Merkle Trees for ZK Circuits](guide-sparse-merkle-zk) — ZK-optimized trees with Poseidon hashing
+- [Sparse Merkle Trees for ZK Circuits](../zk-proofs/guide-sparse-merkle-zk) — ZK-optimized trees with Poseidon hashing

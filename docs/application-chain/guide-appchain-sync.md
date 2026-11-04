@@ -2,223 +2,195 @@
 title: Syncing Follower Nodes
 sidebar_label: Syncing
 sidebar_position: 4
-description: Sync AppChain follower nodes — multi-peer live polling, batch import, state re-execution, finality tracking
+description: How AppChain follower nodes sync — the shared DevP2P stack, snap bootstrap, forward execution, and independent state-root verification
 ---
 
 # Syncing Follower Nodes
 
 > **PREVIEW** — AppChain packages are in preview. APIs may change between releases.
 
-A core promise of the AppChain model is that state is synchronisable by anyone. Follower nodes catch up with the sequencer and maintain a verified copy of the chain state, with every block re-executed and every state root validated. This guide covers multi-peer live sync, batch import for historical catch-up, state validation, and finality tracking.
+A core promise of the AppChain model is that anyone can run a node, sync the chain, and independently verify it. A **follower** does exactly that: it connects to a block producer, downloads the chain, re-executes every block through its own EVM, and rejects anything whose state root does not match. It serves the same JSON-RPC interface as the producer but never signs a block of its own.
+
+There is no separate AppChain sync engine. A follower uses the **same DevP2P sync stack** that Nethereum's mainnet follower and DevChain use — `Nethereum.DevP2P` / `Nethereum.DevP2P.Sync` — composed for AppChain by `AppChainDevP2PFollower`. If you already understand the [DevP2P full-sync](../devp2p/guide-full-sync) and [snap-sync](../devp2p/guide-snap-sync) guides, you already understand how an AppChain follower syncs; this guide shows how that stack is wired for an AppChain and which flags launch it.
 
 :::tip The Simple Way
 ```bash
-nethereum-appchain \
-  --chain-id 420420 \
-  --genesis-owner-address $ADDR \
-  --sync-peers http://sequencer:8546 \
-  --sync-poll-interval 100
+# Producer: serve eth/snap over DevP2P so followers can sync from it
+nethereum-appchain --chain-id 420420 \
+  --genesis-owner-key $KEY --sequencer-key $KEY \
+  --enable-devp2p-serve --devp2p-serve-port 30403 \
+  --node-key-file ./producer/nodekey
+
+# Follower: dial the producer's enode and sync from it
+nethereum-appchain --port 8547 --chain-id 420420 \
+  --genesis-owner-address $OWNER_ADDR --sequencer-address $SEQ_ADDR \
+  --follow-peer enode://<producer-id>@<host>:30403
 ```
-The CLI handles sync automatically — connects to peers, polls for new blocks, validates state. This guide is for when you need programmatic sync control.
+The follower connects over RLPx, downloads state and blocks, re-executes them, and then follows the chain head — no polling interval to tune.
 :::
 
 ## Prerequisites
 
+Followers are launched with the same CLI tool as producers:
+
 ```bash
-dotnet add package Nethereum.AppChain.Sync
+dotnet tool install --global Nethereum.AppChain.Server
 ```
 
-You need a running sequencer to sync from. See the [AppChain Quickstart](guide-appchain-quickstart) for launching one.
+That single tool (`nethereum-appchain`) bundles the DevP2P sync engine. If you compose a node programmatically, reference `Nethereum.AppChain.Server.Core` (it brings `Nethereum.DevP2P.Sync`, `Nethereum.ChainNode.Hosting` and `Nethereum.CoreChain.RocksDB`); `Nethereum.AppChain.Server` is the `nethereum-appchain` tool.
 
-## Two-Phase Synchronization
+You also need a producer that **serves** DevP2P. A producer only accepts follower connections when it is launched with `--enable-devp2p-serve` (it advertises `eth` and `snap` capabilities). See the [Quickstart](guide-appchain-quickstart) for launching one.
 
-AppChain sync uses a two-phase strategy:
+> The old `Nethereum.AppChain.Sync` package — with `MultiPeerSyncService`, `PeerManager`, `BatchImporter`, and friends — has been removed. Followers no longer poll an HTTP RPC endpoint; they peer over DevP2P like any other Ethereum node.
 
-1. **Batch Sync** (historical catch-up): Download pre-packaged block batches from the sequencer. Batches are verified against their content hash and imported into local storage. This is the fast path for catching up with a chain that has been running for a while.
+## Mental Model: A Follower Is a DevP2P Node
 
-2. **Live Sync** (chain head following): Poll peers for new blocks as they're produced. The `MultiPeerSyncService` follows the chain head with configurable intervals and automatic peer switching on failures.
+An AppChain producer and an AppChain follower are the **same server binary** in two roles. The difference is entirely configuration:
 
-For a new follower joining a chain with 10,000 blocks of history, batch sync imports the historical blocks quickly, then live sync takes over to follow the chain head in real-time.
+| | Producer | Follower |
+|---|---|---|
+| Has a signing key | `--sequencer-key` (or `--signer-key` for Clique) | none — uses `--sequencer-address` |
+| Produces blocks | Yes | No |
+| Imports blocks | Optional | Yes — dials `--follow-peer` |
+| Serves DevP2P | `--enable-devp2p-serve` | Not required |
 
-## Live Sync
-
-`MultiPeerSyncService` is the primary sync mechanism — it polls connected peers for new blocks and imports them into local storage:
+Internally, `AppChainComposition.ComposeAsync` decides the role. A node **imports blocks** whenever its sync mode is not `None` (`AppChainServerConfig.ImportsBlocks`), and it **produces blocks** only when it holds a signing key (`ProducesBlocks`). When a node imports, the composition starts an `AppChainDevP2PFollower` in the background:
 
 ```csharp
-using Nethereum.AppChain.Sync;
-
-var peerManager = new PeerManager(new PeerManagerConfig());
-peerManager.AddPeer("http://sequencer:8546");
-
-var syncConfig = new MultiPeerSyncConfig
+// AppChainComposition.ComposeAsync — the follower runs on the node's AppChainExecutionCore and chain write gate when the node imports
+if (imports)
 {
-    PollIntervalMs = 100,
-    AutoFollow = true,
-    RejectOnStateRootMismatch = true
-};
-
-var syncService = new MultiPeerSyncService(syncConfig,
-    blockStore, txStore, receiptStore, logStore,
-    finalityTracker, peerManager, blockReExecutor);
-
-await syncService.StartAsync();
+    _ = Task.Run(() => AppChainDevP2PFollower.RunAsync(
+        config, chainNode, loggerFactory, CancellationToken.None,
+        core, chainWriteGate, forkChoice, mempoolReconciler));
+}
 ```
 
-Setting `RejectOnStateRootMismatch = true` means the sync service will reject blocks whose state root doesn't match the locally re-executed state — this is how followers independently verify the sequencer's execution.
+Because a follower is a DevP2P node, "which peer do I sync from?" is answered by an **enode**, not an HTTP URL. The `--follow-peer` enode is placed first in the node's dial list (`ChainNodeConfig.ResolveDialEnodes`), so the follower connects to your producer as soon as it starts.
 
-### Sync Events
+## How a Follower Syncs
 
-The sync service emits events for monitoring:
+`AppChainDevP2PFollower.RunAsync` runs four steps in order:
 
 ```csharp
-syncService.BlockImported += (sender, args) =>
+// AppChainDevP2PFollower.RunAsync
+var peer = await WaitForSnapPeerAsync(node, ct);  // 1. dial + find a snap-capable producer
+if (peer.PeerLatestBlock > SnapSyncOrchestrator.PivotTrailDistance)
 {
-    Console.WriteLine($"Block {args.Header.BlockNumber} imported, " +
-                      $"local tip: {syncService.LocalTip}, " +
-                      $"remote tip: {syncService.RemoteTip}");
-};
-
-syncService.Error += (sender, args) =>
-{
-    Console.WriteLine($"Sync error: {args.Message}");
-};
+    var pivot = await ResolvePivotAsync(peer, ct);   // 2. read the producer's head header
+    await SnapBootstrapAsync(node, pivot, ct);        // 3. snap-download state at the pivot
+}
+await ForwardExecuteAsync(node, ct);                 // 4. execute blocks + follow the head
 ```
 
-`LocalTip` and `RemoteTip` tell you how far behind the follower is. When they're equal, the follower is fully caught up.
+1. **Find a peer.** The follower dials the `--follow-peer` enode and waits (up to two minutes) for a peer that advertises `snap`. If the producer was not started with `--enable-devp2p-serve`, no such peer appears and the follower logs an error and stops.
 
-### Sync to a Specific Block
+2. **Resolve the pivot** (only when a snap bootstrap will run). It reads the producer's latest header — the block number, hash, and state root become the snap-sync pivot.
 
-For scenarios where you need to sync to a known block (e.g., before querying state at that point):
+3. **Snap bootstrap.** When the producer's tip is further than the pivot trail distance from genesis, the follower runs `SnapSyncOrchestrator` to download the account and storage trie for the pivot state instead of replaying history. Within that distance (a fresh chain) it logs that the snap bootstrap was skipped and forward-executes from genesis. When it runs, the log line reports `ran` and `reason`.
+
+4. **Forward execute + follow.** From the pivot (or from genesis / the last stored block when no snap happened), the follower hands off to the shared `FollowerService`, which pulls missing blocks over DevP2P, executes each one, and then follows the chain head live.
+
+The block feed itself is the standard sync stack from `ChainNodeSyncStack`: a `DevP2PBlockSource` pulls headers and bodies, and `FollowingBlockSource` keeps pulling as the peer announces a higher head, so the follower catches up and then stays at the tip. Blocks are not pushed: the sequencer announces its head and the follower pulls.
+
+## Launching a Follower
+
+A follower needs the chain identity, the producer's addresses (to rebuild the identical genesis), and the producer's enode:
+
+```bash
+nethereum-appchain \
+  --port 8547 \
+  --chain-id 420420 \
+  --name "MyAppChain" \
+  --genesis-owner-address 0xOWNER_ADDRESS \
+  --sequencer-address 0xSEQUENCER_ADDRESS \
+  --follow-peer enode://<producer-node-id>@<host>:30403 \
+  --db-path ./follower-data
+```
+
+The follower uses **addresses, not keys** (`--genesis-owner-address` / `--sequencer-address`) because it never signs — it only needs the addresses to reconstruct the same genesis block the producer created.
+
+The follower-relevant flags:
+
+| Flag | Purpose |
+|------|---------|
+| `--follow-peer <enode>` | Enode of the node to follow; the node syncs from it over DevP2P instead of producing blocks |
+| `--devp2p-peers` / `--trusted-peer <enode>` | Additional peer enodes to dial and trust (replaces the old `--sync-peers` and `--bootstrap-nodes`) |
+| `--genesis-owner-address` | Genesis owner address (follower mode — no private key needed) |
+| `--sequencer-address` | Sequencer address (follower mode — no private key needed) |
+| `--node-key-hex` / `--node-key-file` | Pin this node's own DevP2P identity so its enode is stable across restarts |
+| `--db-path` / `--data-dir` | RocksDB data directory (default `./appchain-data`) |
+| `--in-memory` | Keep everything in memory (re-syncs from scratch on every restart) |
+
+On the **producer** side you need the two serve flags so followers have something to dial:
+
+| Flag | Purpose |
+|------|---------|
+| `--enable-devp2p-serve` | Serve `eth`/`snap` over RLPx DevP2P so snap-sync followers can cold-sync from this node |
+| `--devp2p-serve-port` / `--listen-port` | DevP2P listen port (default `30403`) |
+| `--node-key-file` | Persist the producer's node identity so its enode stays the same — followers reference it in `--follow-peer` (default: `<db-path>/nodekey`, created on first run) |
+
+## Independent State Verification
+
+This is what makes a follower more than a mirror. As it forward-executes, the follower rebuilds the state trie itself with an `IncrementalStateRootCalculator` and compares the state root it computes against the one in each block header. The decision on a mismatch is made by `StrictValidationPolicy`:
 
 ```csharp
-// Sync until block 1000 is imported
-await syncService.SyncToBlockAsync(1000);
-
-// Or sync to the current chain head
-await syncService.SyncToLatestAsync();
+// AppChainDevP2PFollower.StrictPolicy() → ChainNodeFollowerOptionsBuilder.BuildStrictValidationPolicy
+new StrictValidationPolicy(sync.ContinueOnMismatch, anchorEvery: 0, logger: logger);
 ```
 
-## Multi-Peer Management
+By default `ContinueOnMismatch` is `false`, so the policy is strict:
 
-`PeerManager` maintains a health-checked pool of sync peers. It tracks each peer's block height, latency, and failure count, automatically selecting the best peer for sync requests:
+- A state-root divergence causes the follower to **rewind and retry** (`ValidationAction.RewindAndRetry`) — it will not accept a block whose execution it cannot reproduce.
+- A divergence the classifier attributes to an EVM bug is treated as **fatal** and stops the follower rather than silently accepting bad state.
+
+This is the mechanism behind the AppChain's public-verifiability promise: the producer cannot make the follower record a state it did not actually compute. `ContinueOnMismatch` is an advanced setting (`AppChain:Node:Sync:ContinueOnMismatch`) intended for debugging — leave it off in normal operation.
+
+## Composing a Follower Programmatically
+
+For embedding, testing, or custom hosting, drive the same server code directly. Build an `AppChainServerConfig` in code and run it:
 
 ```csharp
-var peerManager = new PeerManager(new PeerManagerConfig
-{
-    HealthCheckIntervalMs = 5000,
-    HealthCheckTimeoutMs = 3000,
-    MaxFailuresBeforeRemoval = 5
-});
+using Nethereum.AppChain.Server;
+using Nethereum.AppChain.Server.Configuration;
+using Nethereum.ChainNode.Hosting.Configuration;
 
-// Add multiple peers for redundancy
-peerManager.AddPeer("http://node1:8546");
-peerManager.AddPeer("http://node2:8546");
-peerManager.AddPeer("http://node3:8546");
+var config = new AppChainServerConfig { ChainId = 420420 };
+config.Genesis.Owner.Address = ownerAddress;
+config.Consensus.Sequencer.Address = sequencerAddress;
+config.Node.Sync.Mode = SyncMode.ForwardExecute;
+config.Node.Sync.FollowPeerEnode = producerEnode;
+config.Node.Rpc.Port = 8547;
 
-peerManager.PeerStatusChanged += (sender, args) =>
-{
-    Console.WriteLine($"Peer {args.Url}: healthy={args.IsHealthy}");
-};
-
-await peerManager.StartHealthCheckAsync();
+// Runs storage, composition (which starts the DevP2P follower), and the JSON-RPC server
+await AppChainServerRunner.RunAsync(config, cancellationToken);
 ```
 
-The health checker periodically pings each peer, checks its block height, and marks unhealthy peers for removal. When the current sync peer fails, `MultiPeerSyncService` automatically switches to the next best peer.
+`AppChainServerRunner.RunAsync` calls `AppChainComposition.ComposeAsync`, which starts the `AppChainDevP2PFollower` for you when the node is in importing mode — you do not construct sync services by hand.
 
-To get the current best peer (highest block, lowest latency):
+## Checking Sync Progress
 
-```csharp
-var bestPeer = peerManager.GetBestPeer();
-var healthyClient = await peerManager.GetHealthyClientAsync();
-```
+The follower serves the same HTTP surface as the producer. Two endpoints are useful while it catches up:
 
-## Batch Import
+| Endpoint | What it tells you |
+|----------|-------------------|
+| `GET /status` | JSON node status including the current `blockNumber` — compare it to the producer's to see how far behind you are |
+| `GET /health` | Liveness check |
 
-For historical catch-up, batch files contain compressed blocks that can be imported in bulk. The sequencer can produce batch files (via `SequencerBatchProducer`), and followers import them:
-
-```csharp
-using Nethereum.AppChain.Sync;
-
-var importer = new BatchImporter(blockStore, txStore, receiptStore, logStore);
-
-var result = await importer.ImportBatchAsync(
-    batchStream,
-    expectedHash: batchHash,
-    verificationMode: BatchVerificationMode.Full,
-    cancellationToken: ct);
-
-Console.WriteLine($"Imported {result.BlockCount} blocks, " +
-                  $"{result.TransactionCount} transactions");
-```
-
-`BatchVerificationMode.Full` verifies the content hash of the batch data before importing — ensuring the batch hasn't been tampered with.
-
-## State Re-Execution
-
-By default, followers store blocks as received from the sequencer. To independently verify the sequencer's execution, enable state re-execution with `BlockReExecutor`:
-
-```csharp
-using Nethereum.AppChain.Sync;
-
-var reExecutor = new BlockReExecutor(
-    transactionProcessor, stateStore, chainConfig, logger);
-```
-
-When passed to `MultiPeerSyncService`, the re-executor processes every imported block's transactions through the local EVM and compares the resulting state root against the block header. If they don't match and `RejectOnStateRootMismatch` is enabled, the block is rejected.
-
-This is the mechanism that makes AppChain state independently verifiable — any follower can prove that the sequencer executed transactions correctly by re-running them locally.
-
-## Coordinated Two-Phase Sync
-
-`CoordinatedSyncService` orchestrates the batch → live transition automatically:
-
-```csharp
-var coordinated = new CoordinatedSyncService(
-    new CoordinatedSyncConfig { AutoStart = true },
-    batchSyncService, liveSyncService,
-    finalityTracker, anchorService, batchStore);
-
-coordinated.SyncProgressChanged += (sender, args) =>
-{
-    Console.WriteLine($"Phase: {args.Phase}, Block: {args.BlockNumber}");
-    // Phase transitions: BatchSync → LiveSync
-};
-
-await coordinated.StartAsync();
-```
-
-The coordinator starts with batch sync to catch up on historical blocks, then seamlessly transitions to live sync once the batch phase is complete.
-
-## Finality Tracking
-
-AppChain blocks have two finality levels:
-
-- **Soft** — recently synced from peers, potentially subject to reorgs
-- **Finalized** — anchored to L1, cryptographically immutable
-
-The `IFinalityTracker` manages these states:
-
-```csharp
-// Check if a block is finalized (L1-anchored)
-bool isFinal = await finalityTracker.IsFinalizedAsync(blockNumber);
-
-// Check if a block is soft (synced but not anchored)
-bool isSoft = await finalityTracker.IsSoftAsync(blockNumber);
-
-// Get the latest finalized block
-long latestFinal = await finalityTracker.GetLatestFinalizedBlockAsync();
-```
-
-For applications that need strong guarantees (e.g., asset transfers), wait for finalization. For applications where speed matters more than finality (e.g., game state), soft confirmation is sufficient.
+You can also just query the follower over JSON-RPC (`eth_blockNumber`) and compare it against the producer — when the two heights match, the follower is caught up and following the head live.
 
 ## Common Gotchas
 
-- **Same genesis required** — the follower must use the same `--genesis-owner-address` and `--chain-id` as the sequencer. Different genesis parameters produce a different genesis block, and the sync will fail immediately.
-- **State re-execution needs storage** — `BlockReExecutor` rebuilds the state trie locally. With in-memory storage, this means the follower must re-execute every block since genesis on every restart. For long-running chains, use RocksDB (see [Storage guide](guide-appchain-storage)).
-- **Poll interval trade-off** — lower `PollIntervalMs` means faster sync but more RPC calls to the sequencer. For production, 1000ms (the default) is usually fine. For testing, 100ms gives near-instant sync.
-- **Peer removal** — `MaxFailuresBeforeRemoval` controls when a peer is dropped from the pool. Set this higher for unreliable networks, lower for fast failover.
+- **The producer must serve DevP2P.** A follower waits for a *snap-capable* peer. If the producer was not launched with `--enable-devp2p-serve`, the follower finds no peer to sync from, logs an error after the wait timeout, and stops. This is the most common "my follower does nothing" cause.
+- **`--follow-peer` takes an enode, not an HTTP URL.** It is `enode://<node-id>@<host>:<port>`, pointing at the producer's DevP2P port (default `30403`), not its JSON-RPC port (`8546`). The two are different ports.
+- **Pin the producer's identity.** An enode contains the node's public key. If the producer generates a fresh key on every start, its enode changes and your `--follow-peer` value goes stale (by default the key is persisted to `<db-path>/nodekey`). Launch the producer with `--node-key-file` (or `--node-key-hex`) so its enode is stable.
+- **Same genesis, or no sync.** The follower must use the same `--chain-id`, `--genesis-owner-address`, and `--sequencer-address` as the producer. These addresses are pre-funded at genesis, so different values produce a different genesis block and the chains cannot reconcile.
+- **In-memory means re-sync on restart.** With `--in-memory`, a follower keeps no state on disk and re-syncs from scratch every time it starts. Use `--db-path` (RocksDB, the default) for anything long-running — see the [Storage guide](guide-appchain-storage).
 
 ## Next Steps
 
-- **[Storage](guide-appchain-storage)** — configure RocksDB for persistent follower storage
-- **[AppChain Quickstart](guide-appchain-quickstart)** — launch the sequencer that followers sync from
+- **[DevP2P Full Sync](../devp2p/guide-full-sync)** — the shared catch-up-then-follow engine an AppChain follower runs, in detail
+- **[DevP2P Snap Sync](../devp2p/guide-snap-sync)** — how the state bootstrap at the pivot works
+- **[Mainnet Follower](../mainnet-follower/guide-mainnet-follower)** — the same follower stack pointed at Ethereum mainnet
+- **[Storage](guide-appchain-storage)** — configure RocksDB so a follower keeps its verified state across restarts
+- **[AppChain Quickstart](guide-appchain-quickstart)** — launch the producer that followers sync from

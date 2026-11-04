@@ -16,8 +16,10 @@ Build Blazor web applications that connect to browser wallets, authenticate user
 EIP-6963 replaces the old `window.ethereum` injection model. All installed browser wallets announce themselves and users choose which to connect:
 
 ```razor
-<EIP6963Wallet OnWalletConnected="HandleWalletConnected" />
+<EIP6963Wallet OnError="HandleError" OnDisconnect="HandleDisconnect" />
 ```
+
+The component parameters are `Theme`, `CssClass`, `InstallWalletText`, `SelectedAccountTruncateLength`, `OnError` and `OnDisconnect`.
 
 ### MetaMask
 
@@ -48,7 +50,7 @@ Integrate Ethereum wallet authentication with Blazor's built-in `<AuthorizeView>
 </AuthorizeView>
 ```
 
-The `EthereumAuthenticationStateProvider` manages wallet connection state, while `SiweAuthenticationServerStateProvider` and `SiweAuthenticationWasmStateProvider` add full SIWE authentication with JWT tokens and session management.
+The `EthereumAuthenticationStateProvider` manages wallet connection state, while `SiweAuthenticationServerStateProvider` adds full SIWE authentication with session management.
 
 A complete starter template is available: **[Nethereum.Templates.Siwe](https://github.com/Nethereum/Nethereum.Templates.Pack)** — includes REST API + Blazor Server + Blazor WASM with MetaMask signing, JWT creation, and role-based access.
 

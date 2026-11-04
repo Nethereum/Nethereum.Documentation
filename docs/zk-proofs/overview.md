@@ -7,6 +7,8 @@ description: Groth16 proof generation and verification, browser and native provi
 
 # Zero-Knowledge Proofs
 
+> **PREVIEW** — The Groth16 proof pipeline described below is stable. Separately, **Zisk zkVM EVM proving** — proving Ethereum execution inside a zero-knowledge VM (`Nethereum.EVM.Zisk`, `Nethereum.Zisk.Core`) — is in preview and its APIs may change between releases.
+
 Nethereum provides a complete ZK proof pipeline — generation, verification, and Solidity-compatible proof formatting — for Groth16 proofs on the BN128 elliptic curve.
 
 ## Proof Generation

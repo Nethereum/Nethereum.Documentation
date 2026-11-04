@@ -28,14 +28,14 @@ using Nethereum.RPC.Eth.DTOs;
 var web3 = new Web3("https://eth.llamarpc.com");
 var cts = new CancellationTokenSource();
 
-var processor = web3.Processing.Logs.CreateProcessor<TransferEventDTO>(
+var processor = web3.Processing.Logs.CreateProcessorForContracts<TransferEventDTO>(
+    contractAddresses: new[] { "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }, // USDC
     action: log =>
     {
         Console.WriteLine($"Transfer: {log.Event.From} -> {log.Event.To}, Amount: {log.Event.Value}");
         return Task.CompletedTask;
     },
-    minimumBlockConfirmations: 12,
-    contractAddresses: new[] { "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" } // USDC
+    minimumBlockConfirmations: 12
 );
 
 await processor.ExecuteAsync(
@@ -94,7 +94,7 @@ var processor = web3.Processing.Blocks.CreateBlockProcessor(
         });
 
         // Handle successful receipts
-        steps.TransactionReceiptStep.SetMatchCriteria(receipt => receipt.Succeeded());
+        steps.TransactionReceiptStep.SetMatchCriteria(receipt => receipt.Succeeded);
         steps.TransactionReceiptStep.AddProcessorHandler(async receipt =>
         {
             await SaveReceiptAsync(receipt);
@@ -116,11 +116,11 @@ await processor.ExecuteAsync(cancellationToken: cts.Token);
 
 | Step | Type | What It Receives |
 |------|------|-----------------|
-| `BlockStep` | `Processor<BlockWithTransactions>` | Full block with embedded transactions |
-| `TransactionStep` | `Processor<TransactionVO>` | Individual transaction |
-| `TransactionReceiptStep` | `Processor<TransactionReceiptVO>` | Transaction receipt (logs, status, gas) |
-| `FilterLogStep` | `Processor<FilterLogVO>` | Individual event log |
-| `ContractCreationStep` | `Processor<ContractCreationVO>` | Contract deployment (address, code) |
+| `BlockStep` | `IProcessor<BlockWithTransactions>` | Full block with embedded transactions |
+| `TransactionStep` | `IProcessor<TransactionVO>` | Individual transaction |
+| `TransactionReceiptStep` | `IProcessor<TransactionReceiptVO>` | Transaction receipt (logs, status, gas) |
+| `FilterLogStep` | `IProcessor<FilterLogVO>` | Individual event log |
+| `ContractCreationStep` | `IProcessor<ContractCreationVO>` | Contract deployment (address, code) |
 
 Each step supports:
 - `AddSynchronousProcessorHandler(Action<T>)` — sync handler
@@ -146,11 +146,15 @@ public interface IBlockProgressRepository
 **JSON file** — simple persistence for single-process scenarios:
 
 ```csharp
-var progressRepo = new JsonBlockProgressRepository("progress.json");
+var progressFile = "progress.json";
+var progressRepo = new JsonBlockProgressRepository(
+    jsonSourceExists: () => Task.FromResult(File.Exists(progressFile)),
+    jsonWriter: json => File.WriteAllTextAsync(progressFile, json),
+    jsonRetriever: () => File.ReadAllTextAsync(progressFile));
 
 var processor = web3.Processing.Blocks.CreateBlockProcessor(
-    progressRepository: progressRepo,
-    configureSteps: steps =>
+    blockProgressRepository: progressRepo,
+    stepsConfiguration: steps =>
     {
         steps.BlockStep.AddSynchronousProcessorHandler(block =>
             Console.WriteLine($"Block {block.Number}"));
@@ -223,8 +227,7 @@ The `web3.Processing.Blocks` extensions use `BlockCrawlOrchestrator`. The `web3.
 ### Log Orchestrator tuning
 
 ```csharp
-// The LogOrchestrator automatically adjusts batch sizes on error
-// and retries with exponential backoff
+// The LogOrchestrator automatically shrinks the block range on error and retries (up to MaxGetLogsRetries = 10)
 var processor = web3.Processing.Logs.CreateProcessor<TransferEventDTO>(
     action: async log => await HandleTransferAsync(log),
     minimumBlockConfirmations: 12
@@ -246,7 +249,7 @@ Built-in services for common token queries without full indexing:
 
 ```csharp
 // Get all ERC-20 transfers for a token contract
-var erc20Service = new ERC20LogProcessingService(web3);
+var erc20Service = web3.Processing.Logs.ERC20;
 var transfers = await erc20Service.GetAllTransferEventsForContract(
     contractAddress: usdcAddress,
     fromBlockNumber: 18000000,
@@ -259,25 +262,28 @@ var accountTransfers = await erc20Service.GetAllTransferEventsFromAndToAccount(
     contractAddresses: new[] { usdcAddress, daiAddress },
     account: walletAddress,
     fromBlockNumber: 18000000,
-    toBlockNumber: 18100000
+    toBlockNumber: 18100000,
+    cancellationToken: cts.Token
 );
 ```
 
 ```csharp
 // Get current NFT owners for a collection
-var erc721Service = new ERC721LogProcessingService(web3);
+var erc721Service = web3.Processing.Logs.ERC721;
 var owners = await erc721Service.GetAllCurrentOwnersProcessingAllTransferEvents(
     contractAddress: nftAddress,
     fromBlockNumber: 0,
-    toBlockNumber: null  // latest
+    toBlockNumber: null,  // latest
+    cancellationToken: cts.Token
 );
 
 // Get NFTs owned by a specific account
-var myNfts = await erc721Service.GetErc721OwnedByAccountUsingAllTransfers(
+var myNfts = await erc721Service.GetErc721OwnedByAccountUsingAllTransfersForContract(
     contractAddress: nftAddress,
     account: walletAddress,
     fromBlockNumber: 0,
-    toBlockNumber: null
+    toBlockNumber: null,
+    cancellationToken: cts.Token
 );
 ```
 

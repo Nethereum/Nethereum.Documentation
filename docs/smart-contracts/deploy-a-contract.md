@@ -76,7 +76,7 @@ When prototyping or working with a raw ABI string, you can deploy without a type
 var receipt = await web3.Eth.DeployContract.SendRequestAndWaitForReceiptAsync(
     abi, bytecode, account.Address,
     new Nethereum.Hex.HexTypes.HexBigInteger(3000000),
-    null, null, Web3.Convert.ToWei(1000000));
+    null, Web3.Convert.ToWei(1000000));
 ```
 
 This approach is less safe — constructor argument types aren't checked at compile time, so a mismatch will fail at runtime. Use the typed approach for production code.

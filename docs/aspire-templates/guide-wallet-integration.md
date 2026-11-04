@@ -29,7 +29,7 @@ After connecting, the page checks if the wallet is on the correct chain (the Dev
 
 ```
 Your wallet is connected to chain 1, but this dApp requires chain 31337.
-[Switch to DevChain]
+[Switch to <ProjectName> DevChain]
 ```
 
 Clicking the button calls `wallet_addEthereumChain`, which tells MetaMask to add the DevChain network and switch to it. The RPC URL comes from Aspire service discovery — the WebApp knows the DevChain's actual URL.
@@ -83,7 +83,7 @@ SelectedChainId = (long)chainId.Value;
 
 ### Chain Switching
 
-When the user clicks "Switch to DevChain", the page sends a `wallet_addEthereumChain` request:
+When the user clicks "Switch to `<ProjectName>` DevChain", the page sends a `wallet_addEthereumChain` request:
 
 ```csharp
 var addChainParam = new AddEthereumChainParameter
@@ -103,7 +103,7 @@ await web3.Eth.HostWallet.AddEthereumChain.SendRequestAsync(addChainParam);
 
 `wallet_addEthereumChain` handles both scenarios — if the chain already exists in MetaMask, it switches to it; if it's new, MetaMask prompts the user to add and switch.
 
-The `rpcUrl` comes from `Configuration["Web3:RpcUrl"]`, which the AppHost resolves from Aspire service discovery.
+The `rpcUrl` comes from `Configuration["Web3:RpcUrl"]`, which `WebApp/Program.cs` fills from the Aspire-injected `services:devchain` endpoint.
 
 ### State Reset on Chain Change
 

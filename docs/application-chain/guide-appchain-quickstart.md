@@ -13,11 +13,13 @@ An AppChain is a lightweight, domain-specific chain that extends Ethereum. This 
 
 :::tip The Simple Way
 ```bash
-# Launch a sequencer
-nethereum-appchain --chain-id 420420 --genesis-owner-key $KEY --sequencer-key $KEY
+# Launch a sequencer, serving eth/snap over DevP2P so followers can sync from it
+nethereum-appchain --chain-id 420420 --genesis-owner-key $KEY --sequencer-key $KEY \
+  --enable-devp2p-serve --devp2p-serve-port 30403
 
-# Launch a follower
-nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sync-peers http://sequencer:8546
+# Launch a follower — dial the sequencer's enode, not its JSON-RPC port
+nethereum-appchain --chain-id 420420 --genesis-owner-address $ADDR --sequencer-address $SEQ_ADDR \
+  --follow-peer enode://<sequencer-id>@<host>:30403
 ```
 That's it. Full EVM, JSON-RPC, WebSocket subscriptions — standard Ethereum interface.
 :::
@@ -26,7 +28,7 @@ That's it. Full EVM, JSON-RPC, WebSocket subscriptions — standard Ethereum int
 
 ```bash
 # Install the CLI tool
-dotnet tool install Nethereum.AppChain.Server
+dotnet tool install --global Nethereum.AppChain.Server
 
 # For programmatic usage
 dotnet add package Nethereum.AppChain.Sequencer
@@ -45,10 +47,11 @@ nethereum-appchain \
   --name "MyAppChain" \
   --genesis-owner-key 0xYOUR_PRIVATE_KEY \
   --sequencer-key 0xYOUR_PRIVATE_KEY \
-  --block-time 1000
+  --block-time 1000 \
+  --enable-devp2p-serve
 ```
 
-This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces blocks every 1000ms. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options.
+This starts an HTTP/WebSocket JSON-RPC server on port 8546. The genesis owner address is pre-funded, and the sequencer produces a block every 1000ms, but only when transactions are pending unless `--allow-empty-blocks` is set. By default, persistent storage uses RocksDB at `./appchain-data` — see the [Storage guide](guide-appchain-storage) for configuration options. `--enable-devp2p-serve` makes the sequencer advertise `eth`/`snap` over DevP2P so followers have a peer to dial — see [Launch a Follower](#launch-a-follower) below.
 
 Key CLI options for the sequencer:
 
@@ -63,6 +66,8 @@ Key CLI options for the sequencer:
 | `--db-path` | `./appchain-data` | RocksDB data directory |
 | `--in-memory` | `false` | Use in-memory storage (no persistence) |
 | `--deploy-mud-world` | `true` | Deploy MUD World contracts at genesis |
+| `--enable-devp2p-serve` | `false` | Serve `eth`/`snap` over DevP2P so followers can sync from this node |
+| `--devp2p-serve-port` | `30403` | DevP2P listen port for served followers |
 
 ## Launch a Follower
 
@@ -75,11 +80,10 @@ nethereum-appchain \
   --name "MyAppChain" \
   --genesis-owner-address 0xOWNER_ADDRESS \
   --sequencer-address 0xSEQUENCER_ADDRESS \
-  --sync-peers http://sequencer:8546 \
-  --sync-poll-interval 100
+  --follow-peer enode://<sequencer-node-id>@<host>:30403
 ```
 
-The follower connects to the sequencer's JSON-RPC endpoint, polls for new blocks, and re-executes transactions to validate state roots. It serves the same JSON-RPC interface as the sequencer but doesn't produce blocks. See the [Syncing guide](guide-appchain-sync) for multi-peer failover and batch sync.
+The sequencer must be launched with `--enable-devp2p-serve` so it advertises `eth`/`snap` over DevP2P for followers to dial. The follower connects over RLPx to the sequencer's `--follow-peer` enode (not its JSON-RPC port), snap-syncs the state at the pivot, re-executes blocks to validate state roots, and then follows the chain head live. It serves the same JSON-RPC interface as the sequencer but doesn't produce blocks. See the [Syncing guide](guide-appchain-sync) for how the DevP2P sync stack drives this.
 
 Note the follower uses `--genesis-owner-address` (not `--genesis-owner-key`) because it doesn't need the private key — it just needs to know the address to reconstruct the same genesis state.
 
@@ -118,9 +122,8 @@ The server exposes more than just JSON-RPC:
 | WS | `/ws` | WebSocket subscriptions (`eth_subscribe`) |
 | GET | `/health` | Health check |
 | GET | `/status` | Comprehensive node status |
-| GET | `/metrics` | Prometheus metrics |
+| GET | `/metrics` | Prometheus metrics (when a metrics port is configured) |
 | GET | `/blocks/latest` | Latest block header |
-| GET | `/sync/status` | Sync status (followers) |
 
 ## Programmatic AppChain with AppChainBuilder
 
@@ -143,7 +146,6 @@ The builder supports all the same options as the CLI:
 ```csharp
 var chain = await new AppChainBuilder("MyChain", 420420)
     .WithOperator(privateKey)
-    .WithStorage(StorageType.RocksDb, "./data/mychain")
     .WithBaseFee(0)
     .WithBlockGasLimit(30_000_000)
     .WithOnDemandBlocks()
@@ -152,6 +154,8 @@ var chain = await new AppChainBuilder("MyChain", 420420)
 ```
 
 `WithOnDemandBlocks()` produces a block immediately when a transaction is submitted — useful for tests where you don't want to wait for interval-based production.
+
+`AppChainBuilder` runs fully in-memory (its default storage). For persistent RocksDB storage, run the AppChain via the CLI (RocksDB is the default; use `--db-path` to set the location) or inject stores manually — `WithStorage(StorageType.RocksDb, …)` on the builder is not supported and throws `NotSupportedException`.
 
 ### Presets
 
@@ -195,21 +199,25 @@ The `AppChainRpcClient` routes JSON-RPC calls directly to the in-process node wi
 By default, the AppChain deploys MUD World contracts during genesis (controlled by `--deploy-mud-world`). This means you can use the [MUD Framework](../mud-framework/overview) immediately:
 
 ```csharp
-var app = new AppNamespace(web3, worldAddress);
-await app.RegisterNamespaceRequestAndWaitForReceiptAsync();
-await app.Tables.BatchRegisterAllTablesRequestAndWaitForReceiptAsync();
+var chain = await new AppChainBuilder("MyChain", 420420)
+    .WithOperator(privateKey)
+    .BuildAsync();
+
+// The deployed World address (null if MUD was not deployed at genesis)
+var worldAddress = chain.MudResult?.WorldAddress;
 ```
 
-The MUD World address is available in `AppChainConfig.WorldAddress` after initialization.
+From there, register namespaces and tables using your MUD-generated namespace and table services — see the [MUD Framework guide](../mud-framework/guide-mud-quickstart). The generated namespace class derives from `NamespaceBase` and exposes `RegisterNamespaceRequestAndWaitForReceiptAsync()` and `Tables.BatchRegisterAllTablesRequestAndWaitForReceiptAsync()`.
 
 ## Common Gotchas
 
-- **Same genesis = same chain** — sequencer and followers must use the same genesis owner address and chain ID, otherwise they produce different genesis blocks and can't sync.
-- **Block time = 0 is not on-demand** — use `--block-time 0` for the fastest interval-based production, but for true on-demand (block only when transactions arrive), use `AppChainBuilder.WithOnDemandBlocks()` programmatically.
+- **Same genesis = same chain** — sequencer and followers must use the same genesis owner address and chain ID, otherwise they produce different genesis blocks and can't sync. A follower accepts only blocks signed by the key behind its `--sequencer-address`, so a chain created by 7.0 (unsigned blocks) must be re-created.
+- **`--block-time` must be positive** — `--block-time 0` is rejected in interval block production (the CLI default). The default is 1000 ms, and blocks are produced only when transactions are pending unless `--allow-empty-blocks` is set; for instant on-demand blocks, use `AppChainBuilder.WithOnDemandBlocks()` programmatically.
 - **RocksDB is the default** — the CLI uses RocksDB at `./appchain-data` unless you pass `--in-memory`. For development without persistence, add `--in-memory`.
-- **Port conflicts** — the sequencer defaults to 8546 (not 8545 like Geth). Use `--port` to change it.
+- **Port conflicts** — the sequencer defaults to 8546. Use `--port` to change it.
+- **RPC modules and hosts** — the RPC port serves `eth`, `net` and `web3` only; add `txpool`, `debug` or `admin` with `--rpc-modules eth,net,web3,admin`. A request whose `Host` header is not `localhost`, an IP address or the bind host is answered 403: list the name with `--rpc-vhosts` (for example behind a proxy or in a container). A browser WebSocket origin needs `--ws-origins`; a request body over 10 MiB is refused.
 
 ## Next Steps
 
 - **[Storage](guide-appchain-storage)** — configure RocksDB for production, understand storage interfaces, tune performance
-- **[Syncing Follower Nodes](guide-appchain-sync)** — multi-peer sync, batch import, state validation, finality tracking
+- **[Syncing Follower Nodes](guide-appchain-sync)** — sync a follower over the shared DevP2P stack (`--follow-peer`), snap bootstrap, forward execution, and independent state-root verification

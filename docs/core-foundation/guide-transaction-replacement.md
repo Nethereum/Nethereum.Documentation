@@ -80,6 +80,8 @@ The key points:
 
 For EIP-1559 transactions, you must increment **both** `MaxPriorityFeePerGas` and `MaxFeePerGas`. The validator selects transactions based on the priority fee (the tip), while the protocol enforces the max fee as an upper bound on total cost. If either value is not higher than the original, the node rejects the replacement.
 
+This assumes the original was sent as EIP-1559, i.e. without `UseLegacyAsDefault = true`.
+
 ```csharp
 txnInput2.MaxPriorityFeePerGas = new HexBigInteger(
     txnInput.MaxPriorityFeePerGas.Value +

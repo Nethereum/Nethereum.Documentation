@@ -15,7 +15,7 @@ Open `contracts/src/MyToken.sol`:
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -53,7 +53,7 @@ forge install openzeppelin/openzeppelin-contracts
 Dependencies are stored in `lib/` and mapped via `remappings.txt`:
 
 ```
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/=lib/openzeppelin-contracts/
 ```
 
 This lets you use clean import paths like `import "@openzeppelin/contracts/token/ERC20/ERC20.sol";`.
@@ -97,19 +97,30 @@ After adding a new contract, you'll want to [generate C# typed services](guide-c
 
 ## The `foundry.toml` Configuration
 
-The template's `foundry.toml` is minimal — Foundry's defaults work well:
+The template's `foundry.toml`:
 
 ```toml
 [profile.default]
 src = "src"
 out = "out"
 libs = ["lib"]
-```
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/"
+]
 
-Common additions:
-- `optimizer = true` and `optimizer_runs = 200` — enable the Solidity optimizer for production
-- `via_ir = true` — use the IR-based code generator (produces smaller bytecode for complex contracts)
-- `solc_version = "0.8.24"` — pin a specific compiler version
+[profile.dev]
+optimizer = false
+verbosity = 3
+
+[profile.ci]
+optimizer = true
+optimizer_runs = 200
+verbosity = 1
+```
 
 ## Next Steps
 

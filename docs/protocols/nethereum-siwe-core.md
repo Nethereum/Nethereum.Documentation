@@ -10,8 +10,6 @@ format: md
 # Nethereum.Siwe.Core
 
 > **NuGet**: [`Nethereum.Siwe.Core`](https://www.nuget.org/packages/Nethereum.Siwe.Core/) | **Source**: [`src/Nethereum.Siwe.Core/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Siwe.Core)
-# Nethereum.Siwe.Core
-
 Core models and utilities for Sign-In with Ethereum (EIP-4361). This package provides the `SiweMessage` model, message parsing, string building, and validation helpers used by both `Nethereum.Siwe` and downstream authentication providers.
 
 ## Key Components
@@ -19,7 +17,7 @@ Core models and utilities for Sign-In with Ethereum (EIP-4361). This package pro
 | Class | Purpose |
 |---|---|
 | `SiweMessage` | EIP-4361 message model with Domain, Address, Statement, URI, Nonce, expiration, and chain binding |
-| `SiweMessageParser` | Parses a plain-text SIWE string back into a `SiweMessage` (regex and ABNF modes) |
+| `SiweMessageParser` | Parses a plain-text SIWE string back into a `SiweMessage` (line parser and ABNF modes) |
 | `SiweMessageStringBuilder` | Builds the canonical plain-text representation for signing |
 
 ## Usage
@@ -46,13 +44,13 @@ string plainText = SiweMessageStringBuilder.BuildMessage(message);
 
 ### Parse a SIWE message
 
-Two parsing modes are available — regex-based (default) and ABNF-based:
+Two parsing modes are available — a linear line parser (default, rejects messages over `SiweMessageParser.MaxMessageLength`, 64 KiB) and ABNF-based:
 
 ```csharp
 var parsed = SiweMessageParser.Parse(plainText);
 // parsed.Address, parsed.Domain, parsed.Nonce, etc.
 
-// ABNF-based parser (stricter validation)
+// ABNF-based parser
 var parsedAbnf = SiweMessageParser.ParseUsingAbnf(plainText);
 ```
 

@@ -7,7 +7,7 @@ description: Convert Solidity ABIs into typed C# contract services using Nethere
 
 # Generate C# from Solidity
 
-After [compiling your Solidity contracts](guide-solidity-contracts) with `forge build`, the next step is generating typed C# services so your .NET code can deploy, call, and query contracts without manual ABI handling. The dApp template includes generation scripts and ships with pre-generated code so you can build immediately.
+After [compiling your Solidity contracts](guide-solidity-contracts) with `forge build`, the next step is generating typed C# services so your .NET code can deploy, call, and query contracts without manual ABI handling. The dApp template ships with a generator configuration and pre-generated code so you can build immediately.
 
 ## How It Works
 
@@ -17,7 +17,7 @@ The flow is:
 contracts/src/MyToken.sol
         ↓ forge build
 contracts/out/MyToken.sol/MyToken.json    (ABI + bytecode)
-        ↓ generate-csharp script
+        ↓ Nethereum.Generator.Console
 ContractServices/MyToken/
 ├── ContractDefinition/MyTokenDefinition.gen.cs   (function/event messages)
 └── MyTokenService.gen.cs                          (typed service class)
@@ -29,23 +29,14 @@ The generated `MyTokenService` gives you strongly-typed methods for every contra
 
 After modifying Solidity and running `forge build`:
 
-**Windows (PowerShell):**
-```bash
-pwsh scripts/generate-csharp.ps1
-```
-
-**Linux/macOS:**
-```bash
-bash scripts/generate-csharp.sh
-```
-
-Both scripts accept a `-b` flag to run `forge build` first:
+Install the generator once with `dotnet tool install -g Nethereum.Generator.Console`, then run `Nethereum.Generator.Console generate from-config -cfg contracts/.nethereum-gen.multisettings -r contracts`.
 
 ```bash
-pwsh scripts/generate-csharp.ps1 -b
+dotnet tool install -g Nethereum.Generator.Console
+Nethereum.Generator.Console generate from-config -cfg contracts/.nethereum-gen.multisettings -r contracts
 ```
 
-The scripts use `Nethereum.Generator.Console` with the configuration in `contracts/.nethereum-gen.multisettings` to read the Foundry output and generate C# into `ContractServices/`.
+The generator uses the configuration in `contracts/.nethereum-gen.multisettings` to read the Foundry output and generate C# into `ContractServices/`.
 
 ## What Gets Generated
 
@@ -83,36 +74,35 @@ Every write method has both `RequestAsync` (returns tx hash) and `RequestAndWait
 
 ## Using Generated Services
 
-Here's a complete example from the template's TDD tests:
+Here are two of the template's TDD tests (`Tests/MyTokenTests.cs`), which deploy through a `DeployTokenAsync` helper:
 
 ```csharp
-// Create an in-process DevChain
-var node = await DevChainNode.CreateAndStartAsync();
-var web3 = node.CreateWeb3(DevChainAccounts.Account2.PrivateKey);
-
-// Deploy
-var deployment = new MyTokenDeployment
+[Fact]
+public async Task Deploy_SetsNameAndSymbol()
 {
-    Name = "TestToken",
-    Symbol = "TT",
-    InitialSupply = Web3.Convert.ToWei(1_000_000)
-};
-var receipt = await MyTokenService.DeployContractAndWaitForReceiptAsync(web3, deployment);
-var tokenService = new MyTokenService(web3, receipt.ContractAddress);
+    var service = await DeployTokenAsync("TestToken", "TT");
 
-// Query
-var name = await tokenService.NameQueryAsync();     // "TestToken"
-var supply = await tokenService.TotalSupplyQueryAsync(); // 1_000_000 * 10^18
+    var name = await service.NameQueryAsync();
+    var symbol = await service.SymbolQueryAsync();
 
-// Mint
-await tokenService.MintRequestAndWaitForReceiptAsync(
-    "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-    Web3.Convert.ToWei(100));
+    Assert.Equal("TestToken", name);
+    Assert.Equal("TT", symbol);
+}
 
-// Transfer
-await tokenService.TransferRequestAndWaitForReceiptAsync(
-    "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    Web3.Convert.ToWei(50));
+[Fact]
+public async Task Transfer_MovesTokens()
+{
+    var service = await DeployTokenAsync(initialSupply: 1000);
+    var amount = Web3.Convert.ToWei(100);
+
+    await service.TransferRequestAndWaitForReceiptAsync(_recipient.Address, amount);
+
+    var senderBalance = await service.BalanceOfQueryAsync(_account.Address);
+    var recipientBalance = await service.BalanceOfQueryAsync(_recipient.Address);
+
+    Assert.Equal(Web3.Convert.ToWei(900), senderBalance);
+    Assert.Equal(Web3.Convert.ToWei(100), recipientBalance);
+}
 ```
 
 ## Adding a New Contract
@@ -120,7 +110,7 @@ await tokenService.TransferRequestAndWaitForReceiptAsync(
 When you add a new `.sol` file (as shown in [Write Contracts](guide-solidity-contracts)):
 
 1. Compile: `cd contracts && forge build`
-2. Regenerate: `pwsh scripts/generate-csharp.ps1`
+2. Regenerate: `Nethereum.Generator.Console generate from-config -cfg contracts/.nethereum-gen.multisettings -r contracts`
 3. The new service appears in `ContractServices/YourContract/`
 4. Add a `<Compile Include="..." />` or rely on wildcard includes in `ContractServices.csproj`
 

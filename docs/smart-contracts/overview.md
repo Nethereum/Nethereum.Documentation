@@ -23,7 +23,7 @@ For standard tokens and common contracts, Nethereum provides built-in typed serv
 | Batch queries | `web3.Eth.GetMultiQueryHandler().MultiCallAsync(call1, call2)` |
 | Resolve ENS name | `web3.Eth.GetEnsService().ResolveAddressAsync("vitalik.eth")` |
 | Detect interface | `web3.Eth.ERC165.GetContractService(addr).SupportsInterfaceQueryAsync(interfaceId)` |
-| CREATE2 predict | `web3.Eth.Create2DeterministicDeploymentProxyService.CalculateCreate2Address(deployment, salt)` |
+| CREATE2 predict | `web3.Eth.Create2DeterministicDeploymentProxyService.CalculateCreate2Address(deployment, proxyAddress, salt)` |
 
 For custom contracts, generate typed C# classes from Solidity ABI with one command and get the same experience.
 
@@ -35,7 +35,7 @@ Generate C# classes from the ABI:
 
 ```bash
 dotnet tool install -g Nethereum.Generator.Console
-Nethereum.Generator.Console generate from-abi -abi MyContract.abi -o Generated
+Nethereum.Generator.Console generate from-abi -abi MyContract.abi -o Generated -ns MyProject.Contracts
 ```
 
 ```csharp

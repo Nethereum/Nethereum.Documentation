@@ -96,7 +96,7 @@ For a production example with 35+ tables and 17+ systems under typed namespace c
 | Register all systems | `namespace.Systems.BatchRegisterAllSystemsRequestAndWaitForReceiptAsync(deployer, salt)` |
 | Index store events | `storeEventsService.ProcessAllStoreChangesAsync(repository)` |
 | Continuous sync | `storeEventsService.CreateProcessor(repository, progressRepo)` |
-| Normalise to PostgreSQL | `MudPostgresStoreRecordsNormaliser.UpsertAsync(repository)` |
+| Normalise to PostgreSQL | `MudPostgresStoreRecordsNormaliser.UpsertRecordAsync(encodedTableRecord)` (driven by `MudPostgresNormaliserProcessingService`) |
 | Query normalised data | `NormalisedTableQueryService.QueryAsync(tableName, predicate)` |
 | Query via REST API | `StoredRecordRestApiClient.GetTableRecordsAsync<T>(predicate)` |
 | Predicate queries | `builder.Equals(x => x.Field, value).AndEqual(x => x.Other, v).Expand()` |
@@ -130,7 +130,7 @@ Table mutations                  StoreEventsLogProcessingService
 
 - **Processor** — `StoreEventsLogProcessingService` reads Store events and applies them to any `ITableRepository`
 - **Blockchain Processor** — `CreateProcessor()` builds a continuous sync loop with block progress tracking and reorg handling
-- **Normaliser** — `MudPostgresStoreRecordsNormaliser` creates typed PostgreSQL tables mirroring MUD schemas (e.g., `app__Player` with `address`, `score`, `name` columns)
+- **Normaliser** — `MudPostgresStoreRecordsNormaliser` creates typed PostgreSQL tables mirroring MUD schemas (e.g., `w_abc123_app_player` with `address`, `score`, `name` columns; `{namespace}_{table}`, lowercased, prefixed with `w_<first 6 hex chars of the world address>_`)
 - **Query Service** — `NormalisedTableQueryService` provides SQL queries with pagination, ordering, and predicate filtering over normalised tables
 - **REST Client** — `StoredRecordRestApiClient` queries a remote MUD indexer via HTTP POST with `TablePredicate`
 - **Predicate Builder** — `TablePredicateBuilder` provides a fluent, typed query API: `builder.Equals(x => x.Address, addr).AndEqual(x => x.Status, 1).Expand()`

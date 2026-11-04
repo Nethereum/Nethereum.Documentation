@@ -30,7 +30,7 @@ For every row above, Nethereum handles gas estimation, nonce management, EIP-155
 |---------|----------|-------------|
 | `Nethereum.Uniswap` | Uniswap V2/V3/V4 | Token swaps, liquidity positions, price quoting, Permit2, Universal Router |
 | `Nethereum.GnosisSafe` | Safe (Gnosis Safe) | Multi-signature transaction assembly, EIP-712 signing, SafeAccount, MultiSend |
-| `Nethereum.X402` | x402 Protocol | HTTP 402 payments with EIP-3009 USDC transfers, ASP.NET middleware, client library |
+| `Nethereum.X402` | x402 Protocol (v2) | HTTP 402 payments via EIP-3009 or Permit2 (any ERC-20), ASP.NET middleware, client library |
 | `Nethereum.Circles` | Circles UBI | Balance queries, personal minting, trust management, transaction history |
 | `Nethereum.Siwe` | Sign-In with Ethereum | EIP-4361 authentication, session management, NFT gating, RECAP capabilities |
 | `Nethereum.Siwe.Core` | SIWE Core | Message model, parser, string builder, RECAP (EIP-5573) |
@@ -42,6 +42,6 @@ For every row above, Nethereum handles gas estimation, nonce management, EIP-155
 | [Uniswap: Swap Tokens](guide-uniswap-swap) | Quote prices, execute swaps via Universal Router, handle slippage and price impact |
 | [Uniswap: Manage Liquidity](guide-uniswap-liquidity) | Create/increase/decrease positions, collect fees, atomic rebalancing |
 | [Gnosis Safe](guide-gnosis-safe) | Build multi-sig transactions, collect signatures, SafeAccount, MultiSend |
-| [x402 Payments](guide-x402-payments) | Protect API endpoints, accept USDC payments, EIP-3009 authorization flow |
+| [x402 Payments](guide-x402-payments) | Protect API endpoints, accept payments (x402 v2) via EIP-3009 or Permit2 |
 | [Circles UBI](guide-circles) | Query balances, mint CRC, manage trust relationships on Gnosis Chain |
 | [SIWE Authentication](../protocols/guide-siwe) | Sign-In with Ethereum, session management, NFT gating, smart contract wallets, RECAP capabilities |

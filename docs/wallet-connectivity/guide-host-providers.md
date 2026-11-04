@@ -84,13 +84,13 @@ public interface IEthereumHostProvider
 The original browser wallet provider targeting MetaMask specifically.
 
 ```bash
-dotnet add package Nethereum.Metamask
+dotnet add package Nethereum.Metamask.Blazor
 ```
 
 Include the JS interop in `index.html` or `App.razor`:
 
 ```html
-<script src="_content/Nethereum.Blazor/NethereumMetamask.js"></script>
+<script src="_content/Nethereum.Metamask.Blazor/NethereumMetamask.js"></script>
 ```
 
 Register and use:
@@ -164,10 +164,7 @@ builder.Services.AddAppKit(new AppKitConfiguration
     Description = "A Nethereum dApp",
     Url = "https://mydapp.com",
     Icons = ["https://mydapp.com/icon.png"],
-    Networks = [
-        new Network { ChainId = 1, Name = "Ethereum", Currency = "ETH", RpcUrl = "https://..." },
-        new Network { ChainId = 137, Name = "Polygon", Currency = "MATIC", RpcUrl = "https://..." }
-    ]
+    Networks = [NetworkConstants.Networks.Ethereum, NetworkConstants.Networks.Polygon]
 });
 ```
 
@@ -189,7 +186,8 @@ dotnet add package Nethereum.WalletConnect
 ```
 
 ```csharp
-var walletConnectService = new NethereumWalletConnectService(signClientOptions);
+var client = await WalletConnectSignClient.Init(signClientOptions);
+var walletConnectService = new NethereumWalletConnectService(client);
 var provider = new NethereumWalletConnectHostProvider(walletConnectService);
 ```
 

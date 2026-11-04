@@ -10,8 +10,6 @@ format: md
 # Nethereum.Util.Rest
 
 > **NuGet**: [`Nethereum.Util.Rest`](https://www.nuget.org/packages/Nethereum.Util.Rest/) | **Source**: [`src/Nethereum.Util.Rest/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.Util.Rest)
-# Nethereum.Util.Rest
-
 Generic REST client abstraction and implementation for HTTP API interactions with JSON serialization support.
 
 ## Overview
@@ -132,37 +130,26 @@ public class ApiResponse
 
 ### Example 2: Dependency Injection Pattern (Real Example from BeaconApiClient)
 
+`Nethereum.Beaconchain.BeaconApiClient` is a real consumer of `IRestHttpHelper` — its
+constructors accept either an `HttpClient` or an `IRestHttpHelper` directly (for testing),
+and it exposes light-client operations through its `LightClient` property.
+
 ```csharp
+using Nethereum.Beaconchain;
+using Nethereum.Beaconchain.LightClient.Responses;
 using Nethereum.Util.Rest;
 using System.Net.Http;
+using System.Threading.Tasks;
 
-// Service class using dependency injection
-public class BeaconApiClient
-{
-    private readonly IRestHttpHelper _restHelper;
-    public string BaseUrl { get; }
+// Constructor with HttpClient
+var beaconClient = new BeaconApiClient("https://beacon-node.example.com", new HttpClient());
 
-    // Constructor with HttpClient
-    public BeaconApiClient(string baseUrl, HttpClient httpClient = null)
-    {
-        BaseUrl = baseUrl.TrimEnd('/');
-        _restHelper = new RestHttpHelper(httpClient ?? new HttpClient());
-    }
+// Constructor with IRestHttpHelper (for testing)
+IRestHttpHelper fakeRestHelper = null; // supply a test double
+var testableClient = new BeaconApiClient("https://beacon-node.example.com", fakeRestHelper);
 
-    // Constructor with IRestHttpHelper (for testing)
-    public BeaconApiClient(string baseUrl, IRestHttpHelper restHelper)
-    {
-        BaseUrl = baseUrl.TrimEnd('/');
-        _restHelper = restHelper;
-    }
-
-    // Example method
-    public async Task<BootstrapResponse> GetBootstrapAsync(string blockRoot)
-    {
-        var url = $"{BaseUrl}/eth/v1/beacon/light_client/bootstrap/{blockRoot}";
-        return await _restHelper.GetAsync<BootstrapResponse>(url);
-    }
-}
+// Light-client calls go through the LightClient property (ILightClientApi)
+LightClientBootstrapResponse bootstrap = await beaconClient.LightClient.GetBootstrapAsync(blockRoot);
 ```
 
 ### Example 3: 4byte.directory API Integration (Real Example)
@@ -219,6 +206,8 @@ public class FourByteDirectoryService
 ### Example 4: Sourcify Contract Verification API (Real Example)
 
 ```csharp
+using Nethereum.ABI.CompilationMetadata;
+using Nethereum.DataServices.Sourcify.Responses;
 using Nethereum.Util.Rest;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -497,6 +486,13 @@ public interface IRestHttpHelper
 }
 ```
 
+`RestHttpHelper` additionally exposes a lower-level method not on the interface:
+
+```csharp
+// Send a fully-constructed HttpRequestMessage directly; returns the raw response, so the caller owns the body and MaxResponseBytes does not apply
+public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request);
+```
+
 ### RestHttpHelper
 
 Concrete implementation of IRestHttpHelper.
@@ -506,6 +502,9 @@ public class RestHttpHelper : IRestHttpHelper
 {
     // Constructor - optionally provide HttpClient
     public RestHttpHelper(HttpClient httpClient = null);
+
+    public const long DefaultMaxResponseBytes = 32L * 1024 * 1024;
+    public long MaxResponseBytes { get; set; } = DefaultMaxResponseBytes;
 
     // Implements all IRestHttpHelper methods
     // Throws Exception on non-success status codes
@@ -592,9 +591,27 @@ public class MultipartFile
 
 ## Important Notes
 
+### Response Size Cap
+
+`GetAsync`, `PostAsync`, `PutAsync`, `DeleteAsync` and `PostMultipartAsync` send with `ResponseHeadersRead` and read each response body, successful or not, through one bounded reader and decode it with the charset in the response `Content-Type` (UTF-8 when none is declared). A body larger than `MaxResponseBytes` (default `RestHttpHelper.DefaultMaxResponseBytes`, 32 MiB) throws `HttpRequestException`, from the declared `Content-Length` before reading, or while streaming when the length is not declared. `DeleteAsync` and the body of a non-success response are capped the same way: an over-cap error body throws `HttpRequestException` instead of the status exception. The public `SendAsync` returns the raw `HttpResponseMessage` and is not capped: its caller owns reading the body. Raise or lower the limit per instance:
+
+```csharp
+var restHelper = new RestHttpHelper(new HttpClient()) { MaxResponseBytes = 1024 * 1024 };
+
+try
+{
+    var data = await restHelper.GetAsync<MyData>("https://api.example.com/data");
+}
+catch (HttpRequestException)
+{
+}
+```
+
 ### Error Handling
 
-All methods throw `Exception` on non-success HTTP status codes:
+All methods throw `Exception` on non-success HTTP status codes. The message format
+differs slightly by method: only `GetAsync` includes the response headers;
+`PostAsync`, `PutAsync`, `DeleteAsync`, and `PostMultipartAsync` omit them.
 
 ```csharp
 try
@@ -603,7 +620,19 @@ try
 }
 catch (Exception ex)
 {
-    // ex.Message contains: "Error: {StatusCode}, {ResponseBody}, {Headers}"
+    // From GetAsync, ex.Message contains: "Error: {StatusCode}, {ResponseBody}, {Headers}"
+    Console.WriteLine($"API error: {ex.Message}");
+}
+
+try
+{
+    var response = await restHelper.PostAsync<CreateUserResponse, CreateUserRequest>(
+        "https://api.example.com/users", request);
+}
+catch (Exception ex)
+{
+    // From PostAsync/PutAsync/DeleteAsync/PostMultipartAsync, ex.Message contains:
+    // "Error: {StatusCode}, {ResponseBody}" — no headers
     Console.WriteLine($"API error: {ex.Message}");
 }
 ```

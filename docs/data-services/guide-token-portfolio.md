@@ -35,7 +35,7 @@ The key insight is that you do not need to index the chain to find tokens. The p
 
 1. **Load the token list** — On first call, the service loads the embedded token list for the chain (e.g., ~1,000+ tokens for Ethereum mainnet). This list includes contract addresses, symbols, names, and decimals. No network call needed — it is bundled in the package. Optionally, a background refresh pulls updates from CoinGecko and caches them.
 2. **Batch multicall** — For every token in the list, a batched `eth_call` via the Multicall contract reads `balanceOf(account)`. The default batch size is 100 tokens per call, so checking 1,000 tokens takes ~10 RPC calls. This is orders of magnitude faster than calling each token contract individually, and it works against any standard RPC endpoint — no archive node, no indexer, no special API.
-3. **Filter non-zero** — Only tokens with a non-zero balance are returned (by default), so the result is the wallet's actual holdings.
+3. **Map results** — every token in the list is returned with its balance (zero for tokens the wallet does not hold); filter with `.Where(b => b.Balance > 0)` for actual holdings.
 4. **Optional pricing** — If requested, contract addresses of held tokens are sent to CoinGecko's price API to attach USD (or other currency) values.
 
 The result is a `List<TokenBalance>` where each entry carries the token metadata, the raw balance, the decimal balance, and optionally a price and computed value.
@@ -399,7 +399,7 @@ public class EtherscanDiscoveryStrategy : IDiscoveryStrategy
         // Call Etherscan API for token transfers
         // Extract unique token addresses
         // Get current balances via multicall
-        return TokenDiscoveryResult.Successful(balances, progress, StrategyName);
+        return TokenDiscoveryResult.Successful(balances, null, StrategyName);
     }
 
     public Task<bool> SupportsChainAsync(long chainId) => Task.FromResult(true);

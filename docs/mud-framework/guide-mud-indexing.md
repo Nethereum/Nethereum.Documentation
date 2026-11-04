@@ -153,19 +153,23 @@ The reorg buffer delays processing by the specified number of blocks, allowing t
 
 ## EF Core Repository
 
-The `MudEFCoreTableRepository` stores decoded MUD records in any database supported by Entity Framework Core. Records are stored as encoded blobs — the schema is generic, not normalised per table:
+A subclass of the abstract `MudEFTableRepository<TDbContext>` stores decoded MUD records in any database supported by Entity Framework Core. Records are stored as encoded blobs — the schema is generic, not normalised per table:
 
 ```csharp
+using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Mud;
+using Nethereum.Mud.EncodingDecoding;
 using Nethereum.Mud.Repositories.EntityFramework;
 
-// Configure with your EF Core DbContext
-var efRepository = new MudEFCoreTableRepository(dbContext);
+// class MyMudTableRepository : MudEFTableRepository<MyMudDbContext>
+var efRepository = new MyMudTableRepository(dbContext);
 
 // Process Store events into EF Core
 await storeEventsService.ProcessAllStoreChangesAsync(efRepository);
 
 // Query typed records
-var players = await efRepository.GetTableRecordsAsync<PlayerTableRecord>();
+var tableIdHex = ResourceEncoder.EncodeTable("app", "Player").ToHex(true);
+var players = await efRepository.GetTableRecordsAsync<PlayerTableRecord>(tableIdHex);
 ```
 
 The EF Core repository stores records in a single table with columns for `TableId`, `Key`, `StaticData`, `EncodedLengths`, and `DynamicData`. This is simpler to set up than PostgreSQL normalisation but doesn't give you typed relational columns.
@@ -177,31 +181,38 @@ The `Nethereum.Mud.Repositories.Postgres` package goes beyond blob storage — i
 ```csharp
 using Nethereum.Mud.Repositories.Postgres;
 
-var normaliser = new MudPostgresStoreRecordsNormaliser(connectionString, worldAddress);
+var normaliser = new MudPostgresStoreRecordsNormaliser(
+    connection, // NpgsqlConnection
+    new StoreNamespace(web3, worldAddress),
+    logger,
+    worldAddress);
 
-// Normalise records from a repository into typed PostgreSQL tables
-await normaliser.UpsertAsync(repository);
+// Normalise an encoded record into typed PostgreSQL tables
+await normaliser.UpsertRecordAsync(encodedTableRecord);
 ```
 
 The normaliser inspects each record's schema and creates or updates PostgreSQL tables with columns matching the MUD table's key and value fields. A MUD table with `address` key and `uint256 score, string name` values becomes a PostgreSQL table with `address VARCHAR`, `score NUMERIC`, `name TEXT` columns.
 
 ### Full Processing Pipeline
 
-For a complete indexing pipeline that processes events and normalises to PostgreSQL, use `MudPostgresNormaliserProcessingService`:
+To normalise the records already stored by `MudPostgresStoreRecordsProcessingService` into typed PostgreSQL tables, use `MudPostgresNormaliserProcessingService`:
 
 ```csharp
 using Microsoft.Extensions.Logging;
 
 var processingService = new MudPostgresNormaliserProcessingService(
-    repository,
-    connectionString,
-    logger);
+    new MudPostgresStoreRecordsTableRepository(context),
+    connection, // NpgsqlConnection
+    logger)
+{
+    RpcUrl = rpcUrl,
+    Address = worldAddress
+};
 
-// Process all Store events and normalise into typed PostgreSQL tables
-await processingService.ProcessAllStoreChangesAsync(web3, worldAddress);
+await processingService.ExecuteAsync(cancellationToken);
 ```
 
-This combines event processing, decoding, and normalisation into a single call.
+It normalises records already stored by `MudPostgresStoreRecordsProcessingService`; it does not read Store events itself.
 
 ![MUD World tables indexed to PostgreSQL with querying and filtering](../screenshots/explorer-animated-gif-mud%20worlds%20tables%20querying%20and%20filtering.gif)
 
@@ -210,22 +221,22 @@ This combines event processing, decoding, and normalisation into a single call.
 Once data is normalised, use `NormalisedTableQueryService` to query the typed PostgreSQL tables:
 
 ```csharp
-var queryService = new NormalisedTableQueryService(connectionString);
+var queryService = new NormalisedTableQueryService(connection); // NpgsqlConnection
 
-// List available tables
+// List available tables (default prefix "w_")
 var tables = await queryService.GetAvailableTablesAsync();
 
 // Get column metadata for a table
-var columns = await queryService.GetTableColumnsAsync("app__Player");
+var columns = await queryService.GetTableColumnsAsync("w_abc123_app_player");
 
 // Query with pagination
-var results = await queryService.QueryAsync("app__Player", limit: 100, offset: 0);
+var results = await queryService.QueryAsync("w_abc123_app_player", pageSize: 100, page: 0);
 
 // Count records
-var count = await queryService.CountAsync("app__Player");
+var count = await queryService.CountAsync("w_abc123_app_player");
 ```
 
-Table names in PostgreSQL follow the pattern `{namespace}__{tableName}` (double underscore separator). This is useful for building explorer UIs or admin dashboards over MUD World data.
+Table names in PostgreSQL follow the pattern `{namespace}_{table}`, lowercased, and are prefixed with `w_<first 6 hex chars of the world address>_` when a world address is given, for example `w_abc123_app_player`. This is useful for building explorer UIs or admin dashboards over MUD World data.
 
 ## Choosing a Storage Strategy
 
@@ -233,7 +244,7 @@ Table names in PostgreSQL follow the pattern `{namespace}__{tableName}` (double 
 |---|---|---|
 | `InMemoryTableRepository` | Development, testing, short-lived processes | Fast, no setup; lost on restart |
 | `InMemoryChangeTrackerTableRepository` | Local state with batch submission | Tracks mutations for replay; same restart limitation |
-| `MudEFCoreTableRepository` | Any EF Core database, simple persistence | Generic schema (blob storage); works with SQL Server, SQLite, PostgreSQL |
+| `MudEFTableRepository<TDbContext>` subclass | Any EF Core database, simple persistence | Generic schema (blob storage); works with SQL Server, SQLite, PostgreSQL |
 | PostgreSQL normalisation | Production indexing, analytics, explorer UIs | Typed relational columns; requires PostgreSQL; normalisation adds latency |
 
 For most production applications, start with in-memory for development, then move to PostgreSQL normalisation for deployment.
@@ -241,7 +252,7 @@ For most production applications, start with in-memory for development, then mov
 ## Common Gotchas
 
 - **Block range matters** — `ProcessAllStoreChangesAsync` defaults to processing from the earliest block. For large chains, specify `fromBlockNumber` to start from the block where your World was deployed.
-- **Normalised table names** — PostgreSQL tables use `{namespace}__{tableName}` format. The double underscore is intentional to avoid conflicts with table names that contain single underscores.
+- **Normalised table names** — PostgreSQL tables use the `{namespace}_{table}` format, lowercased, prefixed with `w_<first 6 hex chars of the world address>_` when a world address is given (for example `w_abc123_app_player`).
 - **Splice events update partial data** — `Store_SpliceStaticData` and `Store_SpliceDynamicData` modify parts of a record, not the whole record. The repository handles merging these correctly.
 - **Schema changes** — if you modify a MUD table's schema and redeploy, the normaliser creates new columns but doesn't migrate old data. Plan schema changes carefully.
 

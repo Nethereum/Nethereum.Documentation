@@ -11,14 +11,17 @@ Nethereum is the .NET integration platform for Ethereum and EVM-compatible block
 
 ## What Can You Build?
 
-Nethereum includes **130+ packages** covering the full Ethereum development stack:
+Nethereum includes **134 packages** covering the full Ethereum development stack:
 
 - **Smart contract interaction** — deploy, call, and listen to events for ERC-20, ERC-721, ERC-1155, ENS, and any custom contract
 - **Code generation** — generate typed C# services from Solidity ABI
 - **Local dev chain** — run a Hardhat/Anvil-compatible chain inside your app with instant mining
 - **Blockchain engine** — pluggable storage, full EVM, RPC routing, Patricia trie
 - **AppChains (Preview)** — production satellite chains with sequencer, P2P sync, and L1 anchoring
+- **Mainnet follower (Preview)** — run your own Ethereum node in .NET: sync, validate, and serve mainnet over JSON-RPC
+- **Peer-to-peer networking (Preview)** — RLPx transport, node discovery, and the block/state sync engine (DevP2P)
 - **EVM simulator** — execute and debug EVM bytecode with step-by-step tracing
+- **Zero-knowledge proofs** — Groth16 generation/verification and Circom circuits, plus Zisk zkVM EVM proving (Preview)
 - **Blockchain data indexing** — crawl and store blocks, transactions, logs, and token transfers
 - **Blockchain explorer** — Blazor Server explorer with ABI-decoded contract interaction
 - **Token services** — discover tokens, fetch prices, scan balances across wallets
@@ -60,8 +63,8 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 | Section | What You'll Find |
 |---|---|
 | **[Getting Started](/docs/getting-started/installation)** | Install, create a project, send your first transaction |
-| **[What Do You Want to Do?](/docs/what-do-you-want-to-do)** | 44 use cases mapped to guides and packages |
-| **[Architecture Map](/docs/architecture)** | How 130+ packages are layered and relate to each other |
+| **[What Do You Want to Do?](/docs/what-do-you-want-to-do)** | over 130 use cases mapped to guides and packages |
+| **[Architecture Map](/docs/architecture)** | How 134 packages are layered and relate to each other |
 | **[Component Catalog](/docs/component-catalog)** | Every package with descriptions, READMEs, and links |
 
 ### Documentation Sections
@@ -73,7 +76,9 @@ The [Nethereum Playground](http://playground.nethereum.com) lets you write and e
 | **[Smart Contracts & Code Gen](/docs/smart-contracts/overview)** | Contract interaction, typed services, code generation, ENS, SIWE |
 | **[DeFi & Protocols](/docs/defi/overview)** | Uniswap, x402 payments, Gnosis Safe, Optimism, Permit2 |
 | **[EVM Simulator](/docs/evm-simulator/overview)** | Execute and debug EVM bytecode with step-by-step tracing |
-| **[Chain Infrastructure](/docs/chain-infrastructure/overview)** | Shared blockchain engine — storage, block production, EVM execution, RPC routing |
+| **[Zero-Knowledge Proofs](/docs/zk-proofs/overview)** | Groth16 proof generation/verification and Circom circuits — plus Zisk zkVM EVM proving (Preview) |
+| **[Mainnet Follower (Preview)](/docs/mainnet-follower/overview)** | Run your own Ethereum mainnet node in .NET — sync, validate, and serve mainnet |
+| **[DevP2P (Preview)](/docs/devp2p/overview)** | Ethereum peer-to-peer networking in .NET — RLPx transport, discovery, and the sync engine |
 | **[DevChain](/docs/devchain/overview)** | Local dev chain — instant mining, Hardhat/Anvil compatibility, Aspire orchestration |
 | **[AppChains (Preview)](/docs/application-chain/overview)** | Production satellite chains — sequencer, P2P networking, L1 anchoring |
 | **[Account Abstraction](/docs/account-abstraction/overview)** | ERC-4337 UserOps, bundler, ERC-7579 smart accounts |

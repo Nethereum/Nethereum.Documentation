@@ -52,10 +52,10 @@ The `UseVerifiedState()` extension intercepts RPC calls and verifies responses a
 | Package | Description |
 |---------|-------------|
 | [`Nethereum.Beaconchain`](nethereum-beaconchain) | Beacon Chain REST API client for light client bootstrap, sync updates, and finality data |
-| [`Nethereum.Consensus.LightClient`](../consensus-and-cryptography/nethereum-consensus-lightclient) | Light client sync protocol — initialization, updates, trusted header tracking, staleness detection |
+| [`Nethereum.Consensus.LightClient`](nethereum-consensus-lightclient) | Light client sync protocol — initialization, updates, trusted header tracking, staleness detection |
 | [`Nethereum.ChainStateVerification`](../data-and-indexing/nethereum-chainstateverification) | Verified state queries with Merkle proof verification, RPC interceptor, caching |
-| [`Nethereum.Consensus.Ssz`](../consensus-and-cryptography/nethereum-consensus-ssz) | SSZ container types for beacon headers, sync committees, and light client messages |
-| [`Nethereum.Ssz`](../consensus-and-cryptography/nethereum-ssz) | Core SSZ encoding/decoding and merkleization primitives |
+| [`Nethereum.Consensus.Ssz`](nethereum-consensus-ssz) | SSZ container types for beacon headers, sync committees, and light client messages |
+| [`Nethereum.Ssz`](nethereum-ssz) | Core SSZ encoding/decoding and merkleization primitives |
 
 ### Supporting Packages
 
@@ -64,7 +64,7 @@ These packages are dependencies used by the light client stack but documented in
 | Package | Section | Role |
 |---------|---------|------|
 | [`Nethereum.Signer.Bls.Herumi`](../signing-and-key-management/nethereum-signer-bls-herumi) | Signing & Key Management | BLS12-381 signature verification (native Herumi library) |
-| [`Nethereum.Merkle.Patricia`](../consensus-and-cryptography/nethereum-merkle-patricia) | Core Foundation | Patricia trie proof verification for account and storage proofs |
+| [`Nethereum.Merkle.Patricia`](../core-foundation/nethereum-merkle-patricia) | Core Foundation | Patricia trie proof verification for account and storage proofs |
 
 ## Supported Chains
 

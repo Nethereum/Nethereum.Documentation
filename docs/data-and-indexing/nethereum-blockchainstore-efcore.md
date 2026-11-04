@@ -45,6 +45,8 @@ Targets `net8.0` and `net10.0`. Uses EF Core 8.x on net8.0 and EF Core 10.x on n
 - **Microsoft.EntityFrameworkCore.Relational** - Relational database abstractions
 - **Microsoft.EntityFrameworkCore.Tools** - Design-time migration tooling (private asset)
 - **Microsoft.Extensions.Configuration** - Connection string resolution
+- **Microsoft.Extensions.Configuration.EnvironmentVariables** - Environment-variable configuration provider
+- **Microsoft.Extensions.Configuration.Json** - appsettings.json configuration provider
 
 ## Key Concepts
 
@@ -68,7 +70,7 @@ public class PostgresBlockchainDbContext : BlockchainDbContextBase
 }
 ```
 
-DbSets provided: `Blocks`, `Transactions`, `TransactionLogs`, `Contracts`, `AddressTransactions`, `InternalTransactions`, `TransactionVmStacks`, `AccountStates`, `ChainStates`, `BlockProgress`, `InternalTransactionBlockProgress`.
+DbSets provided: `Blocks`, `Transactions`, `TransactionLogs`, `Contracts`, `AddressTransactions`, `InternalTransactions`, `TransactionVmStacks`, `AccountStates`, `ChainStates`, `BlockProgress`, `InternalTransactionBlockProgress`, `BlockAccessListAccounts`.
 
 ### IBlockchainDbContextFactory
 
@@ -123,7 +125,7 @@ services.AddBlockchainRepositories();
 - `IBlockchainStoreRepositoryFactory` as `BlockchainStoreRepositoryFactory`
 - `IBlockProgressRepositoryFactory` as `BlockchainStoreRepositoryFactory`
 - `IChainStateRepositoryFactory` as `BlockchainStoreRepositoryFactory`
-- Individual repositories: `IBlockRepository`, `ITransactionRepository`, `ITransactionLogRepository`, `IContractRepository`, `IAddressTransactionRepository`, `IBlockProgressRepository`, `IChainStateRepository`
+- Individual repositories: `IBlockRepository`, `ITransactionRepository`, `ITransactionLogRepository`, `ITransactionVMStackRepository`, `IContractRepository`, `IAddressTransactionRepository`, `IBlockProgressRepository`, `IChainStateRepository`
 
 ### Use with Block Storage Processor
 
@@ -224,8 +226,8 @@ Key methods:
 | `BlockEntityBuilder` | Blocks | (BlockNumber, Hash) unique; BlockNumber; Hash; ParentHash; (IsCanonical, BlockNumber) |
 | `TransactionEntityBuilder` | Transactions | (BlockNumber, Hash) unique; Hash; AddressFrom; AddressTo; NewContractAddress; (IsCanonical, BlockNumber) |
 | `TransactionLogEntityBuilder` | TransactionLogs | (TransactionHash, LogIndex) unique; BlockNumber; Address; EventHash; (IsCanonical, BlockNumber) |
-| `InternalTransactionEntityBuilder` | InternalTransactions | (TransactionHash, Index) unique; BlockNumber |
-| `ContractEntityBuilder` | Contracts | Address unique |
+| `InternalTransactionEntityBuilder` | InternalTransactions | (TransactionHash, TraceIndex) unique; BlockNumber |
+| `ContractEntityBuilder` | Contracts | Address; Name |
 
 ## Related Packages
 

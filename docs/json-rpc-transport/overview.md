@@ -22,7 +22,7 @@ var web3 = new Web3("https://mainnet.infura.io/v3/YOUR_API_KEY");
 
 // With signing account
 var account = new Account("YOUR_PRIVATE_KEY");
-var web3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR_API_KEY");
+var signingWeb3 = new Web3(account, "https://mainnet.infura.io/v3/YOUR_API_KEY");
 ```
 
 ### In-Process DevChain (No External Node)
@@ -58,8 +58,14 @@ await subscription.SubscribeAsync();
 
 ```csharp
 using Nethereum.JsonRpc.IpcClient;
+using Nethereum.Web3;
 
-var ipcClient = new IpcClient("./geth.ipc");
+// Windows (named pipe)
+var ipcClient = new IpcClient(@"\\.\pipe\geth.ipc");
+
+// Linux / macOS (Unix domain socket)
+// var ipcClient = new UnixIpcClient("/home/user/.ethereum/geth.ipc");
+
 var web3 = new Web3(ipcClient);
 ```
 
@@ -69,7 +75,7 @@ var web3 = new Web3(ipcClient);
 |---|---|---|
 | HTTP | Most applications, hosted nodes | `Nethereum.JsonRpc.RpcClient` (included in Web3) |
 | DevChain | Local development and testing | `Nethereum.DevChain` |
-| WebSocket | Real-time subscriptions | `Nethereum.JsonRpc.WebSocketStreamingClient` |
+| WebSocket | Real-time subscriptions | `Nethereum.JsonRpc.WebSocketClient` (contains `StreamingWebSocketClient`) + `Nethereum.RPC.Reactive` for observables |
 | IPC | Local node, lowest latency | `Nethereum.JsonRpc.IpcClient` |
 | System.Text.Json HTTP | AOT-friendly / trimmed apps | `Nethereum.JsonRpc.SystemTextJsonRpcClient` |
 
@@ -96,6 +102,9 @@ Use [Chainlist](https://chainlist.org/) to find RPC endpoints for any EVM-compat
 ## Error Handling
 
 ```csharp
+using Nethereum.JsonRpc.Client;
+using Nethereum.Web3;
+
 try
 {
     var receipt = await web3.Eth.Transactions.GetTransactionReceipt

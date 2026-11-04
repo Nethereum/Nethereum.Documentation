@@ -24,7 +24,7 @@ bool isDelegated = await authService.IsDelegatedAccountAsync(address);
 string delegateContract = await authService.GetDelegatedAccountAddressAsync(address);
 
 // Revoke delegation — removes smart account from EOA
-var receipt = await authService.RemoveAuthorisationRequestAndWaitForReceiptAsync();
+var revokeReceipt = await authService.RemoveAuthorisationRequestAndWaitForReceiptAsync();
 ```
 For sponsored delegation (someone else pays gas), use `EIP7022SponsorAuthorisationService`.
 :::
@@ -195,7 +195,7 @@ var authorisation = new Authorisation7702
 {
     ChainId = 1,                                     // or 0 for universal
     Address = "0xDelegateContractAddress",            // contract to delegate to
-    Nonce = 0                                         // must match the EOA's current nonce
+    Nonce = 1                                         // sender nonce + 1 when the EOA also sends the transaction
 };
 
 // 2. Sign the authorization with the EOA's key
@@ -269,8 +269,8 @@ EIP-7702 adds extra gas on top of the base transaction cost:
 | Cost | Amount | When |
 |------|--------|------|
 | Base transaction | 21,000 | Every transaction |
-| Per authorization | 12,500 | Each authorization tuple |
-| Per account (new or existing) | 25,000 | Each account being delegated |
+| Per authorization tuple | 25,000 | Charged up front for every tuple (new or existing authority) |
+| Refund | 12,500 | Returned when the authority account already exists |
 
 ```csharp
 using Nethereum.RPC.TransactionManagers;
@@ -314,12 +314,12 @@ All external signers support Type 4 transactions:
 
 ```csharp
 // Ledger
-var signer = new LedgerExternalSigner(ledgerManager);
+var signer = new LedgerExternalSigner(ledgerManager, 0);
 await signer.SignAsync(transaction7702);
 
 // AWS KMS
-var signer = new AWSKeyManagementExternalSigner(kmsClient, keyId);
-await signer.SignAsync(transaction7702);
+var kmsSigner = new AWSKeyManagementExternalSigner(kmsClient, keyId);
+await kmsSigner.SignAsync(transaction7702);
 ```
 
 The same `IEthExternalSigner.SignAsync(Transaction7702)` interface works for Ledger, Trezor, AWS KMS, and Azure Key Vault.

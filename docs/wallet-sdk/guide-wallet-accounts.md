@@ -33,22 +33,23 @@ public interface IWalletAccount
 | **Private Key** | `PrivateKeyWalletAccount` | Yes | Direct ECDSA key import |
 | **View-Only** | `ViewOnlyWalletAccount` | No | Address monitoring, balance tracking |
 | **Smart Contract** | `SmartContractWalletAccount` | No | Multisig or AA contract wallets |
-| **Hardware** | via Trezor/Ledger packages | Yes (device) | USB-connected signing |
+| **Hardware** | `TrezorWalletAccount` via the Trezor packages | Yes (device) | USB-connected signing |
 
 ![Add account dialog — Mnemonic, Private Key, View-Only, and Trezor hardware wallet](../screenshots/walletsdk-3-AddAccount-Mnemonic-PrivateKey-ViewOnly-Trezor-PlugableTypes.png)
 
 ## WalletVault
 
-`WalletVault` holds all accounts, mnemonics, and hardware device references. It serialises to JSON and encrypts with AES-256 via `IEncryptionStrategy`.
+`WalletVault` holds all accounts, mnemonics, and hardware device references. It serialises to JSON and encrypts with AES-256-GCM via `IEncryptionStrategy`.
 
 ### Create and Populate a Vault
 
 ```csharp
-var encryption = new BouncyCastleAes256EncryptionStrategy();
+var encryption = new Aes256GcmEncryptionStrategy();
 var vault = new WalletVault(encryption);
 
-var hdWallet = new MinimalHDWallet(Bip39.GenerateMnemonic(12));
-var mnemonicInfo = new MnemonicInfo("My Wallet", hdWallet.Mnemonic, passphrase: null);
+var mnemonic = Bip39.GenerateMnemonic(12);
+var hdWallet = new MinimalHDWallet(mnemonic);
+var mnemonicInfo = new MnemonicInfo("My Wallet", mnemonic, passphrase: null);
 vault.AddMnemonic(mnemonicInfo);
 
 var account = new MnemonicWalletAccount(
@@ -169,7 +170,7 @@ Mnemonic accounts that share the same seed phrase are grouped by `MnemonicId`. R
 var groups = await VaultService.GetAccountGroupsAsync();
 foreach (var group in groups)
 {
-    Console.WriteLine($"Group: {group.Label} ({group.Accounts.Count} accounts)");
+    Console.WriteLine($"Group: {group.GroupId ?? "standalone"} ({group.Count} accounts)");
 }
 ```
 

@@ -116,7 +116,11 @@ Each `BalanceChange` includes a `Type` that tells you what kind of asset moved:
 Fee-on-transfer tokens and rebasing tokens cause the actual balance change to differ from what the `Transfer` event reports. The extractor can cross-check against actual state:
 
 ```csharp
-extractor.ValidateTokenBalances(stateChanges, program, executionStateService);
+extractor.ValidateTokenBalances(
+    stateChanges, program, executionStateService,
+    getErc20Balance: (token, holder) => GetErc20Balance(token, holder),
+    getErc721Owner: (token, tokenId) => GetErc721Owner(token, tokenId),
+    getErc1155Balance: (token, holder, tokenId) => GetErc1155Balance(token, holder, tokenId));
 
 foreach (var change in stateChanges.BalanceChanges)
 {
@@ -130,6 +134,8 @@ foreach (var change in stateChanges.BalanceChanges)
     }
 }
 ```
+
+Validation only runs for a token type when its resolver delegate (`getErc20Balance`, `getErc721Owner`, `getErc1155Balance`) is supplied and, for ERC-20 and ERC-1155, when `BalanceBefore` and `BalanceAfter` are populated on the change; otherwise the change stays `NotValidated`.
 
 Validation statuses:
 - `NotValidated` — not yet checked

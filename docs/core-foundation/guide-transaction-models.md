@@ -24,7 +24,7 @@ dotnet add package Nethereum.Signer
 | Type 1 | 0x01   | AccessList  | EIP-2930: pre-declared storage keys  |
 | Type 2 | 0x02   | EIP-1559    | Priority fee + max fee per gas       |
 | Type 3 | 0x03   | Blob        | EIP-4844: blob-carrying transactions |
-| Type 4 | 0x05   | SetCode     | EIP-7702: delegate code for EOAs     |
+| Type 4 | 0x04   | SetCode     | EIP-7702: delegate code for EOAs     |
 
 ## Legacy Transaction (Type 0)
 
@@ -89,7 +89,7 @@ Lets an EOA temporarily delegate to a smart contract — enables account abstrac
 
 ```csharp
 // Create and sign the authorization
-var authorisation = new Authorisation7702(chainId, contractAddress, nonce);
+var authorisation = new Authorisation7702 { ChainId = chainId, Address = contractAddress, Nonce = nonce };
 
 var authSigner = new Authorisation7702Signer();
 var signedAuth = authSigner.SignAuthorisation(ecKey, authorisation);
@@ -132,7 +132,7 @@ Console.WriteLine($"Signature valid: {isValid}");
 
 ## Decoding Transactions with TransactionFactory
 
-When you receive raw transaction bytes (from a node, mempool, or external source), use `TransactionFactory` to auto-detect the type and decode it. The factory reads the type prefix byte: `0x01` = EIP-2930, `0x02` = EIP-1559, `0x05` = EIP-7702, no prefix = Legacy.
+When you receive raw transaction bytes (from a node, mempool, or external source), use `TransactionFactory` to auto-detect the type and decode it. The factory reads the type prefix byte: `0x01` = EIP-2930, `0x02` = EIP-1559, `0x03` = EIP-4844, `0x04` = EIP-7702, no prefix = Legacy.
 
 <!-- tag:ModelDocExampleTests:TransactionFactory_Detects1559And2930 -->
 

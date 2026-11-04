@@ -93,7 +93,7 @@ string encoded = functionCallEncoder.EncodeRequest(
     "0x1234567890abcdef1234567890abcdef12345678",  // recipient
     1000000000000000000  // amount (1 ETH in wei)
 );
-// Result: "0xc6888fa10000000000000000000000001234567890abcdef1234567890abcdef12345678000000000000000000000000000000000000000000000000001e4c89d6c7e400"
+// Result: "0xc6888fa10000000000000000000000001234567890abcdef1234567890abcdef123456780000000000000000000000000000000000000000000000000de0b6b3a7640000"
 ```
 
 ### Decoding Function Output
@@ -168,20 +168,23 @@ string encoded = functionCallEncoder.EncodeRequest(
 
 ### Example 2: Attribute-Based Function Encoding
 
-From test: `FunctionAttributeEncodingTests.cs:55`
+From test: `FunctionAttributeEncodingTests.cs:55-61` (`ShouldEncodeInt`, backed by `FunctionIntInput` at line 96)
+
+`EncodeRequest<T>(T functionInput, string sha3Signature)` takes the signature explicitly, so
+the input class only needs `[Parameter]` attributes — it does not need `[Function]` or a
+`FunctionMessage` base:
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 
-[Function("multiply")]
-public class MultiplyFunction : FunctionMessage
+public class MultiplyFunctionInput
 {
     [Parameter("uint256", "a", 1)]
     public int A { get; set; }
 }
 
-var input = new MultiplyFunction { A = 69 };
+var input = new MultiplyFunctionInput { A = 69 };
 var encoder = new FunctionCallEncoder();
 string encoded = encoder.EncodeRequest(input, "c6888fa1");
 
@@ -389,6 +392,7 @@ From test: `Eip712TypedDataSignerSimpleScenarioTest.cs:66`
 ```csharp
 using Nethereum.ABI.EIP712;
 using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using System.Collections.Generic;
 
@@ -478,6 +482,7 @@ From test: `Eip712TypedDataSignerTest.cs:107`
 
 ```csharp
 using Nethereum.ABI.EIP712;
+using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 
 // EIP-712 typed data as JSON (MetaMask format)
@@ -531,9 +536,10 @@ var rawTypedData = TypedDataRawJsonConversion.DeserialiseJsonToRawTypedData(type
 var signer = new Eip712TypedDataSigner();
 byte[] encodedTypedData = signer.EncodeTypedDataRaw(rawTypedData);
 
-// Sign directly from JSON
+// Sign directly from JSON — there is no SignTypedDataV4(TypedDataRaw, EthECKey) overload;
+// signing from a raw JSON payload goes through the string overload instead
 var key = new EthECKey("94e001d6adf3a3275d5dd45971c2a5f6637d3e9c51f9693f2e678f649e164fa5");
-string signature = signer.SignTypedDataV4(rawTypedData, key);
+string signature = signer.SignTypedDataV4(typedDataJson, key);
 ```
 
 ### Example 11: EIP-712 with Complex Nested Structures
@@ -660,6 +666,33 @@ catch (AbiEncodingException ex)
 }
 ```
 
+### Example 14: Uniswap Permit2 EIP-712 Types
+
+The `Nethereum.ABI.EIP712.Permit2` namespace provides the Permit2 EIP-712 **signing** types and their
+`TypedData` definitions (`Permit2TypedData`). Signing itself is done by `PermitSigner` in
+`Nethereum.Signer.EIP712`; the on-chain call tuples live in `Nethereum.Contracts.Standards.Permit2`.
+
+Signing types (each matches a Permit2 typehash):
+
+- `TokenPermissions` — `token`, `amount`
+- `PermitDetails` — `token`, `amount` (uint160), `expiration`/`nonce` (uint48)
+- `PermitSingle` / `PermitBatch` — AllowanceTransfer: `details`, `spender`, `sigDeadline`
+- `PermitTransferFromWithSpender` / `PermitBatchTransferFromWithSpender` — SignatureTransfer:
+  `permitted`, `spender`, `nonce`, `deadline`
+
+```csharp
+using Nethereum.ABI.EIP712.Permit2;
+
+var typedData = Permit2TypedData.GetPermitTransferFromTypeDefinition(chainId, permit2Address);
+// PrimaryType "PermitTransferFrom", domain name "Permit2"
+```
+
+**Why a separate `...WithSpender` type:** for SignatureTransfer, Permit2 hashes the caller
+(`msg.sender`) into the typehash's `spender` field, so the *signed* message must include `spender`
+even though the on-chain `PermitTransferFrom` argument tuple (in `Nethereum.Contracts.Standards.Permit2`)
+does not. AllowanceTransfer's `PermitSingle`/`PermitBatch` carry `spender` as a real field, so they are
+used unchanged for both signing and the on-chain call.
+
 ## API Reference
 
 ### Core Classes
@@ -676,12 +709,12 @@ catch (AbiEncodingException ex)
 - `EncodeRequest<T>(T functionInput, string sha3Signature)` - Encode using attributes
 
 #### `FunctionCallDecoder`
-- `DecodeOutput(string output, params Parameter[] parameters)` - Decode function return values
+- `DecodeOutput(string output, params ParameterOutput[] outputParameters)` - Decode function return values
 - `DecodeFunctionOutput<T>(string output)` - Decode using attributes
 
 #### `EventTopicDecoder`
-- `DecodeTopics(object destination, string[] topics, string data)` - Decode event log into object
-- `DecodeTopics<T>(string[] topics, string data)` - Decode event log to typed object
+- `DecodeTopics<T>(T eventDTO, object[] topics, string data)` - Decode event log into an existing typed object instance
+- `DecodeTopics<T>(object[] topics, string data)` - Decode event log into a new typed object (`where T : new()`)
 
 #### `ABIJsonDeserialiser`
 - `DeserialiseContract(string abi)` - Parse contract ABI JSON
@@ -694,10 +727,10 @@ catch (AbiEncodingException ex)
 - `EncodeAndHashTypedData(...)` - Encode and hash for signing
 - `EncodeTypedDataRaw(TypedDataRaw typedData)` - Low-level encoding
 
-#### `Eip712TypedDataSigner` (in Nethereum.Signer)
-- `SignTypedDataV4<T>(T message, TypedData<Domain> typedData, EthECKey key)` - Sign EIP-712 data
-- `RecoverFromSignatureV4<T>(T message, TypedData<Domain> typedData, string signature)` - Recover signer
-- `SignTypedDataV4(TypedDataRaw typedData, EthECKey key)` - Sign from raw typed data
+#### `Eip712TypedDataSigner` (in Nethereum.Signer.EIP712)
+- `SignTypedDataV4<T, TDomain>(T message, TypedData<TDomain> typedData, EthECKey key)` - Sign EIP-712 data
+- `RecoverFromSignatureV4<T, TDomain>(T message, TypedData<TDomain> typedData, string signature)` - Recover signer
+- `SignTypedDataV4(string json, EthECKey key)` - Sign directly from EIP-712 JSON
 
 ### Encoding Attributes
 
@@ -710,13 +743,13 @@ catch (AbiEncodingException ex)
 ### EIP-712 Classes
 
 - `TypedData<TDomain>` - Typed data with domain separation
-- `Domain` - EIP-712 domain (name, version, chainId, verifyingContract, salt)
+- `Domain` - EIP-712 domain (name, version, chainId, verifyingContract); `DomainWithSalt` extends it with an optional `salt` field
 - `MemberDescription` - Type member definition (name, type)
 - `MemberDescriptionFactory` - Generate type descriptions from .NET types
 - `MemberValue` - Runtime value for encoding
 - `TypedDataRaw` - Raw typed data without generics
 
-### Example 14: Smart Contract Revert Error Handling
+### Example 15: Smart Contract Revert Error Handling
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;
@@ -744,7 +777,7 @@ catch (SmartContractRevertException ex)
 }
 ```
 
-### Example 15: Custom Solidity Error Decoding
+### Example 16: Custom Solidity Error Decoding
 
 ```csharp
 using Nethereum.ABI.FunctionEncoding;
@@ -781,6 +814,50 @@ if (errorAbi != null)
     // parameters[0].Result, parameters[1].Result, etc.
 }
 ```
+
+## Decoding Untrusted ABI Data
+
+Decoders, the JSON ABI parser and the signature parser are safe to point at bytes or text from a node, a peer or a user.
+
+- **Declared sizes are checked against the bytes that exist.** An array that declares more elements than the remaining data can hold throws `Exception("Insufficient data length to decode Array...")` before anything is allocated (the size and offset arithmetic is done in 64 bits).
+- **Head offsets are validated.** An offset past the end of the data throws, and two head offsets that point at the same element throw `Exception("Duplicate offset in encoded data...")`. Each dynamic element is sliced from its offset to the next greater distinct offset, so decoding is linear in the data size. The same rules apply to arrays, tuples and `ParameterDecoder.DecodeOutput`.
+- **Nesting is limited to 32 levels** for signature strings (parentheses) and array types (brackets); beyond that `ABIStringSignatureDeserialiser` and `ABIType.CreateABIType` throw `ArgumentException`. A JSON ABI document may nest 68 JSON levels (`2 * 32 + 4`); beyond that `ABIJsonDeserialiser` throws a `JsonException`.
+- **Signature and bytecode parsing is a linear scan.** `ABIStringSignatureDeserialiser` and `ByteCodeSwarmExtractor` no longer use regular expressions, so a crafted signature or bytecode string cannot cause quadratic backtracking.
+
+```csharp
+var tuple = new string('(', 40) + "uint256" + new string(')', 40);
+Assert.Throws<ArgumentException>(() => new ABIStringSignatureDeserialiser().ExtractContractABI("function f(" + tuple + ")"));
+Assert.Throws<ArgumentException>(() => ABIType.CreateABIType("uint256" + string.Concat(Enumerable.Repeat("[]", 40))));
+
+var declaringTooMany = (Word(1 << 26) + Word(1)).HexToByteArray();
+Assert.ThrowsAny<Exception>(() => ABIType.CreateABIType("uint256[]").Decode<List<BigInteger>>(declaringTooMany));
+
+var sameOffsetTwice = (Word(2) + Word(0x40) + Word(0x40) + Word(1) + "61".PadRight(64, '0')).HexToByteArray();
+Assert.ThrowsAny<Exception>(() => ABIType.CreateABIType("string[]").Decode<List<string>>(sameOffsetTwice));
+```
+
+Backed by `FoundationsAbiDocExampleTests.Given_ASignatureOrArrayTypeNestedPastThirtyTwoLevels_When_Parsed_Then_ArgumentExceptionIsThrown`, `FoundationsAbiDocExampleTests.Given_AJsonAbiNestedFarPastTheLimit_When_Deserialised_Then_AJsonExceptionIsThrown`, `FoundationsAbiDocExampleTests.Given_AnArrayDeclaring67MillionElementsInTwoWords_When_Decoded_Then_TheDecoderRefusesBeforeAllocating`, `FoundationsAbiDocExampleTests.Given_ADynamicArrayWhoseTwoHeadOffsetsPointAtTheSameElement_When_Decoded_Then_TheDuplicateOffsetIsRefused` and `FoundationsAbiDocExampleTests.Given_AWellFormedStringArray_When_Decoded_Then_TheElementsAreReturned`.
+
+### EIP-712 encoding rules
+
+`Eip712TypedDataEncoder` encodes by the declared types, as go-ethereum's `apitypes` does:
+
+- A type is a struct if and only if it is a key in `types`, so a struct named `Point1` or `Mybytes4` encodes as a struct. Dependencies are collected with a visited set, primary type first and the rest sorted by name, so mutually recursive types (legal under EIP-712) encode. Empty member names or types, a member that references its own type directly, and unknown member types throw `ArgumentException`.
+- Values must match the declared type: an `address` is 40 hex digits with or without `0x`, or 20 bytes (`AddressUtil.AddressEmptyAsHex`, `"0x0"`, is the zero address); `bytesN` is exactly N bytes from `0x`-prefixed even-length hex or a byte array; `bytes` is hex or bytes, never null; `intN` / `uintN` accept decimal or `0x` hex strings, integral numbers or CLR integers and are range-checked for the declared width (`ArgumentException` when out of range); `bool` must be a `bool`.
+- Message and domain keys that the types do not declare are ignored, as MetaMask's `eth-sig-util` V4 does; a declared field that is missing throws `ArgumentException`.
+- Encoding does not write to the `TypedData<TDomain>` argument, and the domain is rebuilt from `Domain` on every encode: a domain changed after the first encode is the domain signed.
+- `TypedDataRaw.GetChainIdFromDomain()` reads `long`, `int`, `BigInteger` and decimal or `0x`-hex string chain ids, and returns `null` when the domain declares none.
+
+where `json` declares `Person` with a `friends` member of type `Person[]`:
+
+```csharp
+var encoded = Eip712TypedDataSigner.Current.EncodeTypedData(json);
+
+var raw = TypedDataRawJsonConversion.DeserialiseJsonToRawTypedData(jsonWithChainId);
+BigInteger? chainId = raw.GetChainIdFromDomain();
+```
+
+Backed by `FoundationsEip712DocExampleTests.Given_ATypeThatReferencesItselfThroughAnArray_When_Encoded_Then_TheHashIsStable`, `FoundationsEip712DocExampleTests.Given_ATypeThatReferencesItselfDirectlyOrAnUnknownType_When_Encoded_Then_ArgumentExceptionIsThrown`, `FoundationsEip712DocExampleTests.Given_AnAddressWithAndWithoutThePrefixAndAnOutOfRangeInteger_When_Encoded_Then_TheAddressFormsMatchAndTheIntegerIsRefused`, `FoundationsEip712DocExampleTests.Given_AMessageWithAnExtraKeyAndAMessageMissingADeclaredKey_When_Encoded_Then_TheExtraKeyIsIgnoredAndTheMissingKeyIsRefused`, `FoundationsEip712DocExampleTests.Given_DomainsWithNumberDecimalAndHexChainIds_When_TheChainIdIsRead_Then_EachFormGivesTheSameChainId` and `Eip712DomainChangedAfterEncodeTests.Given_a_signed_typed_data_When_a_new_Domain_is_assigned_and_signed_again_Then_the_signature_is_for_the_new_domain` (in `Nethereum.Signer.UnitTests`).
 
 ## Related Packages
 

@@ -2,7 +2,7 @@
 title: "Nethereum.Mud.Repositories.EntityFramework"
 sidebar_label: "Nethereum.Mud.Repositories.EntityFramework"
 sidebar_position: 100
-description: "Nethereum.Mud.Repositories.EntityFramework provides Entity Framework Core abstractions for persisting [MUD (Onchain Engine)](https://mud.dev/) table data. It enables you to sync on-chain MUD state to "
+description: "Nethereum.Mud.Repositories.EntityFramework provides Entity Framework Core abstractions for persisting MUD (Onchain Engine) table data. It enables you to sync on-chain MUD state to a relational databas"
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.Mud.Repositories.EntityFramework/README.md"
 format: md
 ---
@@ -37,6 +37,7 @@ dotnet add package Nethereum.Mud.Repositories.EntityFramework
 - **Microsoft.EntityFrameworkCore.Relational** 8.0+
 - Nethereum.Mud
 - Nethereum.Mud.Contracts
+- Nethereum.BlockchainProcessing
 
 ## Key Concepts
 
@@ -47,7 +48,7 @@ The `StoredRecord` entity represents a persisted MUD table record:
 ```csharp
 public class StoredRecord : EncodedValues
 {
-    public long RowId { get; set; }              // Auto-incrementing primary key
+    public int RowId { get; set; }               // Auto-incrementing primary key
     public string Address { get; set; }          // World contract address
     public string TableId { get; set; }          // MUD table resource ID
     public string Key { get; set; }              // Combined key (key0 + key1 + ...)
@@ -261,9 +262,9 @@ using (var context = new MyMudDbContext(options))
         repository,
         progressRepository,
         logger,
-        blocksPerRequest: 1000,
+        numberOfBlocksPerRequest: 1000,
         retryWeight: 50,
-        minimumBlockConfirmations: 0
+        minimumNumberOfConfirmations: 0
     );
 
     // Start syncing from block 0 (or resume from last processed block)
@@ -349,6 +350,8 @@ Retrieve strongly-typed MUD table records:
 
 ```csharp
 using Nethereum.Mud.TableRepository;
+using Nethereum.Mud.EncodingDecoding;
+using Nethereum.Hex.HexConvertors.Extensions;
 
 // Assume PlayerTableRecord is a generated MUD table record
 using (var context = new MyMudDbContext(options))
@@ -356,8 +359,7 @@ using (var context = new MyMudDbContext(options))
     var repository = new MyMudTableRepository(context);
 
     // Get all records for a specific table
-    var playerResource = new Resource("Game", "Player");
-    var tableIdHex = playerResource.ResourceIdEncoded.ToHex(true);
+    var tableIdHex = ResourceEncoder.EncodeTable("Game", "Player").ToHex(true);
 
     var playerRecords = await repository.GetTableRecordsAsync<PlayerTableRecord>(tableIdHex);
 
@@ -375,24 +377,32 @@ using (var context = new MyMudDbContext(options))
 Use predicates for complex queries:
 
 ```csharp
+using System.Collections.Generic;
 using Nethereum.Mud.TableRepository;
+using Nethereum.Mud.EncodingDecoding;
+using Nethereum.Hex.HexConvertors.Extensions;
 
 using (var context = new MyMudDbContext(options))
 {
     var repository = new MyMudTableRepository(context);
 
-    // Build a predicate
+    var worldAddress = "0xWorldAddress";
+    var tableIdHex = ResourceEncoder.EncodeTable("Game", "Player").ToHex(true);
+
+    // Build a predicate: key0 == 42
     var predicate = new TablePredicate
     {
-        Conditions = new List<TableCondition>
+        CombineOperator = "AND",
+        Conditions = new List<KeyValueOperator>
         {
-            new TableCondition
+            new KeyValueOperator
             {
-                TableId = "0x..." + playerResource.ResourceIdEncoded.ToHex(),
-                Address = worldAddress.ToLowerInvariant(),
+                TableId = tableIdHex,
+                Address = worldAddress,
                 Key = "key0",
+                AbiType = "uint256",
                 ComparisonOperator = "=",
-                HexValue = "0x000000000000000000000000000000000000000000000000000000000000002a",
+                HexValue = "000000000000000000000000000000000000000000000000000000000000002a",
                 UnionOperator = "AND"
             }
         }
@@ -495,9 +505,9 @@ public class MudSyncBackgroundService : BackgroundService
                 repository,
                 progressRepository,
                 _logger,
-                blocksPerRequest: 1000,
+                numberOfBlocksPerRequest: 1000,
                 retryWeight: 50,
-                minimumBlockConfirmations: 12 // Wait for 12 confirmations
+                minimumNumberOfConfirmations: 12 // Wait for 12 confirmations
             );
 
             await processor.ExecuteAsync(
@@ -533,7 +543,7 @@ services.AddHostedService<MudSyncBackgroundService>(provider =>
 Base repository with optimized database operations:
 
 ```csharp
-public abstract class MudEFTableRepository<TDbContext> : ITableRepository
+public abstract class MudEFTableRepository<TDbContext> : TableRepositoryBase, ITableRepository
     where TDbContext : DbContext, IMudStoreRecordsDbSets
 {
     // Paging and batch operations
@@ -690,7 +700,7 @@ var tasks = worlds.Select(async world =>
     var repository = new MyMudTableRepository(context);
     var progressRepo = new BlockProgressRepository<MyMudDbContext>(context);
     var processor = CreateProcessor(world.Item1, repository, progressRepo);
-    await processor.ExecuteAsync(0);
+    await processor.ExecuteAsync(startAtBlockNumberIfNotProcessed: 0);
 });
 
 await Task.WhenAll(tasks);

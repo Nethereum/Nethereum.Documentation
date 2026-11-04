@@ -14,7 +14,7 @@ When you deploy a contract from the [WebApp](guide-webapp-token-interaction) or 
 The Explorer's ABI discovery uses **runtime bytecode matching**:
 
 1. The AppHost tells the Explorer where the Foundry build artifacts are (`contracts/out/`)
-2. On startup, the Explorer's `FileSystemABIInfoStorage` loads all `*.json` files from that directory
+2. On the first ABI lookup, the Explorer's `FileSystemABIInfoStorage` loads all `*.json` files from that directory
 3. For each file, it detects the Foundry artifact format (ABI + deployed bytecode + source map)
 4. When you navigate to a contract address, the Explorer fetches the on-chain bytecode via `eth_getCode`
 5. It compares the on-chain bytecode against all loaded artifacts (stripping metadata suffixes)
@@ -92,7 +92,7 @@ This handles minor differences from constructor arguments, immutables, and metad
 
 ## Adding More Contracts
 
-When you [add a new Solidity contract](guide-solidity-contracts) and compile with `forge build`, the new artifact appears in `contracts/out/`. The Explorer picks it up automatically on the next contract address lookup — no restart needed (artifacts are loaded lazily and cached).
+When you [add a new Solidity contract](guide-solidity-contracts) and compile with `forge build`, the new artifact appears in `contracts/out/`. Artifacts are scanned once, on the first ABI lookup, and cached for the lifetime of the Explorer process; restart the Explorer to pick up newly compiled contracts.
 
 ## Disabling Auto-Discovery
 

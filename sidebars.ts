@@ -194,6 +194,7 @@ const sidebars: SidebarsConfig = {
             'smart-contracts/guide-events',
             'smart-contracts/guide-error-handling',
             'smart-contracts/guide-built-in-standards',
+            'smart-contracts/guide-ens',
           ],
         },
         {
@@ -202,6 +203,14 @@ const sidebars: SidebarsConfig = {
           items: [
             'smart-contracts/guide-multicall',
             'smart-contracts/guide-create2-deployment',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'smart-contracts/nethereum-standardtokeneip20',
+            'smart-contracts/nethereum-standardnonfungibletokenerc721',
           ],
         },
       ],
@@ -239,6 +248,7 @@ const sidebars: SidebarsConfig = {
             'protocols/nethereum-circles',
             'protocols/nethereum-siwe-core',
             'protocols/nethereum-siwe',
+            'protocols/nethereum-ens',
             'protocols/nethereum-privacypools',
             'protocols/nethereum-privacypools-circuits',
           ],
@@ -280,7 +290,11 @@ const sidebars: SidebarsConfig = {
           label: 'Package Reference',
           items: [
             'evm-simulator/nethereum-evm',
+            'evm-simulator/nethereum-evm-core',
             'evm-simulator/nethereum-evm-contracts',
+            'evm-simulator/nethereum-evm-precompiles',
+            'evm-simulator/nethereum-evm-precompiles-bls',
+            'evm-simulator/nethereum-evm-precompiles-kzg',
           ],
         },
       ],
@@ -291,27 +305,72 @@ const sidebars: SidebarsConfig = {
     // ═══════════════════════════════
     {
       type: 'category',
-      label: 'Chain Infrastructure',
+      label: 'Mainnet Follower',
       items: [
-        'chain-infrastructure/overview',
+        'mainnet-follower/overview',
         {
           type: 'category',
           label: 'Guides',
           collapsed: false,
           items: [
-            'chain-infrastructure/guide-custom-chain-node',
-            'chain-infrastructure/guide-custom-storage',
-            'chain-infrastructure/guide-custom-rpc-handlers',
-            'chain-infrastructure/guide-forking',
+            'mainnet-follower/guide-mainnet-follower',
+            'mainnet-follower/guide-custom-chain-node',
+            'mainnet-follower/guide-custom-storage',
+            'mainnet-follower/guide-custom-rpc-handlers',
           ],
         },
         {
           type: 'category',
           label: 'Package Reference',
           items: [
-            'chain-infrastructure/nethereum-corechain',
-            'chain-infrastructure/nethereum-corechain-rocksdb',
-            'core-foundation/nethereum-merkle-patricia',
+            'mainnet-follower/nethereum-mainnetchain',
+            'mainnet-follower/nethereum-mainnetchain-server',
+            'mainnet-follower/nethereum-chainnode-hosting',
+            'mainnet-follower/nethereum-engineapi-hosting',
+            'mainnet-follower/nethereum-corechain',
+            {
+              type: 'category',
+              label: 'Storage',
+              items: [
+                'mainnet-follower/nethereum-corechain-rocksdb',
+                'mainnet-follower/nethereum-corechain-freezer',
+                'mainnet-follower/nethereum-freezer',
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'DevP2P',
+      items: [
+        'devp2p/overview',
+        {
+          type: 'category',
+          label: 'Peer Networking',
+          collapsed: false,
+          items: [
+            'devp2p/guide-connect-to-a-peer',
+            'devp2p/guide-peer-discovery',
+            'devp2p/guide-run-a-node',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Block & State Sync',
+          items: [
+            'devp2p/guide-full-sync',
+            'devp2p/guide-snap-sync',
+            'devp2p/guide-block-access-lists',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Package Reference',
+          items: [
+            'devp2p/nethereum-devp2p',
+            'devp2p/nethereum-devp2p-sync',
           ],
         },
       ],
@@ -406,15 +465,39 @@ const sidebars: SidebarsConfig = {
         'account-abstraction/overview',
         {
           type: 'category',
-          label: 'Guides',
+          label: 'Essentials',
           collapsed: false,
           items: [
             'account-abstraction/guide-send-useroperation',
             'account-abstraction/guide-smart-contracts-with-aa',
             'account-abstraction/guide-smart-account-deployment',
-            'account-abstraction/guide-batching-and-paymasters',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Signer Axis',
+          items: [
+            'account-abstraction/guide-eip7702-smart-accounts',
+            'account-abstraction/guide-webauthn-passkeys',
+            'account-abstraction/guide-external-signer',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Modules & Policies',
+          items: [
             'account-abstraction/guide-modular-accounts',
+            'account-abstraction/guide-smart-sessions-and-policies',
+            'account-abstraction/guide-social-recovery',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Advanced',
+          items: [
+            'account-abstraction/guide-batching-and-paymasters',
             'account-abstraction/guide-run-bundler',
+            'account-abstraction/guide-reference-demo',
           ],
         },
         {
@@ -424,7 +507,19 @@ const sidebars: SidebarsConfig = {
             'account-abstraction/nethereum-accountabstraction',
             'account-abstraction/nethereum-accountabstraction-bundler',
             'account-abstraction/nethereum-accountabstraction-bundler-rpcserver',
+            'account-abstraction/nethereum-accountabstraction-bundler-inprocess',
+            'account-abstraction/nethereum-accountabstraction-bundler-rocksdb',
             'account-abstraction/nethereum-accountabstraction-simpleaccount',
+            {
+              type: 'category',
+              label: 'WebAuthn / Passkeys',
+              items: [
+                'account-abstraction/nethereum-accountabstraction-webauthn',
+                'account-abstraction/nethereum-webauthn',
+                'account-abstraction/nethereum-webauthn-blazor',
+                'account-abstraction/nethereum-webauthn-windows',
+              ],
+            },
           ],
         },
       ],
@@ -577,6 +672,7 @@ const sidebars: SidebarsConfig = {
                 'wallet-sdk/nethereum-wallet-rpcrequests',
                 'wallet-sdk/nethereum-wallet-ui-components',
                 'wallet-sdk/nethereum-wallet-ui-components-trezor',
+                'wallet-sdk/nethereum-wallet-trezor',
               ],
             },
             {
@@ -586,6 +682,7 @@ const sidebars: SidebarsConfig = {
                 'wallet-sdk/nethereum-wallet-ui-components-blazor',
                 'wallet-sdk/nethereum-wallet-ui-components-blazor-trezor',
                 'wallet-sdk/nethereum-wallet-ui-components-maui',
+                'wallet-sdk/nethereum-wallet-ui-components-avalonia',
               ],
             },
             {
@@ -719,6 +816,7 @@ const sidebars: SidebarsConfig = {
             'data-services/nethereum-dataservices',
             'data-services/nethereum-sourcify-database',
             'data-services/nethereum-tokenservices',
+            'data-services/nethereum-abi-abiinfosqlitestorage',
           ],
         },
       ],
@@ -746,9 +844,12 @@ const sidebars: SidebarsConfig = {
           items: [
             'zk-proofs/nethereum-zkproofs',
             'zk-proofs/nethereum-zkproofsverifier',
+            'zk-proofs/nethereum-zkproofs-snarkjs',
             'zk-proofs/nethereum-zkproofs-snarkjs-blazor',
             'zk-proofs/nethereum-zkproofs-rapidsnark',
             'zk-proofs/nethereum-circomwitnesscalc',
+            'zk-proofs/nethereum-evm-zisk',
+            'zk-proofs/nethereum-zisk-core',
           ],
         },
       ],
@@ -797,6 +898,11 @@ const sidebars: SidebarsConfig = {
             'client-extensions/nethereum-geth',
             'client-extensions/nethereum-besu',
             'client-extensions/nethereum-quorum',
+            'client-extensions/nethereum-parity',
+            'client-extensions/nethereum-parity-reactive',
+            'client-extensions/nethereum-rsk',
+            'client-extensions/nethereum-did',
+            'client-extensions/nethereum-did-ethrdid',
           ],
         },
       ],
@@ -826,23 +932,16 @@ const sidebars: SidebarsConfig = {
           items: [
             'application-chain/nethereum-appchain',
             'application-chain/nethereum-appchain-server',
+            'application-chain/nethereum-appchain-server-core',
             'application-chain/nethereum-appchain-sequencer',
-            {
-              type: 'category',
-              label: 'Networking',
-              items: [
-                'application-chain/nethereum-appchain-sync',
-                'application-chain/nethereum-appchain-p2p',
-                'application-chain/nethereum-appchain-p2p-dotnetty',
-                'application-chain/nethereum-appchain-p2p-server',
-              ],
-            },
             {
               type: 'category',
               label: 'Governance & Anchoring',
               items: [
                 'application-chain/nethereum-appchain-policy',
                 'application-chain/nethereum-appchain-anchoring',
+                'application-chain/nethereum-appchain-anchoring-postgres',
+                'application-chain/nethereum-explorer-anchoring',
                 'application-chain/nethereum-consensus-clique',
               ],
             },

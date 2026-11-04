@@ -1,27 +1,27 @@
 ---
 title: Batching & Paymasters
 sidebar_label: Batching & Paymasters
-sidebar_position: 5
+sidebar_position: 11
 description: Execute multiple calls in a single UserOperation and sponsor gas fees with paymasters using Nethereum Account Abstraction.
 ---
 
 # Batching & Paymasters
 
-Two of the most powerful ERC-4337 features are batching — executing multiple calls in a single UserOperation — and paymasters — letting a third party sponsor gas fees. Together, they enable gasless, multi-step operations in a single atomic transaction. This guide covers both.
+Two of the most powerful ERC-4337 features are batching — executing multiple calls in a single UserOperation — and paymasters — letting a third party sponsor gas fees. This guide covers both in depth. If you haven't switched a contract service to Account Abstraction yet, start with [Use AA with Contract Services](guide-smart-contracts-with-aa) — `AAContractHandler` (the object it returns) is what every example below builds on.
 
 :::tip The Simple Way
 
 ```csharp
-// Batch: approve + transfer in one UserOperation
-await handler.BatchExecuteAsync(
-    new ApproveFunction { Spender = spender, Value = amount }.ToBatchCall(),
-    new TransferFunction { To = recipient, Value = amount }.ToBatchCall());
+// Batch: three calls to the SAME contract in one UserOperation
+var receipt = await handler.BatchExecuteAsync(
+    new TransferFunction { To = recipient1, Value = amount }.ToBatchCall(),
+    new TransferFunction { To = recipient2, Value = amount }.ToBatchCall());
 
 // Paymaster: sponsor gas
 handler.WithPaymaster(paymasterAddress);
 ```
 
-Batching and gas sponsorship — two lines each.
+Batching and gas sponsorship — a couple of lines each. Read on for what each call actually does and where the sharp edges are.
 
 :::
 
@@ -36,230 +36,154 @@ dotnet add package Nethereum.AccountAbstraction
 
 You need:
 
-- A **smart contract account** (SimpleAccount, Safe, or any ERC-4337 wallet).
-- A **signer key** that the account accepts for validation.
+- A **smart contract account** (SimpleAccount or any ERC-4337-compatible wallet) already switched to Account Abstraction via `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction` (see [Use AA with Contract Services](guide-smart-contracts-with-aa)).
 - A **bundler endpoint** (your own Nethereum bundler or a third-party service).
-- The **EntryPoint contract address** deployed on your target chain.
-- For paymaster examples: a **deployed paymaster contract** with sufficient funds.
+- The **EntryPoint contract address** — use `EntryPointAddresses.Latest` (v0.9) or `V08`; `V06`/`V07` throw `NotSupportedException` (see [Send a UserOperation](guide-send-useroperation#entrypoint-versions)).
+- For paymaster examples: a **deployed paymaster contract** with sufficient stake and deposit at the EntryPoint.
 
-Set up the handler that all examples in this guide use:
+Set up the handler that the batching examples in this guide use — a code-generated service (from your contract's ABI) switched to AA:
 
 ```csharp
 using Nethereum.AccountAbstraction;
+using Nethereum.Signer;
 using Nethereum.Web3;
-using Nethereum.Web3.Accounts;
 
-var privateKey = "0xYOUR_SIGNER_PRIVATE_KEY";
+var accountKey = new EthECKey("0xYOUR_SIGNER_PRIVATE_KEY");
 var accountAddress = "0xYourSmartAccountAddress";
-var bundlerUrl = "http://localhost:4337";
-var entryPointAddress = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
+var bundlerService = new AccountAbstractionBundlerService(
+    new Nethereum.JsonRpc.Client.RpcClient(new Uri("http://localhost:4337")));
 
-var web3 = new Web3(new Account(privateKey), "http://localhost:8545");
-var handler = web3.GetAAContractHandler(accountAddress, bundlerUrl, entryPointAddress);
+// Built-in services (web3.Eth.ERC20, ERC721, ...) use SwitchToAccountAbstraction; your own code-generated ContractWeb3ServiceBase services use ChangeContractHandlerToAA with the same arguments
+// factoryConfig (SimpleAccountFactory only; a NethereumAccount is created through IAAClient.CreateAccountAsync) comes from your account factory (see Deploy a Smart Account) - omit once the account is deployed
+var myTokenService = web3.Eth.ERC20.GetContractService(tokenAddress);
+var handler = myTokenService.SwitchToAccountAbstraction(
+    accountAddress,
+    accountKey,
+    bundlerService,
+    EntryPointAddresses.Latest,
+    factory: factoryConfig);
 ```
 
 ## Batch Multiple Calls
 
-Without batching, a "token approve + swap" flow takes two separate UserOperations, each paying gas independently and each waiting for inclusion. Batching combines them into a single atomic operation: either every call succeeds or they all revert together, saving gas and eliminating intermediate states.
+Without batching, a multi-step flow takes several separate UserOperations, each paying gas and waiting for inclusion independently. Batching combines them into a single atomic operation: either every call succeeds or they all revert together, saving gas and eliminating intermediate states.
 
-### Typed Batch (Same Contract)
+`AAContractHandler.BatchExecuteAsync` has three overloads, and all three encode into the account's `executeBatch(...)` call — **every call in the batch targets the same contract: the one `handler` is bound to** (its `ContractAddress`, set when you called `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction`). `BatchCall` carries only calldata and an optional ETH value, not a target address, so there is no way to send different calls in one batch to different contracts today — see Common Mistakes below.
 
-When every call targets the same contract, use the generic overload. The handler encodes each message and sends them as a single batch:
+### Typed Batch via `ToBatchCall()`
 
-```csharp
-using Nethereum.StandardTokenEIP20.ContractDefinition;
-
-var mint1 = new TransferFunction { To = "0xRecipient1", Value = Web3.Convert.ToWei(50) };
-var mint2 = new TransferFunction { To = "0xRecipient2", Value = Web3.Convert.ToWei(25) };
-var mint3 = new TransferFunction { To = "0xRecipient3", Value = Web3.Convert.ToWei(25) };
-
-var receipt = await handler.BatchExecuteAsync<TransferFunction>(mint1, mint2, mint3);
-```
-
-All three transfers execute atomically. If recipient3's transfer reverts (for example, insufficient balance), all three revert.
-
-### Mixed Batch (Different Contracts)
-
-Real workflows often span multiple contracts. Use `ToBatchCall()` to convert typed messages into `BatchCall` objects, then batch them together:
+Convert typed `FunctionMessage` objects into `BatchCall`s with the `ToBatchCall()` extension method, then pass them to `BatchExecuteAsync`:
 
 ```csharp
-using Nethereum.StandardTokenEIP20.ContractDefinition;
-
-var tokenAddress = "0xTokenContractAddress";
-var dexAddress = "0xDexContractAddress";
-
-// Step 1: Approve the DEX to spend tokens
-var approve = new ApproveFunction
-{
-    Spender = dexAddress,
-    Value = Web3.Convert.ToWei(1000)
-};
-
-// Step 2: Execute the swap on the DEX
-var swap = new SwapExactTokensForTokensFunction
-{
-    AmountIn = Web3.Convert.ToWei(1000),
-    AmountOutMin = Web3.Convert.ToWei(990),
-    Path = new List<string> { tokenAddress, wethAddress },
-    To = accountAddress,
-    Deadline = DateTimeOffset.UtcNow.AddMinutes(20).ToUnixTimeSeconds()
-};
+using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
 
 var receipt = await handler.BatchExecuteAsync(
-    approve.ToBatchCall(),
-    swap.ToBatchCall());
+    new TransferFunction { To = "0xRecipient1", Value = Web3.Convert.ToWei(50) }.ToBatchCall(),
+    new TransferFunction { To = "0xRecipient2", Value = Web3.Convert.ToWei(25) }.ToBatchCall(),
+    new TransferFunction { To = "0xRecipient3", Value = Web3.Convert.ToWei(25) }.ToBatchCall());
+
+Console.WriteLine($"Batch UserOp Success: {receipt.UserOpSuccess}"); // false + RevertReason if any call reverted
 ```
 
-The approve and swap happen in the same UserOperation. No window exists where the approval is live but the swap hasn't executed yet.
-
-### Batch with ETH Value
-
-Some calls need to send ETH along with calldata. Pass the value when creating the `BatchCall`:
-
-```csharp
-var depositCall = new DepositFunction().ToBatchCall(Web3.Convert.ToWei(1));
-var stakeCall = new StakeFunction { Amount = Web3.Convert.ToWei(1) }.ToBatchCall();
-
-var receipt = await handler.BatchExecuteAsync(depositCall, stakeCall);
-```
-
-You can also construct `BatchCall` directly when you have raw calldata:
-
-```csharp
-var call = new BatchCall(encodedCallData, Web3.Convert.ToWei(0.5m));
-```
+All three transfers execute atomically against the ERC-20 contract `handler` is bound to — if the third transfer reverts (for example, insufficient balance), all three revert. `ToBatchCall()` works with any `FunctionMessage`, so you can freely mix different call types (e.g. `ApproveFunction` and `TransferFunction`) in the same batch as long as they all belong to the contract the handler targets.
 
 ### Raw Calldata Batch
 
-For advanced use cases where you already have encoded calldata (from off-chain computation or another library), pass raw byte arrays:
+For advanced use cases where you already have encoded calldata (from off-chain computation or another library), pass raw byte arrays directly — `BatchExecuteAsync(params byte[][])` wraps each one in a zero-value `BatchCall` for you:
 
 ```csharp
-byte[] approveData = new ApproveFunction
-{
-    Spender = dexAddress,
-    Value = Web3.Convert.ToWei(1000)
-}.GetCallData();
+byte[] approveSpender1 = new ApproveFunction { Spender = spender1, Value = Web3.Convert.ToWei(1000) }.GetCallData();
+byte[] approveSpender2 = new ApproveFunction { Spender = spender2, Value = Web3.Convert.ToWei(500) }.GetCallData();
 
-byte[] swapData = GetSwapCalldataFromExternalSource();
-
-var receipt = await handler.BatchExecuteAsync(approveData, swapData);
+var receipt = await handler.BatchExecuteAsync(approveSpender1, approveSpender2);
 ```
 
-This is useful when integrating with protocols that provide pre-encoded calldata.
-
-## Batch via SmartAccountService
-
-ERC-7579 modular accounts use the `SmartAccountService` directly. The `ExecuteBatchAsync` method accepts an array of `Call` structs and encodes them using the ERC-7579 execution format:
-
-```csharp
-using Nethereum.AccountAbstraction.BaseAccount.ContractDefinition;
-
-var calls = new[]
-{
-    new Call
-    {
-        Target = tokenAddress,
-        Value = 0,
-        Data = new ApproveFunction
-        {
-            Spender = dexAddress,
-            Value = Web3.Convert.ToWei(1000)
-        }.GetCallData()
-    },
-    new Call
-    {
-        Target = dexAddress,
-        Value = 0,
-        Data = new SwapExactTokensForTokensFunction
-        {
-            AmountIn = Web3.Convert.ToWei(1000),
-            AmountOutMin = Web3.Convert.ToWei(990),
-            Path = new List<string> { tokenAddress, wethAddress },
-            To = accountAddress,
-            Deadline = DateTimeOffset.UtcNow.AddMinutes(20).ToUnixTimeSeconds()
-        }.GetCallData()
-    }
-};
-
-var receipt = await account.ExecuteBatchAsync(calls);
-```
-
-Under the hood, `ExecuteBatchAsync` uses `ERC7579ModeLib.EncodeBatchDefault()` and `ERC7579ExecutionLib.EncodeBatch()` to pack the calls into the standard modular account execution format.
+This is useful when integrating with protocols that provide pre-encoded calldata, or when replaying calldata captured elsewhere. Each `BatchCall` (and the `ToBatchCall(ethValue: …)` overload) also carries an optional ETH value, forwarded to the account's `execute` call for that item — so a batch can attach ETH to individual calls, not just calldata.
 
 ## Gas Sponsorship with Paymasters
 
-A paymaster is a contract that pays gas fees on behalf of users. The EntryPoint calls the paymaster's `validatePaymasterUserOp` before execution and `postOp` after. From the user's perspective, the transaction is gasless.
-
-Attach a paymaster to the handler with a single call:
+A paymaster is a contract that pays gas fees on behalf of users. The EntryPoint calls the paymaster's `validatePaymasterUserOp` before execution and `postOp` after. From the user's perspective, the transaction is gasless. Configure a paymaster once on the handler — it applies to every subsequent operation, including batches:
 
 ```csharp
 handler.WithPaymaster(paymasterAddress);
 
-// All subsequent operations use this paymaster
 var receipt = await handler.BatchExecuteAsync(
-    approve.ToBatchCall(),
-    swap.ToBatchCall());
+    new TransferFunction { To = recipient1, Value = amount }.ToBatchCall(),
+    new TransferFunction { To = recipient2, Value = amount }.ToBatchCall());
 ```
 
-The bundler includes the paymaster address in the UserOperation. The EntryPoint verifies that the paymaster has staked enough ETH and calls it for validation.
+The handler fills in `PaymasterVerificationGasLimit`/`PaymasterPostOpGasLimit` from the bundler's own gas estimate automatically — you don't set them yourself. This is enough for a paymaster that accepts every operation unconditionally (an "accept-all" paymaster, or one that gates purely on its own on-chain deposit).
 
-You can also pass additional data that the paymaster contract expects:
+### Static Paymaster Data
+
+If the paymaster contract expects a fixed byte payload for every operation, pass it as the second argument:
 
 ```csharp
 handler.WithPaymaster(paymasterAddress, paymasterData);
+
+var receipt = (AATransactionReceipt)await myTokenService.TransferRequestAndWaitForReceiptAsync(recipient, amount);
+Console.WriteLine($"Paymaster-sponsored UserOp Success: {receipt.UserOpSuccess}");
 ```
 
-## Verifying Paymaster
+### Dynamic Paymaster Data: `PaymasterConfig` with a Data Provider
 
-A verifying paymaster requires an off-chain signature to approve each UserOperation. This is the most common pattern for dApp-sponsored transactions: your backend signs each request after checking business rules (rate limits, user eligibility, etc.).
-
-Retrieve a `VerifyingPaymasterManager` from Web3 using the extension method:
+A **verifying paymaster** requires an off-chain signature over each UserOperation — the common pattern for dApp-sponsored transactions, where your backend signs after checking business rules (rate limits, eligibility, and so on). Because the signature typically covers the operation's final gas values, the data provider must run *after* gas estimation — pass a `PaymasterConfig` with a callback instead of static bytes, and the handler invokes it once the UserOperation is fully estimated:
 
 ```csharp
-using Nethereum.AccountAbstraction.Paymasters;
-using Nethereum.AccountAbstraction.Extensions;
+using Nethereum.AccountAbstraction;
+using Nethereum.AccountAbstraction.Contracts.Paymaster.VerifyingPaymaster;
+using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Signer;
+using System.Linq;
 
-var paymasterAddress = "0xYourVerifyingPaymasterAddress";
-var paymasterSignerKey = "0xPAYMASTER_SIGNER_PRIVATE_KEY";
-
-var paymaster = await web3.GetVerifyingPaymasterAsync(paymasterAddress, paymasterSignerKey);
-```
-
-The paymaster signer key is the private key whose address is registered in the paymaster contract as an authorized signer. The manager handles signing the UserOperation hash with the correct format that the on-chain contract expects.
-
-`VerifyingPaymasterManager` also manages deposits and sponsors UserOperations:
-
-```csharp
-// Deposit ETH into the paymaster contract
-await paymaster.DepositAsync(Web3.Convert.ToWei(1));
-
-// Check the deposit balance
-var deposit = await paymaster.GetDepositAsync();
-
-// Sponsor a UserOperation — signs and attaches paymaster data
-var sponsorResult = await paymaster.SponsorUserOperationAsync(userOp);
-if (sponsorResult.IsSponsored)
+async Task<byte[]> SignVerifyingPaymasterDataAsync(
+    VerifyingPaymasterService paymaster, UserOperation userOp, EthECKey signerKey)
 {
-    // userOp now has Paymaster, PaymasterData, and gas fields populated
+    var validUntil = (ulong)DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
+    const ulong validAfter = 0;
+
+    // getHash excludes paymasterAndData, so it can be computed before the signature exists.
+    var packedForHash = UserOperationBuilder.PackUserOperation(userOp);
+    packedForHash.InitCode ??= Array.Empty<byte>();
+    packedForHash.CallData ??= Array.Empty<byte>();
+    packedForHash.PaymasterAndData ??= Array.Empty<byte>();
+    packedForHash.Signature ??= Array.Empty<byte>();
+
+    var hash = await paymaster.GetHashQueryAsync(packedForHash, validUntil, validAfter);
+    var signature = new EthereumMessageSigner().Sign(hash, signerKey).HexToByteArray();
+
+    // The reference ERC-4337 VerifyingPaymaster expects validUntil(6) || validAfter(6) || signature —
+    // the exact layout is paymaster-specific, so check your contract's own _parsePaymasterData.
+    return PackValidity(validUntil, validAfter, signature);
 }
-```
 
-Wire it into the handler using a `PaymasterConfig`:
-
-```csharp
-var config = new PaymasterConfig(paymasterAddress, async userOp =>
+byte[] PackValidity(ulong validUntil, ulong validAfter, byte[] signature)
 {
-    return await paymaster.GetPaymasterDataAsync(userOp);
-});
+    byte[] ToUInt48BigEndian(ulong value)
+    {
+        var bytes = new byte[6];
+        for (var i = 5; i >= 0; i--) { bytes[i] = (byte)value; value >>= 8; }
+        return bytes;
+    }
 
-handler.WithPaymaster(config);
+    return ToUInt48BigEndian(validUntil).Concat(ToUInt48BigEndian(validAfter)).Concat(signature).ToArray();
+}
+
+handler.WithPaymaster(new PaymasterConfig(
+    paymasterAddress,
+    userOp => SignVerifyingPaymasterDataAsync(verifyingPaymasterService, userOp, paymasterSignerKey)));
+
+// Estimation now succeeds (no AA33) and the op lands fully sponsored — even for a counterfactual
+// account with a zero ETH balance, since only the paymaster ever pays.
+var receipt = (AATransactionReceipt)await myTokenService.TransferRequestAndWaitForReceiptAsync(recipient, amount);
+Console.WriteLine($"Sponsored UserOp Success: {receipt.UserOpSuccess}"); // true even though the account holds 0 ETH
 ```
 
-The paymaster signs each UserOperation just before submission, ensuring the signature covers the final gas values.
+This is the pattern Nethereum's own test suite proves end to end: a real, deployed, deposit-funded `VerifyingPaymaster` sponsors a not-yet-deployed account that holds zero ETH, with the signature computed after the bundler's gas estimate comes back.
 
-### More Control: Manual Paymaster Fields
+### Manual Paymaster Fields (No `AAContractHandler`)
 
-When building UserOperations manually (without `AAContractHandler`), set the paymaster fields directly on the `UserOperation`:
+When you build a `UserOperation` by hand instead of going through `AAContractHandler` (see [Send a UserOperation](guide-send-useroperation)), set the paymaster fields directly:
 
 ```csharp
 var userOp = new UserOperation
@@ -275,82 +199,31 @@ var userOp = new UserOperation
 };
 ```
 
-The `Paymaster` field is the paymaster contract address. `PaymasterData` contains any data the paymaster contract requires for validation (empty for accept-all paymasters). `PaymasterVerificationGasLimit` and `PaymasterPostOpGasLimit` control how much gas the paymaster's `validatePaymasterUserOp` and `postOp` functions can consume.
+`Paymaster` is the paymaster contract address; `PaymasterData` is whatever bytes that paymaster's validation expects (empty for an accept-all paymaster). Estimate gas via the bundler and sign, exactly as in [Send a UserOperation](guide-send-useroperation) — the only difference from a self-funded operation is that these two fields are populated before estimation. This manual-fields path — a single sponsored transfer, a sponsored batch across several recipients, and repeated sequential sponsored operations — is exercised end to end by Nethereum's own test suite against a real bundler and EntryPoint.
 
-## Deposit Paymaster
+## Choosing an Approach
 
-A deposit paymaster works differently: users (or a sponsor) deposit funds into the paymaster contract ahead of time. When the user submits a UserOperation, the paymaster deducts from their deposit balance instead of requiring a per-operation signature.
-
-This pattern works well for application chains where all gas is sponsored from a shared pool:
-
-```csharp
-var paymasterAddress = "0xYourDepositPaymasterAddress";
-
-var depositPaymaster = web3.GetDepositPaymasterAsync(paymasterAddress);
-```
-
-The `DepositPaymasterManager` provides methods to check deposit balances and add deposits. Configure it on the handler:
-
-```csharp
-handler.WithPaymaster(paymasterAddress);
-```
-
-Since the deposit paymaster validates by checking the sender's on-chain deposit, no dynamic signing is needed — a static paymaster address is sufficient.
-
-## Dynamic Paymaster Data
-
-Some paymasters need data that can only be computed at submission time — a timestamp-based signature, a price oracle quote, or data from a paymaster API. Use the `Func<UserOperation, Task<byte[]>>` overload to compute paymaster data dynamically:
-
-```csharp
-var config = new PaymasterConfig(
-    paymasterAddress,
-    async userOp =>
-    {
-        // Call your paymaster API with the UserOperation
-        var response = await httpClient.PostAsJsonAsync(
-            "https://paymaster.example.com/sign",
-            new { userOp = userOp });
-
-        var result = await response.Content.ReadFromJsonAsync<PaymasterResponse>();
-        return result.PaymasterData.HexToByteArray();
-    });
-
-handler.WithPaymaster(config);
-```
-
-The function receives the fully populated `UserOperation` (with gas estimates already filled in) and returns the byte array that gets appended to the `paymasterAndData` field. This runs just before the operation is signed and submitted to the bundler.
-
-A common pattern is time-limited sponsorship where the paymaster backend includes a validity window:
-
-```csharp
-var config = new PaymasterConfig(
-    paymasterAddress,
-    async userOp =>
-    {
-        var validUntil = DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds();
-        var validAfter = DateTimeOffset.UtcNow.AddSeconds(-30).ToUnixTimeSeconds();
-
-        // Pack validity window + signature from your paymaster signer
-        return await paymaster.GetPaymasterDataWithValidityAsync(
-            userOp, validUntil, validAfter);
-    });
-
-handler.WithPaymaster(config);
-```
+| Scenario | Approach |
+|----------|----------|
+| Smart account holds its own ETH | No paymaster — omit `WithPaymaster` entirely |
+| Gas sponsored unconditionally (accept-all or self-funded-deposit paymaster) | `handler.WithPaymaster(paymasterAddress)`, optionally with static `paymasterData` |
+| Sponsorship gated by a backend decision, rate limit, or per-request signature | `handler.WithPaymaster(new PaymasterConfig(paymasterAddress, dataProvider))` |
+| Building UserOperations by hand, without `AAContractHandler` | Set `userOp.Paymaster`/`PaymasterData`/gas-limit fields directly |
 
 ## Common Mistakes
 
-**Batch calls targeting the wrong address.** Each `BatchCall` carries only calldata, not a target address. When using `BatchExecuteAsync<T>`, all calls go to the contract the handler is bound to. If you need different target contracts, use the `BatchCall[]` overload and make sure each call is associated with the correct contract through the handler configuration.
+**Assuming a batch can span multiple contracts.** `BatchCall` carries only calldata and an ETH value, not a target address — every call in a `BatchExecuteAsync` batch is sent to `handler`'s own `ContractAddress`. There is currently no `AAContractHandler` API for batching calls to *different* contracts (an "approve on the token, then swap on the DEX" pattern) in one UserOperation. If you need that, you must drive the account's own `execute`/`executeBatch` calldata yourself (see [Send a UserOperation](guide-send-useroperation)) rather than going through `BatchExecuteAsync`.
 
-**Paymaster not funded.** The EntryPoint checks that the paymaster has sufficient stake and deposit before accepting the UserOperation. If the paymaster contract has no ETH deposited, the bundler rejects the operation with an `AA31` or `AA32` error. Fund the paymaster's deposit on the EntryPoint contract before use.
+**Paymaster not funded.** The EntryPoint checks that the paymaster has a sufficient deposit before accepting the UserOperation. A zero-deposit paymaster is rejected at admission with `AA31` — fund the paymaster's EntryPoint deposit before use.
 
-**Paymaster data expired.** Verifying paymasters typically include a validity window in the signed data. If you pre-sign paymaster data and then submit the UserOperation too late, the on-chain validation fails. Use dynamic paymaster data (the `Func<>` overload) to sign at submission time, and keep validity windows generous enough to account for network latency.
+**Paymaster data expired.** Verifying paymasters typically include a validity window in the signed data. If you pre-sign paymaster data and then submit late, on-chain validation fails. Use the `PaymasterConfig` data-provider path to sign at submission time, and keep validity windows generous enough for network latency — the data provider sees the fully-estimated operation, so signing happens as late as possible.
 
-**Mixing batch approaches.** Pick one batching style per operation. Don't mix `BatchExecuteAsync<T>` with raw calldata in the same call — use the `BatchCall[]` overload when you need heterogeneous calls.
+**Forgetting `await` on paymaster setup calls.** `WithPaymaster` itself is synchronous (it just stores configuration on the handler), but if your `PaymasterConfig` data provider calls an async signer, backend API, or contract query, make sure that call is awaited inside the callback — an un-awaited `Task<byte[]>` returned as `byte[]` won't compile, but an un-awaited *inner* call (e.g. a fire-and-forget HTTP request) silently races the real submission.
 
-**Forgetting gas estimation.** Batched operations consume more gas than single calls. The handler estimates gas automatically, but if you override gas limits manually, ensure they account for every call in the batch.
+**Reaching for a deleted `SmartAccountService`.** Older examples of Nethereum AA batching referenced a `SmartAccountService` type — it has been removed. Batching goes through `AAContractHandler.BatchExecuteAsync` as shown above. ERC-7579 modular accounts have their own execution encoding (`WithErc7579Execution()`); see [ERC-7579 Modular Accounts](guide-modular-accounts) for that model.
 
 ## Next Steps
 
-- **[Modular Accounts](guide-modular-accounts)** — add session keys and spending policies to your smart account for fine-grained access control.
 - **[Run a Bundler](guide-run-bundler)** — deploy your own Nethereum bundler for full control over UserOperation submission and gas pricing.
+- **[ERC-7579 Modular Accounts](guide-modular-accounts)** — add session keys and spending policies to your smart account for fine-grained access control.
+- **[Use AA with Contract Services](guide-smart-contracts-with-aa)** — the `ChangeContractHandlerToAA`/`SwitchToAccountAbstraction` entry points every example on this page builds on.

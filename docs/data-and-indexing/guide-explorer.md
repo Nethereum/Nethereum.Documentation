@@ -112,8 +112,7 @@ AppHost (Aspire Orchestrator)
     ├── Connects to PostgreSQL for indexed data
     ├── Full explorer with token pages, MUD browser, EVM debugger
     ├── EIP-6963 browser wallet integration
-    ├── Token and Contract REST API endpoints
-    └── Pre-configured with dev account for write operations
+    └── Token and Contract REST API endpoints
 ```
 
 ### AppHost wiring
@@ -183,6 +182,14 @@ builder.Services.AddTokenPostgresRepositories(connectionString);
 // MUD support with normalised SQL queries
 builder.Services.AddDbContext<MudPostgresStoreRecordsDbContext>(options =>
     options.UseNpgsql(connectionString).UseLowerCaseNamingConvention());
+builder.Services.AddScoped<IMudStoreRecordsDbSets>(sp =>
+    sp.GetRequiredService<MudPostgresStoreRecordsDbContext>());
+builder.Services.AddTransient<INormalisedTableQueryService>(sp =>
+{
+    var conn = new NpgsqlConnection(connectionString);
+    var logger = sp.GetService<ILogger<NormalisedTableQueryService>>();
+    return new NormalisedTableQueryService(conn, logger);
+});
 
 // RPC URL resolved from Aspire service discovery
 var devchainUrl = builder.Configuration["services:devchain:http:0"]
@@ -347,7 +354,7 @@ When an ABI is found, it's cached in memory for subsequent requests. You can als
 | `POST` | `/api/contracts/{address}/abi` | Upload ABI (`{ "abi": "...", "name": "..." }`) |
 | `POST` | `/api/contracts/batch` | Batch upload (max 50 contracts) |
 
-POST endpoints validate the `X-Api-Key` header if `ApiKey` is configured. Rate limited to 100 requests per minute.
+POST endpoints require the `X-Api-Key` header to match `ApiKey`; with no `ApiKey` set they answer `401`. Rate limited to 100 requests per minute per client IP.
 
 ### Token API
 
@@ -387,11 +394,21 @@ Returns `503` if token repositories are not configured.
 
 ## MUD Browser Setup
 
-To enable the MUD World browser, register the MUD PostgreSQL context alongside the explorer:
+To enable the MUD World browser, register the MUD PostgreSQL context, the `IMudStoreRecordsDbSets` alias and the normalised table query service alongside the explorer:
 
 ```csharp
 builder.Services.AddDbContext<MudPostgresStoreRecordsDbContext>(options =>
     options.UseNpgsql(connectionString).UseLowerCaseNamingConvention());
+
+builder.Services.AddScoped<IMudStoreRecordsDbSets>(sp =>
+    sp.GetRequiredService<MudPostgresStoreRecordsDbContext>());
+
+builder.Services.AddTransient<INormalisedTableQueryService>(sp =>
+{
+    var conn = new NpgsqlConnection(connectionString);
+    var logger = sp.GetService<ILogger<NormalisedTableQueryService>>();
+    return new NormalisedTableQueryService(conn, logger);
+});
 ```
 
 The MUD browser shows deployed World contracts, their table schemas, and individual records with raw, decoded, and normalised SQL views.

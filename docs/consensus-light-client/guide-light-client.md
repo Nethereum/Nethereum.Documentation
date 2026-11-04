@@ -37,22 +37,13 @@ There are three levels of confidence in the headers the light client tracks:
 
 ## Configuration
 
-The `LightClientConfig` class holds the chain-specific parameters needed to initialize the light client.
+The `LightClientConfig` class holds the chain-specific parameters needed to initialize the light client. `LightClientNetworks.CreateConfig` builds it for a known chain.
 
 ```csharp
-var config = new LightClientConfig
-{
-    GenesisValidatorsRoot = "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95".HexToByteArray(),
-    CurrentForkVersion = currentForkVersion,
-    SlotsPerEpoch = 32,
-    SecondsPerSlot = 12,
-    WeakSubjectivityRoot = weakSubjectivityRoot
-};
+var config = LightClientNetworks.CreateConfig(1, weakSubjectivityRoot);
 ```
 
-The `GenesisValidatorsRoot` is a fixed constant for each chain -- it identifies which Ethereum network the client is syncing with. The `CurrentForkVersion` identifies the current consensus fork and should be fetched dynamically from the beacon API since it changes with hard forks. The `WeakSubjectivityRoot` is a recent finalized block root that serves as the bootstrap starting point.
-
-`SlotsPerEpoch` and `SecondsPerSlot` default to the mainnet values of 32 and 12 respectively. These values determine how the client computes sync committee periods: a period spans `SlotsPerEpoch * 256` slots.
+The config carries a `GenesisValidatorsRoot`, `SecondsPerSlot` and a `WeakSubjectivityRoot`. The `GenesisValidatorsRoot` is a fixed constant for each chain -- it identifies which Ethereum network the client is syncing with, and `CreateConfig` fills it in for chain IDs 1, 11155111 and 17000. `SecondsPerSlot` defaults to 12. The `WeakSubjectivityRoot` is a recent finalized block root that serves as the bootstrap starting point. The fork version is not configured: it comes from the config's `ChainSpec` (mainnet by default) per slot.
 
 Here are the genesis validators roots for the supported networks:
 
@@ -85,14 +76,7 @@ var weakSubjectivityRoot = finalityUpdate.FinalizedHeader.Beacon.HashTreeRoot();
 
 Console.WriteLine("Weak subjectivity root: " + weakSubjectivityRoot.ToHex(true));
 
-var config = new LightClientConfig
-{
-    GenesisValidatorsRoot = "0x4b363db94e286120d76eb905340fdd4e54bfe9f06bf33ff6cf5ad27f511bfe95".HexToByteArray(),
-    CurrentForkVersion = "0x06000000".HexToByteArray(),
-    SlotsPerEpoch = 32,
-    SecondsPerSlot = 12,
-    WeakSubjectivityRoot = weakSubjectivityRoot
-};
+var config = LightClientNetworks.CreateConfig(1, weakSubjectivityRoot);
 
 var nativeBls = new NativeBls(new HerumiNativeBindings());
 await nativeBls.InitializeAsync();
@@ -217,7 +201,7 @@ This returns `null` if the block number is not in the history window (the most r
 
 ### Staleness Detection
 
-The provider monitors how fresh its headers are. If too much time passes without an update, the headers become stale.
+The provider monitors how fresh its headers are. A header is stale when its own timestamp is older than the threshold, however recently the store was updated.
 
 ```csharp
 var trustedProvider = new TrustedHeaderProvider(lightClient);
@@ -269,7 +253,7 @@ Here is a minimal file-based store implementation:
 
 ```csharp
 using System.IO;
-using System.Text.Json;
+using Nethereum.Consensus.LightClient;
 
 public class FileLightClientStore : ILightClientStore
 {
@@ -285,24 +269,23 @@ public class FileLightClientStore : ILightClientStore
         if (!File.Exists(_filePath))
             return null;
 
-        var json = await File.ReadAllTextAsync(_filePath);
-        return JsonSerializer.Deserialize<LightClientState>(json);
+        var bytes = await File.ReadAllBytesAsync(_filePath);
+        return LightClientStateCodec.TryDecode(bytes, out var state) ? state : null;
     }
 
     public async Task SaveAsync(LightClientState state)
     {
-        var json = JsonSerializer.Serialize(state);
-        await File.WriteAllTextAsync(_filePath, json);
+        await File.WriteAllBytesAsync(_filePath, LightClientStateCodec.Encode(state));
     }
 }
 ```
 
-Persistence matters because bootstrapping requires fetching a fresh weak subjectivity root and a full bootstrap response from the beacon API. A persisted state lets `InitializeAsync` skip this network round-trip entirely -- it loads the saved state and resumes where it left off.
+The state is serialised with `LightClientStateCodec.Encode` and read back with `TryDecode`; it is not JSON-serialisable. Persistence matters because bootstrapping requires a full bootstrap response from the beacon API. A persisted state lets `InitializeAsync` skip only the bootstrap request -- it loads the saved state, then refreshes it from the beacon API.
 
 Pass your custom store to the `LightClientService` constructor:
 
 ```csharp
-var store = new FileLightClientStore("light-client-state.json");
+var store = new FileLightClientStore("light-client-state.bin");
 var lightClient = new LightClientService(beaconClient.LightClient, nativeBls, config, store);
 await lightClient.InitializeAsync();
 ```
@@ -328,11 +311,9 @@ During verification, the light client extracts the participating public keys fro
 
 **Archive node requirements.** State proof verification (`eth_getProof`) requires the execution node to have the state trie at the specific block referenced by the light client header. Standard pruned nodes only keep recent state. If you see errors about "missing trie node" or "old data not available due to pruning," you need an archive node or a node with a wider proof window.
 
-**Fork version changes.** The `CurrentForkVersion` changes with each consensus hard fork. Rather than hardcoding it, fetch it dynamically from the beacon API's state fork endpoint to ensure your config stays correct across network upgrades.
-
 ## Next Steps
 
 - [Verified State Queries](guide-verified-state) -- use the light client to verify account balances, nonces, storage, and contract code
 - [Nethereum.Beaconchain](nethereum-beaconchain) -- beacon chain API client reference
-- [Nethereum.Consensus.LightClient](../consensus-and-cryptography/nethereum-consensus-lightclient) -- package reference
-- [Nethereum.Consensus.Ssz](../consensus-and-cryptography/nethereum-consensus-ssz) -- SSZ serialization reference
+- [Nethereum.Consensus.LightClient](nethereum-consensus-lightclient) -- package reference
+- [Nethereum.Consensus.Ssz](nethereum-consensus-ssz) -- SSZ serialization reference

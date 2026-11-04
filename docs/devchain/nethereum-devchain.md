@@ -2,7 +2,7 @@
 title: "Nethereum.DevChain"
 sidebar_label: "Nethereum.DevChain"
 sidebar_position: 100
-description: "Development blockchain with full EVM execution up to the Prague hardfork, automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development."
+description: "Development blockchain with full EVM execution through the Amsterdam hardfork (the newest fork the bundled registry runs; the base `DevChainConfig` default is Prague, and the DevChain server defaults "
 custom_edit_url: "https://github.com/Nethereum/Nethereum/edit/master/src/Nethereum.DevChain/README.md"
 format: md
 ---
@@ -12,17 +12,17 @@ format: md
 > **NuGet**: [`Nethereum.DevChain`](https://www.nuget.org/packages/Nethereum.DevChain/) | **Source**: [`src/Nethereum.DevChain/`](https://github.com/Nethereum/Nethereum/tree/master/src/Nethereum.DevChain)
 # Nethereum.DevChain
 
-Development blockchain with full EVM execution up to the Prague hardfork, automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development.
+Development blockchain with full EVM execution through the Amsterdam hardfork (the newest fork the bundled registry runs; the base `DevChainConfig` default is Prague, and the DevChain server defaults to Amsterdam), automatic mining, SQLite storage, and extended RPC support. A local Ethereum-compatible chain for testing and development.
 
 ## Overview
 
 Nethereum.DevChain provides a complete local blockchain environment:
 - **Instant Mining** - Transactions mined immediately or on a configurable interval
-- **Full EVM Execution** - EVM opcode support up to Prague via Nethereum.EVM
+- **Full EVM Execution** - EVM opcode support through Amsterdam (newest registry fork) via Nethereum.EVM
 - **SQLite Storage** - Default lightweight storage with auto-cleanup (no native dependencies)
 - **State Management** - Patricia trie-based state with snapshot/revert
 - **Extended RPC** - Development, debug, and Anvil-compatible APIs
-- **Transaction Tracing** - Geth-compatible debug_traceTransaction and debug_traceCall
+- **Transaction Tracing** - `debug_traceTransaction` and `debug_traceCall`
 - **Forking** - Fork from live Ethereum networks
 
 ## Installation
@@ -34,9 +34,12 @@ dotnet add package Nethereum.DevChain
 ## Dependencies
 
 - Nethereum.CoreChain - Core blockchain infrastructure
+- Nethereum.Merkle.Binary - Binary Merkle trie and ZK-friendly hashing
 - Nethereum.RPC.Extensions - Extended RPC utilities
 - Nethereum.JsonRpc.RpcClient - JSON-RPC client
 - Nethereum.Web3 - Web3 and Accounts
+- Nethereum.ChainNode.Hosting - Shared node-composition and hosting layer
+- Nethereum.EngineApi.Hosting - JWT-authenticated Engine API host
 - Microsoft.Data.Sqlite - SQLite storage provider
 - Microsoft.Extensions.Hosting.Abstractions - IHostedService support
 - Microsoft.AspNetCore.App (FrameworkReference) - ASP.NET Core web extensions
@@ -103,9 +106,9 @@ DevChain uses a hybrid storage strategy by default:
 | Transactions | SQLite | Historical, grows unbounded |
 | Receipts | SQLite | Historical, grows unbounded |
 | Logs | SQLite | Historical, grows unbounded |
-| State | In-Memory | Needs fast snapshot/revert |
+| State | SQLite (HistoricalStateStore over SqliteStateStore; snapshot/revert is diff-based) | Persisted with the chain |
 | Filters | In-Memory | Transient, bounded |
-| Trie Nodes | In-Memory | Needs fast access |
+| Trie Nodes | SQLite | Persisted with the chain |
 
 SQLite uses WAL journal mode for concurrent reads during block production. The database is auto-deleted on dispose unless persistence is enabled.
 
@@ -116,13 +119,27 @@ SQLite uses WAL journal mode for concurrent reads during block production. The d
 ```csharp
 public class DevChainConfig : ChainConfig
 {
-    public int ChainId { get; set; } = 1337;
-    public long BlockGasLimit { get; set; } = 30_000_000;
+    public BigInteger ChainId { get; set; } = 1337;   // inherited from ChainConfig
+
+    // Overridden in DevChainConfig: a computed BigInteger, not a fixed long.
+    // When left unset it sizes itself to the largest contract the newest fork this
+    // chain runs will deploy (~130,000,000 at Amsterdam), not a hard-coded 30M.
+    public override BigInteger BlockGasLimit
+    {
+        get => _blockGasLimit ?? BlockGasLimitLargeEnoughToDeployAt(NewestForkThisChainRuns);
+        set => _blockGasLimit = value;
+    }
+
     public bool AutoMine { get; set; } = true;
+    public bool PredeploySystemContracts { get; set; } = true;   // false: genesis keeps only what it declares (no EIP-4788/2935 predeploys)
     public long BlockTime { get; set; } = 0;           // 0 = instant
     public int MaxTransactionsPerBlock { get; set; } = 100;
     public BigInteger BaseFee { get; set; } = 1_000_000_000; // 1 gwei
     public BigInteger InitialBalance { get; set; }; // Default: 10000 ETH (BigInteger.Parse("10000000000000000000000"))
+
+    // State trie (inherited from ChainConfig)
+    public StateTreeType StateTree { get; set; } = StateTreeType.Patricia;
+    public IHashProvider StateTreeHashProvider { get; set; }; // null = Blake3 for Binary, Keccak for Patricia
 
     // Forking
     public string ForkUrl { get; set; }
@@ -137,18 +154,48 @@ public class DevChainConfig : ChainConfig
 var config = DevChainConfig.Default;   // ChainId 1337
 var config = DevChainConfig.Hardhat;   // ChainId 31337
 var config = DevChainConfig.Anvil;     // ChainId 31337
+
+// Binary trie with Poseidon (ZK-friendly)
+var zkConfig = new DevChainConfig
+{
+    StateTree = StateTreeType.Binary,
+    StateTreeHashProvider = new BN254PoseidonPairHashProvider()
+};
+
+// Binary trie with Blake3 (fastest)
+var fastConfig = new DevChainConfig
+{
+    StateTree = StateTreeType.Binary,
+    StateTreeHashProvider = new Blake3HashProvider()
+};
 ```
 
 ## Core Features
 
+### EIP-4844 Blob Transactions
+
+Blob sidecars are stored only when the node has an `IBlobStore`: `DevChainNode.CreateInMemory()` supplies an in-memory one; the default SQLite constructor and `AddDevChainServer` do not, so `node.BlobStore` is null and sidecars are dropped.
+
+```csharp
+// Send blob transaction with sidecar
+var tx = new Transaction4844(..., blobVersionedHashes);
+tx.Sidecar = sidecar;
+await node.SendTransactionAsync(tx);
+await node.MineBlockAsync();
+
+// Fetch stored blobs by block number
+var blobs = await node.BlobStore.GetBlobsByBlockNumberAsync(blockNumber);
+var originalData = BlobEncoder.DecodeBlobs(blobs.Select(b => b.Blob).ToList());
+```
+
 ### Transaction Processing
 
 ```csharp
-// Send a signed transaction
-var txHash = await node.SendTransactionAsync(signedTransaction);
+// Send a signed transaction (returns a TransactionExecutionResult, not a hash)
+var result = await node.SendTransactionAsync(signedTransaction);
 
-// Get receipt
-var receipt = await node.GetTransactionReceiptAsync(txHash);
+// Get receipt (the hash is on result.TransactionHash)
+var receipt = await node.GetTransactionReceiptAsync(result.TransactionHash);
 
 // Raw byte sending (eth_sendRawTransaction) is available via the RPC layer
 ```
@@ -186,7 +233,16 @@ await node.SetBalanceAsync(address, newBalance);
 await node.SetCodeAsync(address, bytecode);
 await node.SetStorageAtAsync(address, slot, value);
 await node.SetNonceAsync(address, nonce);
+await node.SetBlockHashAsync(blockNumber, hash);
 ```
+
+`SetBlockHashAsync` stamps the hash into the block store **and**
+mirrors it into the EIP-2935 history contract's storage at
+`0x0000F90827F1C53a10cb7A02335B175320002935`, slot `blockNumber %
+8191`. That mirror keeps the BLOCKHASH opcode consistent with the
+in-guest state-reader view for state tests and stateless replays
+where the block-hash history is seeded explicitly rather than built
+up from actual block production.
 
 ### Snapshots
 
@@ -248,7 +304,7 @@ var stateOverrides = new Dictionary<string, StateOverride>
 {
     [address] = new StateOverride
     {
-        Balance = "0x1000000000000000000",
+        Balance = new HexBigInteger("0x1000000000000000000"),
         Code = "0x...",
         State = new Dictionary<string, string>
         {
@@ -292,8 +348,15 @@ registry.AddAnvilAliases();      // Anvil compatibility
 | `hardhat_setCode` | Set contract code |
 | `hardhat_setNonce` | Set account nonce |
 | `hardhat_setStorageAt` | Set storage slot |
-| `hardhat_impersonateAccount` | Impersonate account |
-| `hardhat_stopImpersonatingAccount` | Stop impersonating |
+| `hardhat_impersonateAccount` | Record an address as impersonated (registered only via `AddDevChainServer`, not `AddDevHandlers`; no signing support) |
+| `hardhat_stopImpersonatingAccount` | Stop impersonating (registered only via `AddDevChainServer`) |
+
+### Testing Methods
+
+| Method | Description |
+|--------|-------------|
+| `testing_buildBlockV1` | Build a block on the current head from payload attributes and return it as a `getPayload` response, without persisting it or moving the head. The given transactions are kept in order and all must apply (else `-32000`); a `null` list takes the pool. `parentHash` must be the current head |
+| `testing_commitBlockV1` | Build a block the same way, insert it, make it the canonical head and return its hash. An unapplicable transaction is an error and the head stays; a `null` list takes the pool and drains it |
 
 ### Debug Methods
 
@@ -332,7 +395,7 @@ var config = new DevChainServerConfig { ChainId = 31337, Storage = "sqlite" };
 builder.AddDevChainServer(config); // Registers DI services, CORS, and hosted service
 
 var app = builder.Build();
-app.MapDevChainEndpoints(); // Maps JSON-RPC POST /, health GET /, and CORS middleware
+await app.MapDevChainEndpointsAsync(); // Maps JSON-RPC POST /, health GET /, and CORS middleware
 app.Run();
 ```
 
@@ -387,5 +450,4 @@ var pastBalance = await node.GetBalanceAsync(address, blockNumber: 5);
 ## Additional Resources
 
 - [Ethereum JSON-RPC Specification](https://ethereum.github.io/execution-apis/api-documentation/)
-- [Geth Debug API](https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-debug)
 - [Nethereum Documentation](http://docs.nethereum.com)

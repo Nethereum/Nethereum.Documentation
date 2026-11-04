@@ -57,9 +57,9 @@ var web3 = await WalletHost.GetWeb3Async();
 var tokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
 var erc20 = new ERC20ContractService(web3.Eth, tokenAddress);
 
-var txHash = await erc20.TransferRequestAndWaitForReceiptAsync(
+var receipt = await erc20.TransferRequestAndWaitForReceiptAsync(
     to: "0xRecipientAddress",
-    tokenAmount: BigInteger.Parse("1000000")); // 1 USDC (6 decimals)
+    value: BigInteger.Parse("1000000")); // 1 USDC (6 decimals)
 ```
 
 ## Gas Estimation and Fee Strategies
@@ -67,7 +67,7 @@ var txHash = await erc20.TransferRequestAndWaitForReceiptAsync(
 The `TransactionViewModel` exposes gas configuration properties. For EIP-1559 chains:
 
 ```csharp
-var feeStrategy = new MedianPriorityFeeHistorySuggestionStrategy(web3.Eth);
+var feeStrategy = new MedianPriorityFeeHistorySuggestionStrategy(web3.Client);
 var fee = await feeStrategy.SuggestFeeAsync();
 
 var txInput = new TransactionInput
@@ -75,8 +75,8 @@ var txInput = new TransactionInput
     To = recipientAddress,
     Value = new HexBigInteger(Web3.Convert.ToWei(amount)),
     From = senderAddress,
-    MaxFeePerGas = new HexBigInteger(fee.MaxFeePerGas),
-    MaxPriorityFeePerGas = new HexBigInteger(fee.MaxPriorityFeePerGas),
+    MaxFeePerGas = new HexBigInteger(fee.MaxFeePerGas.Value),
+    MaxPriorityFeePerGas = new HexBigInteger(fee.MaxPriorityFeePerGas.Value),
 };
 
 var gasEstimate = await web3.Eth.TransactionManager
@@ -95,27 +95,9 @@ txInput.GasPrice = gasPrice;
 
 ## EVM State Preview
 
-Before signing, you can simulate the transaction locally to preview state changes (balance deltas, storage writes, event logs). This uses the [EVM Simulator](../evm-simulator/guide-transaction-simulation):
+Before signing, you can simulate the transaction locally to preview state changes (balance deltas, storage writes, event logs). This uses the [EVM Simulator](../evm-simulator/guide-transaction-simulation).
 
-```csharp
-using Nethereum.EVM;
-using Nethereum.EVM.BlockchainState;
-
-var nodeDataService = new RpcNodeDataService(web3.Eth, BlockParameter.CreateLatest());
-var stateService = new ExecutionStateService(nodeDataService);
-
-var simulator = new TransactionExecutor(stateService);
-var result = await simulator.ExecuteTransactionAsync(
-    txInput.From,
-    txInput.To,
-    txInput.Value?.Value ?? 0,
-    txInput.Data?.HexToByteArray());
-
-foreach (var transfer in result.Transfers)
-{
-    Console.WriteLine($"{transfer.From} -> {transfer.To}: {transfer.Value} wei");
-}
-```
+The wallet's `TransactionViewModel` does this through `IStateChangesPreviewService` (registered by `AddTokenTransferServices`). For a standalone simulation, follow the EVM Simulator guide.
 
 This is useful for showing "you will send X ETH and receive Y tokens" previews in a wallet UI before the user confirms.
 
@@ -146,17 +128,13 @@ Track pending transactions via `IPendingTransactionService`:
 @inject IPendingTransactionService PendingTxService
 
 @code {
-    private async Task MonitorTransaction(string txHash)
+    protected override async Task OnInitializedAsync()
     {
-        PendingTxService.AddPendingTransaction(txHash, chainId);
+        PendingTxService.TransactionConfirmed += (sender, args) =>
+            Console.WriteLine("Transaction confirmed");
 
-        var receipt = await web3.Eth.Transactions.GetTransactionReceipt
-            .SendRequestAsync(txHash);
-
-        if (receipt.Succeeded())
-        {
-            Console.WriteLine($"Confirmed in block {receipt.BlockNumber}");
-        }
+        var pending = await PendingTxService.GetPendingTransactionsAsync(chainId);
+        PendingTxService.StartMonitoring();
     }
 }
 ```
@@ -171,7 +149,7 @@ The wallet tracks token holdings through `ITokenManagementService`. Tokens are d
 @inject ITokenManagementService TokenService
 
 @code {
-    var tokens = await TokenService.GetTokensForAccountAsync(address, chainId);
+    var tokens = await TokenService.GetAccountTokensAsync(address, chainId);
 
     foreach (var token in tokens)
     {

@@ -13,7 +13,7 @@ The `nethereum-devchain` template gives you a complete local Ethereum developmen
 
 By the end of this guide, you'll have four services running together:
 
-- **DevChain** — an in-memory Ethereum node with EIP-1559, debug tracing, and pre-funded accounts
+- **DevChain** — an Ethereum node with EIP-1559, debug tracing, and pre-funded accounts (SQLite storage; state is not kept across restarts unless `Persist` is enabled)
 - **Indexer** — a background worker that indexes blocks, transactions, token transfers, and MUD records into PostgreSQL
 - **Explorer** — a full Blazor blockchain explorer with contract interaction, ABI decoding, and wallet connection
 - **PostgreSQL** — a managed database container for all indexed data
@@ -117,7 +117,7 @@ Replace `<port>` with the actual port from the Aspire dashboard.
 
 ### DevChain Storage
 
-By default, the DevChain persists state to SQLite so your chain survives restarts. For ephemeral testing:
+By default, the DevChain uses the SQLite storage backend, but `Persist` defaults to `false`, so the chain is not kept across restarts. Set `"Persist": true` to write it to `./chaindata/chain.db` (`DataDir`) and keep it across restarts. For a purely in-memory chain:
 
 ```json
 {

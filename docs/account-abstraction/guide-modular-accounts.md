@@ -1,7 +1,7 @@
 ---
 title: ERC-7579 Modular Accounts
 sidebar_label: Modular Accounts
-sidebar_position: 6
+sidebar_position: 8
 description: Install and manage ERC-7579 modules — validators, executors, hooks, and session keys — on smart accounts using Nethereum.
 ---
 
@@ -42,6 +42,9 @@ Add these namespaces to your code:
 ```csharp
 using Nethereum.AccountAbstraction.ERC7579;
 using Nethereum.AccountAbstraction.ERC7579.Modules;
+using Nethereum.AccountAbstraction.ERC7579.Modules.SocialRecovery;
+using Nethereum.AccountAbstraction.ERC7579.Modules.SmartSession;
+using Nethereum.AccountAbstraction.Contracts.Modules.SmartSessions.SmartSession.ContractDefinition;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 ```
@@ -105,7 +108,7 @@ var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(config);
 You can also build the config with fluent methods:
 
 ```csharp
-var config = new OwnableValidatorConfig(validatorAddress)
+var config = new OwnableValidatorConfig { ModuleAddress = validatorAddress }
     .WithOwner(owner1)
     .WithOwner(owner2)
     .WithOwner(owner3)
@@ -116,7 +119,7 @@ The shortcut method works here too:
 
 ```csharp
 var receipt = await accountService.InstallOwnableValidatorAndWaitForReceiptAsync(
-    validatorAddress, threshold: 2, owner1, owner2, owner3);
+    validatorAddress, threshold: 2, new[] { owner1, owner2, owner3 });
 ```
 
 After installation, any UserOperation must include valid signatures from at least 2 of the 3 owners.
@@ -138,7 +141,7 @@ var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(config);
 The fluent builder works the same way:
 
 ```csharp
-var config = new SocialRecoveryConfig(moduleAddress)
+var config = new SocialRecoveryConfig { ModuleAddress = moduleAddress }
     .WithGuardian(guardian1)
     .WithGuardian(guardian2)
     .WithGuardian(guardian3)
@@ -149,10 +152,25 @@ Or use the shortcut:
 
 ```csharp
 var receipt = await accountService.InstallSocialRecoveryAndWaitForReceiptAsync(
-    moduleAddress, threshold: 2, guardian1, guardian2, guardian3);
+    moduleAddress, threshold: 2, new[] { guardian1, guardian2, guardian3 });
 ```
 
 With a threshold of 2, any two guardians can trigger recovery. The third guardian is a safety net in case one guardian becomes unavailable.
+
+### Passkeys (WebAuthn)
+
+A passkey is an ERC-7579 validator too. `WebAuthnValidatorModule` (package `Nethereum.AccountAbstraction.WebAuthn`) plugs into the account exactly like the validators above — install it with a `WebAuthnValidatorConfig` through the same `InstallModuleAndWaitForReceiptAsync` call:
+
+```csharp
+using Nethereum.AccountAbstraction.WebAuthn.ERC7579.Modules;
+
+// credential is a WebAuthnCredential (the on-chain DTO) - obtain it from a platform
+// authenticator's created credential via credential.ToCredential().
+var moduleConfig = new WebAuthnValidatorConfig(webAuthnValidatorAddress, threshold: 1, credential);
+var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(moduleConfig);
+```
+
+See the [WebAuthn Passkeys](guide-webauthn-passkeys) guide for credential creation and signing UserOperations with a passkey, and the `Nethereum.AccountAbstraction.WebAuthn` package for `WebAuthnValidatorModule`, `WebAuthnValidatorConfig`, and the `IAAClient` extensions that attach an account signed by a passkey.
 
 ## Install an Executor
 
@@ -181,18 +199,19 @@ Session keys let you grant temporary, scoped permissions to a key without giving
 
 ### Create a Basic Session
 
-Start with `SmartSessionConfig` to define a session tied to a session validator:
+Start with `SmartSessionConfig` to define a session tied to a session validator. The salt is a 32-byte value; `Create` takes a `byte[]`, and `WithSalt` also accepts a `BigInteger`:
 
 ```csharp
 var sessionModuleAddress = "0x6666666666666666666666666666666666666666";
 var sessionValidatorAddress = "0x7777777777777777777777777777777777777777";
-var salt = new BigInteger(1);
+var salt = new byte[32];
+salt[31] = 1;
 
 var config = SmartSessionConfig.Create(sessionModuleAddress, sessionValidatorAddress, salt);
 var receipt = await accountService.InstallModuleAndWaitForReceiptAsync(config);
 ```
 
-If the session validator needs to know the owner address (for ECDSA verification of session signatures), use:
+If the session validator needs to know the owner address (for ECDSA verification of session signatures), use `CreateWithOwner` with the same salt shape:
 
 ```csharp
 var ownerAddress = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B";
@@ -275,34 +294,57 @@ var generatedSession = await sessionKeyManager.GenerateSessionKeyAsync(accountAd
 // Mark it as registered after on-chain installation
 await sessionKeyManager.MarkRegisteredAsync(generatedSession.Key);
 
-// Retrieve the best (most recently registered) session key for an account
+// Retrieve the best session key for an account: the active one currently inside its ValidAfter/ValidUntil window with the latest ValidUntil
 var bestKey = await sessionKeyManager.GetBestSessionKeyAsync(accountAddress);
 
 // Remove a session key when it's no longer needed
 await sessionKeyManager.RemoveSessionKeyAsync(generatedSession.Key);
 ```
 
-The manager tracks key states (generated, registered, expired) and `GetBestSessionKeyAsync` returns the most suitable active key for a given account. Use this to build session key rotation or expiry workflows in your application.
+The manager stores each generated key as inactive until `MarkRegisteredAsync` flips `IsActive`, and `GetBestSessionKeyAsync` returns the active key currently inside its `ValidAfter`/`ValidUntil` window with the latest `ValidUntil`. Use this to build session key rotation or expiry workflows in your application.
 
-## Configure Modules at Account Creation
+## Attaching Modules: At Creation vs. After Deployment
 
-You don't have to install modules after the account is deployed. `SmartAccountBuilder` lets you bake modules into the account from the start:
+Every module above needs an account to attach to. There are two different points in an account's life where that happens, and they use different APIs.
 
-```csharp
-var builder = new SmartAccountBuilder()
-    .WithValidator(validatorAddress);
-```
+### The Initial Validator, Baked In at Creation
 
-For more control, pass the full module type, address, and init data:
+`NethereumAccountFactory` deploys accounts via CREATE2, encoding exactly one validator into the account's init data — the validator installed the moment the account deploys. `IAAClient.CreateAccountAsync` builds that init data and derives the counterfactual address for you:
 
 ```csharp
-var initData = new OwnableValidatorConfig(validatorAddress, threshold: 2, owner1, owner2).GetInitData();
+using Nethereum.AccountAbstraction.Client;
+using Nethereum.Signer;
 
-var builder = new SmartAccountBuilder()
-    .WithModule(ERC7579ModuleTypes.TYPE_VALIDATOR, validatorAddress, initData);
+var owner = EthECKey.GenerateKey();
+var account = await aaClient.CreateAccountAsync(owner);   // NethereumSmartAccount, ECDSAValidator baked in
 ```
 
-Modules configured at creation time are active from the account's first transaction. This avoids the extra UserOperation that a post-deployment install would require.
+This is the ECDSA-owned shortcut. `CreateAccountAsync` also has a generic overload that takes any `IAccountSigningService` paired with the `IErc7579ValidatorModule` that authenticates it — an external signer, WebAuthn, or your own module — for the same one-validator-at-creation deploy. See [Smart Account Deployment](guide-smart-account-deployment) for the full mechanics: counterfactual addresses, funding, and deploy-on-first-op.
+
+Every other module — a second validator, an executor, a hook, or a smart session — attaches after deployment, as its own UserOperation.
+
+### Installing a Module After Deployment: The Self-Call Pattern
+
+Installing or uninstalling a module on an already-deployed account is a UserOperation the account sends to itself. That means `NethereumAccountService` needs to be routed through Account Abstraction exactly like any other typed contract service — via `UseAccountAbstraction` — before the install/uninstall/query calls used throughout this guide will work:
+
+```csharp
+using Nethereum.AccountAbstraction; // AATransactionReceipt
+using Nethereum.AccountAbstraction.Client;
+using Nethereum.AccountAbstraction.Contracts.Core.NethereumAccount;
+using Nethereum.AccountAbstraction.ERC7579.Modules;
+
+var accountService = new NethereumAccountService(web3, account.Address);
+accountService.UseAccountAbstraction(account, aaClient);
+
+var config = OwnableExecutorConfig.Create(executorAddress, delegateAddress);
+var receipt = (AATransactionReceipt)await accountService.InstallModuleAndWaitForReceiptAsync(config);
+
+Console.WriteLine(receipt.UserOpSuccess
+    ? $"Installed - isModuleInstalled: {await accountService.IsModuleInstalledAsync(config)}"
+    : receipt.FailureDiagnostic);
+```
+
+This `accountService` — bound to the account's own address and routed through `UseAccountAbstraction` — is what every `InstallModuleAndWaitForReceiptAsync`/`IsModuleInstalledAsync`/`UninstallModuleAndWaitForReceiptAsync` call earlier in this guide runs against.
 
 ## Check and Remove Modules
 
@@ -327,15 +369,17 @@ var receipt = await accountService.UninstallModuleAndWaitForReceiptAsync(config)
 
 The config's `GetDeInitData()` method provides the cleanup data the module needs to remove its state.
 
-If you are working at the lower level with `SmartAccountService` directly, the raw methods accept type IDs and byte arrays:
+If you need the raw generated methods instead of a config's `IModuleConfig` encoding — `NethereumAccountService` (the generated contract service itself, not a separate class) exposes them directly, taking the type ID and byte arrays yourself:
 
 ```csharp
-bool installed = await smartAccountService.IsModuleInstalledAsync(
-    ERC7579ModuleTypes.TYPE_VALIDATOR, validatorAddress);
+bool installed = await accountService.IsModuleInstalledQueryAsync(
+    ERC7579ModuleTypes.TYPE_VALIDATOR, validatorAddress, additionalContext: Array.Empty<byte>());
 
-await smartAccountService.UninstallModuleAsync(
+await accountService.UninstallModuleRequestAsync(
     ERC7579ModuleTypes.TYPE_VALIDATOR, validatorAddress, deInitData);
 ```
+
+These are exactly what the `IModuleConfig`-based helpers above call into — reach for them only if you are building `initData`/`deInitData` yourself instead of using a config class.
 
 ## Common Mistakes
 
@@ -351,6 +395,9 @@ await smartAccountService.UninstallModuleAsync(
 
 ## Next Steps
 
+- [Smart Sessions and Policies](guide-smart-sessions-and-policies) — the `SmartSession` module in depth: `SudoPolicy` vs `UniActionPolicy`, spending limits, and the full enable/use/revoke lifecycle.
+- [Social Recovery](guide-social-recovery) — the `SocialRecovery` module in depth: configuring an N-of-M guardian quorum and recovering a lost owner key.
+- [Smart Account Deployment](guide-smart-account-deployment) — counterfactual addresses, deploy-on-first-op, and the full `IAAClient.CreateAccountAsync` mechanics.
 - [Run a Bundler](guide-run-bundler) — set up and run a local ERC-4337 bundler for development.
 - [Send a UserOperation](guide-send-useroperation) — build and submit UserOperations manually for full control.
 - [Account Abstraction Package Reference](nethereum-accountabstraction) — full API reference for `Nethereum.AccountAbstraction`.

@@ -22,7 +22,7 @@ dotnet add package Nethereum.CircomWitnessCalc       # native witness generation
 dotnet add package Nethereum.ZkProofs.RapidSnark     # native Groth16 proof generation (C++, P/Invoke)
 ```
 
-For browser-based Blazor WASM applications, use `Nethereum.ZkProofs.Snarkjs.Blazor` instead. See the [ZK Proof Demos guide](/docs/consensus-and-cryptography/guide-zk-proof-demos) for working examples of both approaches.
+For browser-based Blazor WASM applications, use `Nethereum.ZkProofs.Snarkjs.Blazor` instead. See the [ZK Proof Demos guide](/docs/zk-proofs/guide-zk-proof-demos) for working examples of both approaches.
 
 ## Create an Account
 
@@ -101,7 +101,7 @@ Two withdrawal modes are available:
 
 | Mode | Method | Privacy | Use When |
 |------|--------|---------|----------|
-| **Relay** | `Pool.WithdrawAsync(...)` | High — relayer submits tx | Production: your address stays hidden |
+| **Entrypoint relay** | `Pool.WithdrawAsync(...)` | Sent from the configured web3 account (it also publishes the ASP root first, so that account must be the Entrypoint's postman, the address set at initialization) — hides the sender only when that account is a relayer | Run this from a relayer; end users submit via `PrivacyPoolRelayer` |
 | **Direct** | `Pool.WithdrawDirectAsync(...)` | Low — your address is `msg.sender` | Testing or self-hosted scenarios |
 
 Both modes generate a Groth16 proof showing you know a commitment in the state tree AND the ASP's approved set, without revealing which one.
@@ -133,7 +133,7 @@ The `ASPTreeService` builds and manages the Association Set Provider Merkle tree
 var asp = pp.CreateASPTreeService();
 asp.BuildFromDeposits(deposits);
 
-// Publish root on-chain (requires POSTMAN role)
+// Publish root on-chain (sender must be the Entrypoint's postman)
 await asp.PublishRootAsync("bafybei...");
 
 // Generate inclusion proof for a withdrawal

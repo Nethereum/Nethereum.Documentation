@@ -72,7 +72,7 @@ public async void ShowWalletButtons()
         foreach (var image in images)
         {
             if (image.gameObject.name == "Icon")
-                ImageHelper.ApplyBase64Image(image, wallets[i].Icon);
+                ImageHelper.ApplyBase64Image(image, wallets[i].Icon); // ImageHelper is your own helper that decodes the data URI into a Texture2D (not part of Nethereum)
         }
 
         // Capture UUID for the click handler

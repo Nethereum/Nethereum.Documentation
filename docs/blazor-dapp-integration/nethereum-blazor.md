@@ -113,6 +113,7 @@ await builder.Build().RunAsync();
 @page "/wallet"
 @inject EIP6963WalletHostProvider WalletProvider
 @inject AuthenticationStateProvider AuthStateProvider
+@inject SelectedEthereumHostProviderService SelectedHostProviderService
 
 <AuthorizeView>
     <Authorized>
@@ -135,6 +136,7 @@ await builder.Build().RunAsync();
         {
             await WalletProvider.SelectWalletAsync(wallets[0].Uuid);
             await WalletProvider.EnableProviderAsync();
+            await SelectedHostProviderService.SetSelectedEthereumHostProvider(WalletProvider);
 
             // Notify authentication system
             if (AuthStateProvider is EthereumAuthenticationStateProvider ethAuth)
@@ -242,7 +244,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 // Register SIWE services
 builder.Services.AddSingleton<NethereumSiweAuthenticatorService>();
 builder.Services.AddSingleton<IAccessTokenService, LocalStorageAccessTokenService>();
-builder.Services.AddSingleton<ISessionStorage, SessionStorageService>();
+builder.Services.AddSingleton<ISessionStorage, InMemorySessionNonceStorage>();
 
 // Register user service (implement IUserService<User>)
 builder.Services.AddSingleton<IUserService<User>, MyUserService>();
@@ -893,7 +895,7 @@ Nethereum.Blazor includes a set of ABI-driven components that render contract fu
 | `DynamicGasSettings` | Collapsible gas configuration (gas limit, nonce, gas price, EIP-1559 fees) |
 | `DynamicReceiptDisplay` | Shows transaction receipt details after submission |
 
-These components accept a `FunctionABI` parameter and a `Web3` instance (or `IEthereumHostProvider`), and handle encoding, RPC calls, and decoding automatically. They use the `neth-` CSS class prefix for styling.
+These components accept a `FunctionABI` parameter and either a `Web3` instance (`DynamicQueryFunction`) or a `HostProvider` (`SelectedEthereumHostProviderService`, `DynamicTransactionFunction`), and handle encoding, RPC calls, and decoding automatically. They use the `neth-` CSS class prefix for styling.
 
 ## Related Packages
 

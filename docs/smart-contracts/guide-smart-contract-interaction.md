@@ -175,7 +175,7 @@ All query methods accept an optional `BlockParameter` to read contract state at 
 ```csharp
 var historicalBalance = await balanceHandler.QueryDeserializingToObjectAsync<BalanceOfOutputDTO>(
     balanceOfMessage, contractAddress,
-    new Nethereum.RPC.Eth.DTOs.BlockParameter(deployReceipt.BlockNumber));
+    new Nethereum.RPC.Eth.DTOs.BlockParameter(receipt.BlockNumber));
 ```
 
 ## Gas Estimation and Gas Price

@@ -9,10 +9,9 @@ description: Batch multiple contract queries into a single call with Nethereum M
 
 :::tip The Simple Way
 ```csharp
-var multiQuery = web3.Eth.GetMultiQueryHandler();
-var balance1 = multiQuery.AddQueryHandler<BalanceOfFunction, BigInteger>(contract1, balanceMsg1);
-var balance2 = multiQuery.AddQueryHandler<BalanceOfFunction, BigInteger>(contract2, balanceMsg2);
-await multiQuery.MultiCallAsync();
+var call1 = new MulticallInputOutput<BalanceOfFunction, BalanceOfOutputDTO>(balanceMsg1, contract1);
+var call2 = new MulticallInputOutput<BalanceOfFunction, BalanceOfOutputDTO>(balanceMsg2, contract2);
+await web3.Eth.GetMultiQueryHandler().MultiCallAsync(call1, call2);
 ```
 Batch multiple reads into a single call — no gas needed for read-only queries.
 :::
@@ -158,9 +157,9 @@ Use the **Multicall contract** approach on public networks where Multicall3 is d
 Nethereum provides two wrapper types for multicall items:
 
 - **`MulticallInputOutput<TFunction, TOutput>`** -- use when you need the decoded output (most common). Wraps both the function message and output DTO, so results are decoded automatically into `call.Output`.
-- **`MulticallInput<TFunction>`** -- use when you only need to send a call but don't need to decode the output (e.g., for write operations or when you handle decoding separately).
+- **`MulticallInput<TFunction>`** -- the base class holding the function message and target address. It is not accepted by `MultiCallAsync`, which takes `IMulticallInputOutput` items, so pass `MulticallInputOutput<TFunction, TOutput>` to the handlers.
 
-Both implement `IMulticallInput` and work with both the Multicall contract and RPC batch handlers.
+`MulticallInputOutput` implements `IMulticallInputOutput` and works with both the Multicall contract and RPC batch handlers.
 
 ## MultiSend (Batched Write Transactions)
 

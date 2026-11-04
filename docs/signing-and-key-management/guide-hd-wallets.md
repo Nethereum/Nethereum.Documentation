@@ -23,7 +23,7 @@ Nethereum offers two implementations:
 | Package | Use Case | Dependencies |
 |---|---|---|
 | `Nethereum.HDWallet` | Full HD wallet — NBitcoin-based, extended keys, multiple derivation paths | NBitcoin |
-| `Nethereum.Wallet` | Light HD wallet — zero external crypto deps, modern .NET only | None |
+| `Nethereum.Accounts` (`MinimalHDWallet`) | Light HD wallet — zero external crypto deps, modern .NET only (net6.0+) | None |
 
 ## Full HD Wallet
 

@@ -69,15 +69,17 @@ Assert.Equal("E2EToken", name);
 Deploys a token, transfers tokens, then waits for the Indexer to process the transaction. This tests the full pipeline — DevChain → Indexer → PostgreSQL:
 
 ```csharp
+var recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+
 var transferReceipt = await tokenService.TransferRequestAndWaitForReceiptAsync(
-    DevChainAccounts.Account3.Address,
+    recipient,
     Web3.Convert.ToWei(100));
 
 // Wait for indexer to process
 await Task.Delay(3000);
 
 // Query the chain to verify
-var balance = await tokenService.BalanceOfQueryAsync(DevChainAccounts.Account3.Address);
+var balance = await tokenService.BalanceOfQueryAsync(recipient);
 Assert.Equal(Web3.Convert.ToWei(100), balance);
 ```
 

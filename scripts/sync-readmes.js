@@ -97,13 +97,26 @@ const PACKAGE_CATEGORY = {
 
   // §4 EVM Simulator
   'Nethereum.EVM': 'evm-simulator',
+  'Nethereum.EVM.Core': 'evm-simulator',
   'Nethereum.EVM.Contracts': 'evm-simulator',
+  'Nethereum.EVM.Precompiles': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Bls': 'evm-simulator',
   'Nethereum.EVM.Precompiles.Kzg': 'evm-simulator',
 
-  // §5 DevChain (Core + Dev)
-  'Nethereum.CoreChain': 'devchain',
-  'Nethereum.CoreChain.RocksDB': 'devchain',
+  // §5 Mainnet Follower (the follower node + the engine it runs on)
+  'Nethereum.MainnetChain': 'mainnet-follower',
+  'Nethereum.MainnetChain.Server': 'mainnet-follower',
+  'Nethereum.CoreChain': 'mainnet-follower',
+  'Nethereum.CoreChain.RocksDB': 'mainnet-follower',
+  'Nethereum.CoreChain.Freezer': 'mainnet-follower',
+  'Nethereum.Freezer': 'mainnet-follower',
+  'Nethereum.ChainNode.Hosting': 'mainnet-follower',
+
+  // §5 DevP2P (Ethereum peer-to-peer networking + sync stack)
+  'Nethereum.DevP2P': 'devp2p',
+  'Nethereum.DevP2P.Sync': 'devp2p',
+
+  // §5 DevChain (Dev)
   'Nethereum.DevChain': 'devchain',
   'Nethereum.DevChain.Server': 'devchain',
 
@@ -111,21 +124,26 @@ const PACKAGE_CATEGORY = {
   'Nethereum.AppChain': 'application-chain',
   'Nethereum.AppChain.Server': 'application-chain',
   'Nethereum.AppChain.Sequencer': 'application-chain',
-  'Nethereum.AppChain.Sync': 'application-chain',
-  'Nethereum.AppChain.P2P': 'application-chain',
-  'Nethereum.AppChain.P2P.DotNetty': 'application-chain',
-  'Nethereum.AppChain.P2P.Server': 'application-chain',
+  'Nethereum.AppChain.Server.Core': 'application-chain',
   'Nethereum.AppChain.Policy': 'application-chain',
   'Nethereum.AppChain.Anchoring': 'application-chain',
+  'Nethereum.AppChain.Anchoring.Postgres': 'application-chain',
+  'Nethereum.Explorer.Anchoring': 'application-chain',
   'Nethereum.Consensus.Clique': 'application-chain',
+  // AA-on-AppChain lives in the AppChain area (its own full section), not Account Abstraction
+  'Nethereum.AccountAbstraction.AppChain': 'application-chain',
 
   // §6 Account Abstraction
   'Nethereum.AccountAbstraction': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler': 'account-abstraction',
+  'Nethereum.AccountAbstraction.Bundler.InProcess': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler.RocksDB': 'account-abstraction',
   'Nethereum.AccountAbstraction.Bundler.RpcServer': 'account-abstraction',
   'Nethereum.AccountAbstraction.SimpleAccount': 'account-abstraction',
-  'Nethereum.AccountAbstraction.AppChain': 'account-abstraction',
+  'Nethereum.AccountAbstraction.WebAuthn': 'account-abstraction',
+  'Nethereum.WebAuthn': 'account-abstraction',
+  'Nethereum.WebAuthn.Blazor': 'account-abstraction',
+  'Nethereum.WebAuthn.Windows': 'account-abstraction',
 
   // §7 Data & Indexing
   'Nethereum.BlockchainProcessing': 'data-and-indexing',
@@ -190,6 +208,10 @@ const PACKAGE_CATEGORY = {
   'Nethereum.ZkProofs.Snarkjs.Blazor': 'zk-proofs',
   'Nethereum.ZkProofs.RapidSnark': 'zk-proofs',
   'Nethereum.CircomWitnessCalc': 'zk-proofs',
+  'Nethereum.EVM.Zisk': 'zk-proofs',
+  'Nethereum.Zisk.Core': 'zk-proofs',
+  'Nethereum.Zisk.Prover.Server': 'zk-proofs',
+  'Nethereum.BlockProver.Server': 'zk-proofs',
 
   // §12 Consensus Light Client
   'Nethereum.Ssz': 'consensus-light-client',
@@ -200,13 +222,27 @@ const PACKAGE_CATEGORY = {
   // §10 Client Extensions
   'Nethereum.Geth': 'client-extensions',
   'Nethereum.Besu': 'client-extensions',
+  'Nethereum.DID': 'client-extensions',
+  'Nethereum.DID.EthrDID': 'client-extensions',
 
   // Misc packages
   'Nethereum.BigInteger.N351': 'core-foundation',
   'Nethereum.Consensus.Ssz': 'consensus-light-client',
   'Nethereum.Quorum': 'client-extensions',
   'Nethereum.RPC.Extensions': 'core-foundation',
+  'Nethereum.Parity': 'client-extensions',
+  'Nethereum.Parity.Reactive': 'client-extensions',
+  'Nethereum.Rsk': 'client-extensions',
+  'Nethereum.StandardTokenEIP20': 'smart-contracts',
+  'Nethereum.StandardNonFungibleTokenERC721': 'smart-contracts',
+  'Nethereum.ABI.ABIInfoSqliteStorage': 'data-services',
+  'Nethereum.EngineApi.Hosting': 'mainnet-follower',
+  'Nethereum.Wallet.Trezor': 'wallet-sdk',
+  'Nethereum.Wallet.UI.Components.Avalonia': 'wallet-sdk',
+  'Nethereum.ZkProofs.Snarkjs': 'zk-proofs',
 };
+
+const NOT_PUBLISHED = new Set(['Nethereum.HybridWebView']);
 
 // Generate a URL-friendly slug from a package name
 function toSlug(pkg) {
@@ -226,7 +262,7 @@ function extractDescription(content) {
     if (trimmed.startsWith('![')) continue;
     if (trimmed.startsWith('[![')) continue;
     if (/[a-zA-Z]{3,}/.test(trimmed)) {
-      return trimmed.replace(/\*\*/g, '').replace(/\*/g, '').substring(0, 200);
+      return trimmed.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\*\*/g, '').replace(/\*/g, '').substring(0, 200);
     }
   }
   return `${lines[0] || 'Package documentation'}`;
@@ -307,6 +343,7 @@ const packageData = [];
 for (const entry of entries) {
   if (!entry.isDirectory()) continue;
   if (!entry.name.startsWith('Nethereum.')) continue;
+  if (NOT_PUBLISHED.has(entry.name)) continue;
 
   const readmePath = path.join(srcDir, entry.name, 'README.md');
   if (!fs.existsSync(readmePath)) continue;

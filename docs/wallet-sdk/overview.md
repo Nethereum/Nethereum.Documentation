@@ -28,7 +28,7 @@ Nethereum.Wallet                              Core services: accounts, vaults, B
 | **ViewModels** | `Nethereum.Wallet.UI.Components`, `.Trezor` | Cross-platform MVVM ViewModels for every wallet screen with field-level validation and localisation |
 | **Renderers** | `.Blazor`, `.Blazor.Trezor`, `.Maui` | Platform-specific UI implementations |
 | **RPC** | `Nethereum.Wallet.RpcRequests` | EIP-1193 JSON-RPC request handlers for wallet-to-dApp communication |
-| **Hardware** | `Nethereum.Maui.AndroidUsb` | Android USB transport for Ledger/Trezor on MAUI |
+| **Hardware** | `Nethereum.Maui.AndroidUsb` | Android USB transport for Trezor on MAUI |
 
 ![Wallet SDK login with vault data stored in Web3 KeyStore](../screenshots/walletsdk-1-Login-vaultDataStoredInWeb3KeyStore.png)
 
@@ -38,9 +38,9 @@ The wallet supports multiple account types:
 
 - **Mnemonic** — BIP39 seed phrase with BIP44 derivation paths
 - **Private Key** — Direct ECDSA key import
-- **Keystore** — Web3 Secret Storage encrypted files
 - **View-Only** — Address monitoring without signing capability
-- **Hardware** — Ledger and Trezor via USB (desktop/Android)
+- **Smart Contract** — Contract wallet addresses (multisig, AA)
+- **Trezor** — Hardware wallet via USB (desktop/Android)
 
 ## Getting Started
 
@@ -54,8 +54,8 @@ dotnet add package Nethereum.Wallet.UI.Components.Blazor
 Register services in DI:
 
 ```csharp
-builder.Services.AddNethereumWallet();
-builder.Services.AddNethereumWalletBlazorComponents();
+builder.Services.AddNethereumWalletHostProvider();
+builder.Services.AddNethereumWalletUI();
 ```
 
 ## Packages
